@@ -1,0 +1,117 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  TREASURER
+  COACH
+  PLAYER
+  SPONSOR
+  ACADEMY_CANDIDATE
+  VISITOR
+}
+
+model User {
+  id               String        @id @default(uuid())
+  email            String        @unique
+  passwordHash     String
+  name             String
+  role             UserRole      @default(VISITOR)
+  avatarUrl        String?
+  phoneNumber      String?
+  address          String?
+  emergencyContact String?
+  bio              String?
+  country          String?       @default("Togo")
+  city             String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  player           PlayerProfile?
+  transactions     FinancialTransaction[]
+}
+
+model PlayerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  jerseyNumber    Int
+  position        String
+  heightCm        Float
+  weightKg        Float
+  age             Int
+  bio             String?
+  ppg             Float    @default(0.0)
+  rpg             Float    @default(0.0)
+  apg             Float    @default(0.0)
+  spg             Float    @default(0.0)
+  bpg             Float    @default(0.0)
+  efficiency      Float    @default(0.0)
+}
+
+model Match {
+  id               String   @id @default(uuid())
+  opponent         String
+  opponentLogo     String
+  isHome           Boolean  @default(true)
+  matchDate        DateTime
+  venue            String
+  address          String
+  status           String   @default("UPCOMING")
+  scoreTeam        Int?
+  scoreOpponent    Int?
+  quarterScoresJson String?
+  summary          String?
+  mvpPlayerName    String?
+}
+
+model FinancialTransaction {
+  id          String   @id @default(uuid())
+  date        DateTime @default(now())
+  description String
+  category    String
+  amount      Float
+  type        String
+  userOrOrg   String
+  status      String   @default("PAYÉ")
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  type        String
+  eventDate   DateTime
+  time        String
+  location    String
+  description String
+}
+
+model AcademyApplication {
+  id                String   @id @default(uuid())
+  candidateName     String
+  email             String
+  age               Int
+  height            String
+  preferredPosition String
+  videoUrl          String?
+  status            String   @default("EN_ATTENTE")
+  submittedAt       DateTime @default(now())
+}
+
+model ChampionsDay {
+  id                 String   @id @default(uuid())
+  editionYear        Int      @unique
+  date               DateTime
+  seasonMvp          String
+  dunkContestWinner  String
+  threePtWinner      String
+  academyRookie      String
+}
