@@ -1,0 +1,64 @@
+{
+  "name": "HOOPER",
+  "short_name": "HOOPER",
+  "description": "Plateforme officielle de Basketball au Togo — Matchs en direct, classements, statistiques avancées, billetterie et vie du club.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090A0F",
+  "theme_color": "#FF2A3B",
+  "lang": "fr-TG",
+  "dir": "ltr",
+  "categories": ["sports", "social", "entertainment"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Match Center & Live",
+      "short_name": "Live",
+      "description": "Scores en temps réel et programmation des matchs",
+      "url": "/?tab=matchs",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tournois & Classements",
+      "short_name": "Tournois",
+      "description": "Classements des championnats et ligues togolaises",
+      "url": "/?tab=tournois",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Équipe & Roster",
+      "short_name": "Équipe",
+      "description": "Effectif et staff du club actif",
+      "url": "/?tab=equipe",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Team Designer",
+      "short_name": "Designer",
+      "description": "Personnalisation des maillots et identités visuelles",
+      "url": "/?tab=designer",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

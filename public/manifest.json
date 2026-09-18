@@ -1,0 +1,70 @@
+{
+  "name": "HOOPER",
+  "short_name": "HOOPER",
+  "description": "Plateforme officielle de Basketball au Togo — Matchs en direct, classements, statistiques avancées, billetterie et vie du club.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090A0F",
+  "theme_color": "#FF2A3B",
+  "lang": "fr-TG",
+  "dir": "ltr",
+  "categories": [
+    "sports",
+    "social",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Match Center & Live",
+      "short_name": "Live",
+      "url": "/?tab=matchs",
+      "icons": [
+        {
+          "src": "/web-app-manifest-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Tournois",
+      "short_name": "Tournois",
+      "url": "/?tab=tournois",
+      "icons": [
+        {
+          "src": "/web-app-manifest-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Équipe",
+      "short_name": "Équipe",
+      "url": "/?tab=equipe",
+      "icons": [
+        {
+          "src": "/web-app-manifest-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
