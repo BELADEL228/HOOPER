@@ -135,9 +135,6 @@ export function RecruitmentPage({ currentRole }: { currentRole: UserRole }) {
     <div className="space-y-8 pb-12">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#FFB800]/30 bg-[#FFB800]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFB800]">
-            <UserRound className="w-3.5 h-3.5" /> Mercato basketball
-          </div>
           <h2 className="mt-2 text-3xl font-black text-white">Recrutement & opportunités</h2>
           <p className="mt-1 text-sm text-slate-400">Trouvez une équipe ou publiez un besoin précis.</p>
         </div>

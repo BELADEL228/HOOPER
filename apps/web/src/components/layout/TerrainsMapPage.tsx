@@ -121,9 +121,6 @@ export const TerrainsMapPage: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
-          <MapPin className="w-3.5 h-3.5" /> Cartographie des terrains du Togo
-        </div>
         <h2 className="text-3xl font-extrabold text-white">Terrains disponibles & sites sportifs nationaux</h2>
         <p className="text-slate-400 text-sm">Carte des infrastructures actives, réservées ou en maintenance dans les grandes villes du pays.</p>
       </div>
@@ -241,22 +238,20 @@ export const TerrainsMapPage: React.FC = () => {
             key={spot.id}
             type="button"
             onClick={() => setSelectedId(spot.id)}
-            className={`glass-panel rounded-2xl border p-3 text-left transition-all ${
-              selectedId === spot.id ? 'border-[#FF2A3B] bg-[#FF2A3B]/10' : 'border-white/10 hover:border-white/20'
-            }`}
+            className={`glass-panel rounded-2xl border p-3 text-left transition-all ${selectedId === spot.id ? 'border-[#FF2A3B] bg-[#FF2A3B]/10' : 'border-white/10 hover:border-white/20'
+              }`}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-[#FFB800]" />
                 <span className="text-sm font-bold text-white">{spot.city}</span>
               </div>
-              <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                spot.status === 'Disponible'
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${spot.status === 'Disponible'
                   ? 'bg-emerald-500/20 text-emerald-300'
                   : spot.status === 'Réservé'
                     ? 'bg-amber-500/20 text-amber-300'
                     : 'bg-red-500/20 text-red-300'
-              }`}>
+                }`}>
                 {spot.status}
               </span>
             </div>

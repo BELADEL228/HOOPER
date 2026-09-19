@@ -100,9 +100,6 @@ export function ScoutingPage({ currentRole }: { currentRole: UserRole }) {
     <div className="space-y-8 pb-12">
       {/* Header */}
       <header>
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-cyan-300">
-          <BarChart3 className="w-3.5 h-3.5" /> Analyse performance
-        </div>
         <h2 className="mt-2 text-3xl font-black text-white">
           Scouting & comparaison
         </h2>

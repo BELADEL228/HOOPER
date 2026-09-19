@@ -431,13 +431,10 @@ export function MarketplacePage() {
 
   return (
     <div className="space-y-8 pb-16 animate-fadeIn text-slate-100">
-      
+
       {/* ─── HEADER PRINCIPAL ─────────────────────────────────────────────────── */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-red-400">
-            <ShoppingBag className="w-3.5 h-3.5" /> Boutique Officielle & Billetterie Matchday
-          </div>
           <h2 className="mt-2 text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
             Marketplace & Billetterie QR
           </h2>
@@ -502,11 +499,10 @@ export function MarketplacePage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               type="button"
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-                isActive
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${isActive
                   ? 'bg-gradient-to-r from-red-600 to-amber-500 text-white shadow-md shadow-red-500/20'
                   : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-              }`}
+                }`}
             >
               <Icon className="w-4 h-4" />
               {tab.label}
@@ -533,11 +529,10 @@ export function MarketplacePage() {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 type="button"
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  selectedCategory === cat.id
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${selectedCategory === cat.id
                     ? 'bg-white text-slate-950 shadow'
                     : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/10'
-                }`}
+                  }`}
               >
                 {cat.label}
               </button>
@@ -625,9 +620,8 @@ export function MarketplacePage() {
                       <button
                         onClick={() => handleAddToCart(product, 'L')}
                         type="button"
-                        className={`${
-                          product.customizable ? '' : 'col-span-2'
-                        } w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-xs font-black text-white shadow-md transition-all cursor-pointer`}
+                        className={`${product.customizable ? '' : 'col-span-2'
+                          } w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-xs font-black text-white shadow-md transition-all cursor-pointer`}
                       >
                         <ShoppingBag className="w-3.5 h-3.5" /> Ajouter
                       </button>
@@ -778,22 +772,20 @@ export function MarketplacePage() {
               {myTickets.map((tkt) => (
                 <div
                   key={tkt.id}
-                  className={`rounded-3xl border p-5 space-y-4 transition-all shadow-2xl relative overflow-hidden ${
-                    tkt.isUsed
+                  className={`rounded-3xl border p-5 space-y-4 transition-all shadow-2xl relative overflow-hidden ${tkt.isUsed
                       ? 'border-white/10 bg-slate-900/40 opacity-70'
                       : 'border-amber-500/40 bg-slate-900/90 shadow-amber-950/20'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
                     <span className="text-[10px] font-black uppercase tracking-wider text-red-400">
                       Billet Officiel Match
                     </span>
                     <span
-                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                        tkt.isUsed
+                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${tkt.isUsed
                           ? 'bg-slate-800 text-slate-400 border border-white/10'
                           : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      }`}
+                        }`}
                     >
                       {tkt.isUsed ? '✓ Déjà Utilisé' : '● Valide pour Entrée'}
                     </span>
@@ -939,11 +931,10 @@ export function MarketplacePage() {
                         handleValidateTicket(t.ticketCode);
                       }}
                       type="button"
-                      className={`text-xs font-mono px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                        t.isUsed
+                      className={`text-xs font-mono px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${t.isUsed
                           ? 'border-white/10 bg-white/5 text-slate-500 line-through'
                           : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20'
-                      }`}
+                        }`}
                     >
                       {t.ticketCode} ({t.tierName})
                     </button>
@@ -955,13 +946,12 @@ export function MarketplacePage() {
             {/* Résultat du Scan */}
             {scanResult.status !== 'idle' && (
               <div
-                className={`rounded-2xl p-5 border animate-fadeIn transition-all ${
-                  scanResult.status === 'success'
+                className={`rounded-2xl p-5 border animate-fadeIn transition-all ${scanResult.status === 'success'
                     ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200'
                     : scanResult.status === 'already_used'
-                    ? 'bg-amber-950/90 border-amber-500/50 text-amber-200'
-                    : 'bg-red-950/90 border-red-500/50 text-red-200'
-                }`}
+                      ? 'bg-amber-950/90 border-amber-500/50 text-amber-200'
+                      : 'bg-red-950/90 border-red-500/50 text-red-200'
+                  }`}
               >
                 <div className="flex items-start gap-3">
                   {scanResult.status === 'success' && (
@@ -998,7 +988,7 @@ export function MarketplacePage() {
         <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="flex-1" onClick={() => setIsCartOpen(false)} />
           <div className="w-full max-w-md bg-[#0F121E] border-l border-white/15 p-6 flex flex-col justify-between shadow-2xl animate-slideLeft">
-            
+
             <div className="space-y-5">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div className="flex items-center gap-2 text-white">
@@ -1031,11 +1021,10 @@ export function MarketplacePage() {
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
-                              item.itemType === 'ticket'
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${item.itemType === 'ticket'
                                 ? 'bg-red-500/20 text-red-300'
                                 : 'bg-amber-500/20 text-amber-300'
-                            }`}
+                              }`}
                           >
                             {item.itemType === 'ticket' ? 'BILLET' : 'PRODUIT'}
                           </span>
@@ -1279,11 +1268,10 @@ export function MarketplacePage() {
                         key={method.id}
                         type="button"
                         onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                          isSelected
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
                             ? 'bg-amber-500/15 border-amber-400 text-white shadow'
                             : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                        }`}
+                          }`}
                       >
                         <span className="font-black text-xs block text-white">{method.label}</span>
                         <span className="text-[10px] text-slate-400">{method.desc}</span>

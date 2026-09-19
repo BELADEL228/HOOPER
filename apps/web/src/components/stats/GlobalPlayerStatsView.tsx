@@ -328,10 +328,6 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
         <div className="absolute top-0 right-0 w-96 h-96 bg-linear-to-bl from-[#FF2A3B]/10 via-[#FFB800]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-slate-300">
-            <Trophy className="w-3.5 h-3.5 text-[#FFB800]" />
-            Ligue HOOPERS — Données Officielles
-          </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
             Classement & Statistiques des Joueurs
           </h1>
@@ -482,11 +478,10 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold tracking-tight transition-all cursor-pointer shrink-0 ${
-                categoryFilter === cat
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold tracking-tight transition-all cursor-pointer shrink-0 ${categoryFilter === cat
                   ? 'bg-white/15 text-white border border-white/20'
                   : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-              }`}
+                }`}
             >
               {cat === 'ALL' ? 'Toutes catégories' : cat}
             </button>

@@ -35,13 +35,20 @@ interface ApiPlayer {
 
 interface ApiMatch {
   id: string;
-  homeTeam?: { name?: string | null } | null;
-  awayTeam?: { name?: string | null } | null;
-  scheduledAt?: string | null;
+  opponent: string;
+  opponentLogo?: string | null;
+  isHome: boolean;
+  date: string;
+  time: string;
   venue?: string | null;
+  address?: string | null;
+  category?: string | null;
   status?: string | null;
-  homeScore?: number | null;
-  awayScore?: number | null;
+  scoreTeam?: number | null;
+  scoreOpponent?: number | null;
+  summary?: string | null;
+  mvpPlayerName?: string | null;
+  photos?: string[];
 }
 
 interface TrendingTopic {
@@ -113,11 +120,10 @@ const FollowClubButton: React.FC<{
     <button
       onClick={handleClick}
       title={isAuthenticated ? 'Suivre ce club' : 'Connectez-vous pour suivre ce club'}
-      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
-        isFollowing
-          ? 'bg-[#FF2A3B] text-white'
-          : 'bg-white/10 hover:bg-[#FF2A3B] hover:text-white text-slate-200'
-      }`}
+      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${isFollowing
+        ? 'bg-[#FF2A3B] text-white'
+        : 'bg-white/10 hover:bg-[#FF2A3B] hover:text-white text-slate-200'
+        }`}
     >
       {isFollowing && <CheckCircle2 className="w-3 h-3" />}
       {isFollowing ? 'Suivi' : isAuthenticated ? 'Suivre' : '🔒 Suivre'}
@@ -270,12 +276,6 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
 
       {/* ── Barre de Recherche ── */}
       <div className="social-card-border rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#FFB800]" />
-          <h2 className="text-xl font-black text-white uppercase tracking-tight">
-            Explorer le Basketball HOOPERS
-          </h2>
-        </div>
 
         <div className="relative">
           {isSearching
@@ -298,11 +298,10 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  filter === tab
-                    ? 'bg-[#FF2A3B] text-white shadow-md'
-                    : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                }`}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filter === tab
+                  ? 'bg-[#FF2A3B] text-white shadow-md'
+                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
               >
                 {tab === 'ALL' && 'Tout'}
                 {tab === 'USERS' && 'Profils'}
@@ -583,24 +582,24 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
                   >
                     <div>
                       <div className="text-sm font-bold text-white">
-                        {m.homeTeam?.name || '?'} vs {m.awayTeam?.name || '?'}
+                        {m.isHome ? 'HOOPERS' : m.opponent} vs {m.isHome ? m.opponent : 'HOOPERS'}
                       </div>
                       <span className="text-xs text-slate-400">
-                        {m.scheduledAt
-                          ? new Date(m.scheduledAt).toLocaleDateString('fr-FR', {
-                              weekday: 'short', day: 'numeric', month: 'short',
-                              hour: '2-digit', minute: '2-digit',
-                            })
+                        {m.date
+                          ? new Date(m.date).toLocaleDateString('fr-FR', {
+                            weekday: 'short', day: 'numeric', month: 'short',
+                            hour: '2-digit', minute: '2-digit',
+                          })
                           : ''}
                         {m.venue ? ` • ${m.venue}` : ''}
                       </span>
                     </div>
                     {m.status === 'LIVE' ? (
                       <span className="px-3 py-1 rounded-full text-xs font-black hoopers-badge-live text-white animate-pulse">
-                        LIVE {m.homeScore ?? 0} - {m.awayScore ?? 0}
+                        LIVE {m.scoreTeam} - {m.scoreOpponent}
                       </span>
                     ) : m.status === 'FINISHED' ? (
-                      <span className="text-xs font-black text-slate-300">{m.homeScore ?? 0} - {m.awayScore ?? 0}</span>
+                      <span className="text-xs font-black text-slate-300">{m.scoreTeam} - {m.scoreOpponent}</span>
                     ) : (
                       <span className="text-xs text-slate-400 font-semibold">À venir</span>
                     )}
