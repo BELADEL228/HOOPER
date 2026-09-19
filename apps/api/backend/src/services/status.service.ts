@@ -2,6 +2,7 @@ import { prisma } from '../config/database';
 import { STATUS_CONFIG, StatusReactionType, StatusVisibility } from '../config/status.config';
 import { CreateStatusInput } from '../validators/status.validator';
 import { ClubService } from './club.service';
+import { pushNotificationToUser } from './socketServer.service';
 
 export class StatusServiceError extends Error {
   statusCode: number;
@@ -701,14 +702,46 @@ export class StatusService {
 
     // Notification à l'auteur si ce n'est pas lui-même
     if (status.userId && status.userId !== currentUserId) {
-      await prisma.notification.create({
-        data: {
-          userId: status.userId,
-          type: 'STATUS_REACTION',
-          title: 'Nouvelle réaction à votre story',
-          text: `Quelqu'un a réagi avec « ${type} » à votre story.`,
-        },
-      }).catch(() => undefined);
+      try {
+        const actor = await prisma.user.findUnique({
+          where: { id: currentUserId },
+          select: { name: true, avatarUrl: true },
+        });
+
+        const emojiMap: Record<string, string> = {
+          LIKE: '👍',
+          LOVE: '❤️',
+          FIRE: '🔥',
+          CLAP: '👏',
+          HAHA: '😂',
+          WOW: '😮',
+          SAD: '😢',
+          ANGRY: '😡',
+        };
+        const emoji = emojiMap[type] || '🔥';
+        const actorName = actor?.name || 'Un utilisateur';
+
+        const notif = await prisma.notification.create({
+          data: {
+            userId: status.userId,
+            type: 'STATUS_REACTION',
+            title: 'Réaction à votre story',
+            text: `${actorName} a réagi avec ${emoji} à votre story.`,
+          },
+        });
+
+        pushNotificationToUser(status.userId, {
+          id: notif.id,
+          type: notif.type,
+          title: notif.title,
+          text: notif.text,
+          read: notif.read,
+          createdAt: notif.createdAt.toISOString(),
+          meta: { statusId, actorAvatar: actor?.avatarUrl, emoji },
+        });
+      } catch (notifErr) {
+        console.warn('[StatusService] Erreur notification réaction:', notifErr);
+      }
     }
 
     return reaction;
@@ -792,14 +825,28 @@ export class StatusService {
 
     // Notification à l'auteur
     if (status.userId && status.userId !== currentUserId) {
-      await prisma.notification.create({
-        data: {
-          userId: status.userId,
-          type: 'STATUS_REPLY',
-          title: 'Réponse à votre story',
-          text: `${reply.user.name} a répondu à votre story : « ${content.slice(0, 60)} »`,
-        },
-      }).catch(() => undefined);
+      try {
+        const notif = await prisma.notification.create({
+          data: {
+            userId: status.userId,
+            type: 'STATUS_REPLY',
+            title: 'Réponse à votre story',
+            text: `${reply.user.name} a répondu à votre story : « ${content.slice(0, 60)} »`,
+          },
+        });
+
+        pushNotificationToUser(status.userId, {
+          id: notif.id,
+          type: notif.type,
+          title: notif.title,
+          text: notif.text,
+          read: notif.read,
+          createdAt: notif.createdAt.toISOString(),
+          meta: { statusId, replyId: reply.id, actorAvatar: reply.user.avatarUrl },
+        });
+      } catch (notifErr) {
+        console.warn('[StatusService] Erreur notification réponse:', notifErr);
+      }
     }
 
     return reply;

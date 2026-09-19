@@ -6,10 +6,18 @@ import { AuthenticatedUser } from '../types';
 export class PostController {
   static async listPosts(req: Request, res: Response) {
     try {
+      const user = (req as any).user as AuthenticatedUser | undefined;
+
       const clubId =
-        typeof req.query.clubId === 'string' ? req.query.clubId : undefined;
+        typeof req.query.clubId === 'string'
+          ? req.query.clubId
+          : undefined;
+
       const authorId =
-        typeof req.query.authorId === 'string' ? req.query.authorId : undefined; // ✅
+        typeof req.query.authorId === 'string'
+          ? req.query.authorId
+          : undefined;
+
       const limit = Number(req.query.limit) || 50;
       const offset = Number(req.query.offset) || 0;
 
@@ -18,13 +26,16 @@ export class PostController {
         authorId,
         limit,
         offset,
+        userId: user?.id,
       });
+
       return res.json(posts);
     } catch (error: any) {
       console.error('List posts error:', error);
-      return res
-        .status(500)
-        .json({ error: 'Impossible de charger le fil d’actualités.' });
+
+      return res.status(500).json({
+        error: 'Impossible de charger le fil d’actualités.',
+      });
     }
   }
 
@@ -41,6 +52,23 @@ export class PostController {
     } catch (error: any) {
       console.error('Create post error:', error);
       return res.status(500).json({ error: 'Erreur lors de la publication.' });
+    }
+  }
+
+
+  static async deletePost(req: Request, res: Response) {
+    const user = (req as any).user as AuthenticatedUser;
+    const { id } = req.params;
+
+    try {
+      const result = await PostService.deletePost(id, user.id);
+      return res.json(result);
+    } catch (error: any) {
+      console.error('Delete post error:', error);
+
+      return res.status(error.statusCode || 500).json({
+        error: error.message || 'Erreur lors de la suppression.',
+      });
     }
   }
 

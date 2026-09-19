@@ -282,4 +282,38 @@ export class ConversationController {
             res.status(500).json({ error: 'Erreur lors du marquage comme lu' });
         }
     }
+
+    /**
+     * DELETE /api/conversations/:id/messages/:messageId
+     * Supprime un message de la conversation (auteur ou admin).
+     */
+    static async deleteMessage(req: Request, res: Response) {
+        try {
+            const { id: conversationId, messageId } = req.params;
+            const userId = (req as any).user?.id || (req as any).userId;
+            const userRole = (req as any).user?.role;
+            if (!userId) return res.status(401).json({ error: 'Non authentifié' });
+
+            const message = await prisma.message.findUnique({
+                where: { id: messageId },
+            });
+
+            if (!message || message.conversationId !== conversationId) {
+                return res.status(404).json({ error: 'Message introuvable' });
+            }
+
+            if (message.senderId !== userId && userRole !== 'SUPER_ADMIN' && userRole !== 'ADMIN') {
+                return res.status(403).json({ error: 'Non autorisé à supprimer ce message' });
+            }
+
+            await prisma.message.delete({
+                where: { id: messageId },
+            });
+
+            res.json({ success: true, messageId });
+        } catch (err: any) {
+            console.error('[ConversationController.deleteMessage]', err?.message);
+            res.status(500).json({ error: 'Erreur lors de la suppression du message' });
+        }
+    }
 }

@@ -9,6 +9,7 @@ import {
   Send,
   Check,
   Copy,
+  Trash,
 } from 'lucide-react';
 import type { SocialPost, SocialComment } from '../../types';
 import { socialApi } from '../../services/socialApi';
@@ -19,14 +20,31 @@ interface SocialPostCardProps {
   isAuthenticated?: boolean;
   /** ✅ Callback pour ouvrir le profil de l'auteur au clic */
   onOpenProfile?: (userId: string) => void;
+  onDeletePost?: (postId: string) => void;
 }
+
+const getAuthenticatedUserId = (): string | null => {
+  try {
+    const session = JSON.parse(
+      localStorage.getItem('firestone-auth') || '{}'
+    );
+
+    return session?.user?.id || session?.userId || null;
+  } catch {
+    return null;
+  }
+};
 
 export const SocialPostCard: React.FC<SocialPostCardProps> = ({
   post,
   onOpenAuth,
   isAuthenticated = true,
   onOpenProfile,
+  onDeletePost,
 }) => {
+
+
+
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [hasLiked, setHasLiked] = useState(Boolean(post.hasLiked));
   const [isLiking, setIsLiking] = useState(false);
@@ -39,7 +57,7 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-
+  const authenticatedUserId = getAuthenticatedUserId();
   // Modal de signalement
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('SPAM');
@@ -52,25 +70,38 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
       post.authorName || 'User'
     )}&background=FF2A3B&color=fff`;
 
+
+  const handleDeletePost = async () => {
+    try {
+      await socialApi.deletePost(post.id);
+
+      // Le backend a confirmé la suppression
+      onDeletePost?.(post.id);
+
+      setShowMenu(false);
+    } catch (error) {
+      console.error('Erreur lors de la suppression du post:', error);
+    }
+  };
+
   const handleToggleLike = async () => {
     if (!isAuthenticated) {
       onOpenAuth?.();
       return;
     }
+
     if (isLiking) return;
+
     setIsLiking(true);
 
-    const nextLiked = !hasLiked;
-    const nextCount = nextLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
-    setHasLiked(nextLiked);
-    setLikesCount(nextCount);
-
     try {
-      await socialApi.toggleLike(post.id);
-    } catch {
-      // Revert on error
-      setHasLiked(!nextLiked);
-      setLikesCount(likesCount);
+      const result = await socialApi.toggleLike(post.id);
+
+      // Le backend est la source de vérité
+      setHasLiked(result.liked);
+      setLikesCount(result.likesCount);
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
     } finally {
       setIsLiking(false);
     }
@@ -221,6 +252,17 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
                 <Flag className="w-4 h-4" />
                 <span>Signaler</span>
               </button>
+
+              {authenticatedUserId === post.authorId && (
+                <button
+                  onClick={handleDeletePost}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-500/15 text-red-400 text-left cursor-pointer"
+                >
+                  <Trash className="w-4 h-4" />
+                  <span>Supprimer</span>
+                </button>
+              )}
+
             </div>
           )}
         </div>

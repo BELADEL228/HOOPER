@@ -23,6 +23,7 @@ interface StoryViewerModalProps {
   onClose: () => void;
   onGroupChange: (newIndex: number) => void;
   currentUserId?: string | null;
+  onStatusViewed?: (statusId: string, groupIndex: number) => void;
   onStatusDelete?: (statusId: string) => void;
 }
 
@@ -35,6 +36,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   onClose,
   onGroupChange,
   currentUserId = null,
+  onStatusViewed,
   onStatusDelete,
 }) => {
   const currentGroup = storyGroups[activeGroupIndex];
@@ -90,13 +92,26 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   // Mark status as viewed (mais PAS si on est le propriétaire)
   useEffect(() => {
     if (
-      isOpen &&
-      currentStatus?.id &&
-      !isOwnerOfCurrentGroup  // ✅ Évite que l'owner se marque lui-même comme vu
+      !isOpen ||
+      !currentStatus?.id ||
+      isOwnerOfCurrentGroup
     ) {
-      void statusApi.markAsViewed(currentStatus.id);
+      return;
     }
-  }, [isOpen, currentStatus?.id, isOwnerOfCurrentGroup]);
+
+    void statusApi.markAsViewed(currentStatus.id);
+
+    onStatusViewed?.(
+      currentStatus.id,
+      activeGroupIndex
+    );
+  }, [
+    isOpen,
+    currentStatus?.id,
+    isOwnerOfCurrentGroup,
+    activeGroupIndex,
+    onStatusViewed,
+  ]);
 
   const handleNext = useCallback(() => {
     if (currentStatusIndex < statuses.length - 1) {
@@ -402,13 +417,13 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             ) : (
               <img
                 src={currentMedia.url}
                 alt="Story visual"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             )
           ) : (

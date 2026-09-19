@@ -11,8 +11,10 @@ import {
     ChevronRight,
     Award,
     X,
+    PlayCircle,
 } from 'lucide-react';
 import { apiUrl } from '../../services/api';
+import { LiveMatchViewerModal } from './LiveMatchViewerModal';
 
 interface GlobalMatchCenterProps {
     currentRole?: UserRole;
@@ -48,6 +50,7 @@ export const GlobalMatchCenter: React.FC<GlobalMatchCenterProps> = ({
     const [filter, setFilter] = useState<StatusFilter>('ALL');
     const [clubFilter, setClubFilter] = useState<string>('ALL');
     const [selectedMatch, setSelectedMatch] = useState<GlobalMatch | null>(null);
+    const [liveViewerMatch, setLiveViewerMatch] = useState<GlobalMatch | null>(null);
 
     // ── Chargement GLOBAL de tous les matchs ────────────────────────────
     useEffect(() => {
@@ -342,9 +345,23 @@ export const GlobalMatchCenter: React.FC<GlobalMatchCenterProps> = ({
                                     <span className="flex items-center gap-1 truncate">
                                         <MapPin className="w-3.5 h-3.5" /> {match.venue || '—'}
                                     </span>
-                                    <span className="text-[#FFB800] font-semibold flex items-center gap-0.5">
-                                        Détails <ChevronRight className="w-4 h-4" />
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {isLive && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setLiveViewerMatch(match);
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-extrabold text-[11px] flex items-center gap-1 shadow-md shadow-red-600/30 transition-colors"
+                                            >
+                                                <PlayCircle className="w-3.5 h-3.5" />
+                                                Live Match
+                                            </button>
+                                        )}
+                                        <span className="text-[#FFB800] font-semibold flex items-center gap-0.5">
+                                            Détails <ChevronRight className="w-4 h-4" />
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -433,6 +450,21 @@ export const GlobalMatchCenter: React.FC<GlobalMatchCenterProps> = ({
                             </div>
                         )}
 
+                        {/* Bouton direct vers le live si le match est en cours */}
+                        {selectedMatch.status === 'LIVE' && (
+                            <button
+                                onClick={() => {
+                                    const m = selectedMatch;
+                                    setSelectedMatch(null);
+                                    setLiveViewerMatch(m);
+                                }}
+                                className="w-full py-3 rounded-2xl bg-linear-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/30 transition-all cursor-pointer"
+                            >
+                                <Radio className="w-4 h-4 animate-pulse" />
+                                <span>Rejoindre le Visionnage en Direct & Chat</span>
+                            </button>
+                        )}
+
                         {/* Vidéo */}
                         {selectedMatch.videoUrl && (
                             <a
@@ -456,6 +488,15 @@ export const GlobalMatchCenter: React.FC<GlobalMatchCenterProps> = ({
                         )}
                     </div>
                 </div>
+            )}
+
+            {/* ─── MODALE VISIONNEUSE EN DIRECT (STREAMING & CHAT) ─── */}
+            {liveViewerMatch && (
+                <LiveMatchViewerModal
+                    match={liveViewerMatch}
+                    isOpen={Boolean(liveViewerMatch)}
+                    onClose={() => setLiveViewerMatch(null)}
+                />
             )}
         </div>
     );

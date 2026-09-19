@@ -93,15 +93,17 @@ export const socialPermissions: Record<string, UserRole[]> = {
     academie: ALL_ROLES,
     'journee-champions': ALL_ROLES,
 
+    // ── Création de contenu (authentifié) ──────────────────────────────────
+    create: AUTHENTICATED_ROLES,
+
     // ── Profil / compte (authentifié) ──────────────────────────────────────
     'mon-profil': AUTHENTICATED_ROLES,
     parametres: AUTHENTICATED_ROLES,
 
-    // ── Messagerie sociale : TOUT utilisateur authentifié peut discuter ────
-    // ✅ C'est ici que la règle change : un VISITOR peut envoyer des DM.
+    // ── Messagerie sociale ─────────────────────────────────────────────────
     messagerie: AUTHENTICATED_ROLES,
 
-    // ── Pages de détail (pas d'authentification requise) ───────────────────
+    // ── Pages de détail ────────────────────────────────────────────────────
     'club-profile': ALL_ROLES,
 };
 
@@ -189,11 +191,11 @@ export const workspacePermissions: Record<string, UserRole[]> = {
 // ONGLETS PRIVÉS (nécessitent d'être connecté, quel que soit le mode)
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const PRIVATE_TABS: Set<string> = new Set([
+export const PRIVATE_TABS = new Set([
     'mon-profil',
     'parametres',
-    'finances',
     'messagerie',
+    'finances',
     'admin',
     'club-admin',
 ]);
@@ -238,11 +240,23 @@ export const getPermissionsForMode = (
 export const canAccessPage = (
     tab: string,
     role: UserRole,
-    mode: PermissionMode = 'social'
+    mode: PermissionMode = 'social',
+    isAuthenticated = false
 ): boolean => {
+    // Les onglets privés sont invisibles pour les utilisateurs non connectés
+    if (PRIVATE_TABS.has(tab) && !isAuthenticated) {
+        return false;
+    }
+
     const permissions = getPermissionsForMode(mode);
     const allowed = permissions[tab];
-    return !allowed || allowed.includes(role);
+
+    // Sécurité : un onglet non déclaré n'est pas accessible
+    if (!allowed) {
+        return false;
+    }
+
+    return allowed.includes(role);
 };
 
 /**
@@ -262,5 +276,15 @@ export const filterAccessibleTabs = <T,>(
     tabs: T[],
     role: UserRole,
     mode: PermissionMode = 'social',
+    isAuthenticated = false,
     getKey: (tab: T) => string = (tab: any) => tab.key ?? tab.id ?? ''
-): T[] => tabs.filter((tab) => canAccessPage(getKey(tab), role, mode));
+): T[] => {
+    return tabs.filter((tab) =>
+        canAccessPage(
+            getKey(tab),
+            role,
+            mode,
+            isAuthenticated
+        )
+    );
+};

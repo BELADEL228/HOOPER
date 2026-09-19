@@ -119,15 +119,38 @@ export const socialApi = {
     };
   },
 
+  async deletePost(postId: string): Promise<void> {
+    const res = await fetch(apiUrl(`/posts/${postId}`), {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => null);
+
+      throw new Error(
+        error?.error || 'Impossible de supprimer la publication'
+      );
+    }
+  },
+
   /** Bascule le like d'une publication */
   async toggleLike(
     postId: string
-  ): Promise<{ liked: boolean; likesCount?: number }> {
+  ): Promise<{ liked: boolean; likesCount: number }> {
     const res = await fetch(apiUrl(`/posts/${postId}/like`), {
       method: 'POST',
       headers: getAuthHeaders(),
     });
-    if (!res.ok) throw new Error('Action like impossible');
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => null);
+
+      throw new Error(
+        error?.error || 'Action like impossible'
+      );
+    }
+
     return res.json();
   },
 

@@ -13,7 +13,6 @@ import {
   UserCheck,
   ShoppingBag,
   Search,
-  Plus,
   User,
   MessageSquare,
   Calendar,
@@ -28,7 +27,8 @@ import { filterAccessibleTabs } from '../../config/permissions';
 interface MobileNavBarProps {
   activeTab: string;
   onSelectTab: (tab: string) => void;
-  userRole?: UserRole;
+  userRole: UserRole;
+  isAuthenticated?: boolean;
   unreadCount?: number;
   unreadMessagesCount?: number;
   onCreateClick?: () => void;
@@ -54,9 +54,9 @@ export function MobileNavBar({
   activeTab,
   onSelectTab,
   userRole = 'VISITOR',
+  isAuthenticated = false,
   unreadCount = 0,
   unreadMessagesCount = 0,
-  onCreateClick,
   mode = 'club_workspace',
 }: MobileNavBarProps) {
   const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
@@ -65,7 +65,6 @@ export function MobileNavBar({
   const socialMainTabs: TabDef[] = [
     { id: 'accueil', label: 'Accueil', icon: Flame },
     { id: 'explorer', label: 'Explorer', icon: Search },
-    { id: 'create', label: 'Créer', icon: Plus, isCreate: true },
     {
       id: 'messagerie',
       label: 'Messages',
@@ -118,8 +117,19 @@ export function MobileNavBar({
   const sourceMoreItems = mode === 'social' ? socialMoreItems : workspaceMoreItems;
 
   // Filtre via permissions centralisées
-  const visibleMainTabs = filterAccessibleTabs(sourceMainTabs, userRole, mode);
-  const visibleMoreItems = filterAccessibleTabs(sourceMoreItems, userRole, mode);
+  const visibleMainTabs = filterAccessibleTabs(
+    sourceMainTabs,
+    userRole,
+    mode,
+    isAuthenticated
+  );
+
+  const visibleMoreItems = filterAccessibleTabs(
+    sourceMoreItems,
+    userRole,
+    mode,
+    isAuthenticated
+  );
 
   const handleTabClick = (tabId: string) => {
     onSelectTab(tabId);
@@ -138,23 +148,6 @@ export function MobileNavBar({
             const Icon = tab.icon;
             const isActive = activeTab === tab.id && !showMoreMenu;
             const badgeText = formatBadge(tab.badge ?? 0);   // ✅ Cap 99+
-
-            if (tab.isCreate) {
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (onCreateClick) onCreateClick();
-                    else handleTabClick('create');
-                  }}
-                  type="button"
-                  aria-label="Créer une publication ou une story"
-                  className="relative -top-3 flex flex-col items-center justify-center p-3 rounded-full bg-gradient-to-tr from-[#FF2A3B] to-[#FFB800] text-white shadow-xl shadow-[#FF2A3B]/40 hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-[#090A0F]"
-                >
-                  <Plus className="w-6 h-6 stroke-[3]" />
-                </button>
-              );
-            }
 
             return (
               <button
@@ -251,8 +244,8 @@ export function MobileNavBar({
                       onClick={() => handleTabClick(item.id)}
                       type="button"
                       className={`flex flex-col text-left p-3 rounded-2xl border transition-all cursor-pointer ${isSelected
-                          ? 'bg-white/15 border-[#FF2A3B] text-white shadow-lg'
-                          : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
+                        ? 'bg-white/15 border-[#FF2A3B] text-white shadow-lg'
+                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
                         }`}
                     >
                       <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-[#FFB800] mb-2">

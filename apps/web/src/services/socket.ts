@@ -202,6 +202,17 @@ class SocketService {
         return () => this.socket?.off('notification:delete-all', handler);
     }
 
+    onUserTyping(handler: (data: TypingPayload) => void): () => void {
+        this.socket?.on('user:typing', handler);
+        return () => this.socket?.off('user:typing', handler);
+    }
+
+    onUserStopTyping(handler: (data: TypingPayload) => void): () => void {
+        this.socket?.on('user:stop-typing', handler);
+        return () => this.socket?.off('user:stop-typing', handler);
+    }
+
+
 }
 
 // ✅ Singleton exporté

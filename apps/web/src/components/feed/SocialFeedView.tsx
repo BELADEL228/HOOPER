@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StoriesBar } from '../stories/StoriesBar';
 import { StoryViewerModal } from '../stories/StoryViewerModal';
 import { PostComposer } from './PostComposer';
@@ -96,15 +96,48 @@ export const SocialFeedView: React.FC<SocialFeedViewProps> = ({
   const handleStoryCreated = (_newStory: StatusItem) => {
     void loadFeedData();
   };
+  const handleStatusViewed = useCallback(
+    (statusId: string, groupIndex: number) => {
+      setStoryGroups((prevGroups) =>
+        prevGroups.map((group, index) =>
+          index === groupIndex
+            ? {
+              ...group,
+              hasUnseen: false,
+            }
+            : group
+        )
+      );
+    },
+    []
+  );
+  const handleStatusDelete = useCallback(
+    (deletedStatusId: string) => {
+      setStoryGroups((prevGroups) =>
+        prevGroups
+          .map((group) => ({
+            ...group,
+            statuses: group.statuses.filter(
+              (status) => status.id !== deletedStatusId
+            ),
+          }))
+          .filter((group) => group.statuses.length > 0)
+      );
+    },
+    []
+  );
+
+  const handleDeletePost = (postId: string) => {
+    setPosts((prevPosts) =>
+      prevPosts.filter((post) => post.id !== postId)
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* ── 1. Barre des Stories ── */}
       <section className="social-card-border rounded-3xl p-3 sm:p-4 shadow-xl">
         <div className="flex items-center justify-between px-2 mb-1">
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-            Stories 24h
-          </span>
           <button
             onClick={handleRefresh}
             aria-label="Actualiser les flux"
@@ -177,6 +210,7 @@ export const SocialFeedView: React.FC<SocialFeedViewProps> = ({
               onOpenAuth={onOpenAuth}
               isAuthenticated={isAuthenticated}
               onOpenProfile={onOpenProfile}   // ✅ Nouveau
+              onDeletePost={handleDeletePost}
             />
           ))
         )}
@@ -191,19 +225,10 @@ export const SocialFeedView: React.FC<SocialFeedViewProps> = ({
           onClose={() => setActiveStoryGroupIndex(null)}
           onGroupChange={(newIdx) => setActiveStoryGroupIndex(newIdx)}
           currentUserId={authUser?.id || null}
-          onStatusDelete={(deletedStatusId) => {
-            setStoryGroups((prevGroups) =>
-              prevGroups
-                .map((group) => ({
-                  ...group,
-                  statuses: group.statuses.filter(
-                    (status) => status.id !== deletedStatusId
-                  ),
-                }))
-                .filter((group) => group.statuses.length > 0)
-            );
-          }}
+          onStatusViewed={handleStatusViewed}
+          onStatusDelete={handleStatusDelete}
         />
+
       )}
 
       {/* ── Modal Création (Post / Story) ── */}

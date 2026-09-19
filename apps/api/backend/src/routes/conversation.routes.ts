@@ -18,3 +18,6 @@ conversationRouter.post('/:id/messages', requireAuth, ConversationController.sen
 
 // Marquer une conversation comme lue
 conversationRouter.post('/:id/read', requireAuth, ConversationController.markAsRead);
+
+// Supprimer un message
+conversationRouter.delete('/:id/messages/:messageId', requireAuth, ConversationController.deleteMessage);

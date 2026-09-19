@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { X, MessageSquare, Clock, Sparkles, Send, ShieldCheck, Image, Video, Upload, Loader2 } from 'lucide-react';
 import { statusApi } from '../../services/statusApi';
 import { socialApi } from '../../services/socialApi';
+import { uploadMedia } from '../../services/uploadService';
 import type { SocialPost, StatusItem } from '../../types';
 
 interface CreateContentModalProps {
@@ -13,43 +14,7 @@ interface CreateContentModalProps {
   isClubManager?: boolean;
 }
 
-// ─── Compression image via canvas ─────────────────────────────────────────────
-const compressImage = (file: File, maxPx = 1200, quality = 0.85): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new window.Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxPx || height > maxPx) {
-          if (width > height) { height = Math.round((height * maxPx) / width); width = maxPx; }
-          else { width = Math.round((width * maxPx) / height); height = maxPx; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('Canvas non disponible')); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-// ─── Lecture vidéo en base64 ──────────────────────────────────────────────────
-const readVideoAsBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target?.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-const MAX_VIDEO_MB = 10;
+const MAX_VIDEO_MB = 20;
 
 export const CreateContentModal: React.FC<CreateContentModalProps> = ({
   isOpen,
@@ -61,66 +26,54 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
 }) => {
   const [activeMode, setActiveMode] = useState<'POST' | 'STORY'>('POST');
   const [text, setText] = useState('');
-  const [mediaUrl, setMediaUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO'>('IMAGE');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [asClub, setAsClub] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClose = () => {
     setText('');
-    setMediaUrl('');
+    setSelectedFile(null);
     setPreviewUrl(null);
     setErrorMsg(null);
     setSuccessMsg(null);
-    setIsCompressing(false);
+    setIsSubmitting(false);
     onClose();
   };
 
-  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setErrorMsg(null);
-    setIsCompressing(true);
-    setMediaUrl('');
-    setPreviewUrl(null);
 
-    try {
-      if (file.type.startsWith('image/')) {
-        setMediaType('IMAGE');
-        const b64 = await compressImage(file);
-        setMediaUrl(b64);
-        setPreviewUrl(b64);
-      } else if (file.type.startsWith('video/')) {
-        setMediaType('VIDEO');
-        const sizeMb = file.size / (1024 * 1024);
-        if (sizeMb > MAX_VIDEO_MB) {
-          setErrorMsg(`Vidéo trop lourde (${sizeMb.toFixed(1)} Mo) — max ${MAX_VIDEO_MB} Mo.`);
-          setIsCompressing(false);
-          return;
-        }
-        const b64 = await readVideoAsBase64(file);
-        setMediaUrl(b64);
-        setPreviewUrl(URL.createObjectURL(file));
-      } else {
-        setErrorMsg('Format non supporté. Utilisez une image (JPG, PNG, WEBP) ou une vidéo (MP4).');
+    if (file.type.startsWith('image/')) {
+      setMediaType('IMAGE');
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    } else if (file.type.startsWith('video/')) {
+      const sizeMb = file.size / (1024 * 1024);
+      if (sizeMb > MAX_VIDEO_MB) {
+        setErrorMsg(`Vidéo trop lourde (${sizeMb.toFixed(1)} Mo) — limite ${MAX_VIDEO_MB} Mo.`);
+        return;
       }
-    } catch {
-      setErrorMsg('Erreur lors du chargement du fichier. Réessaie.');
-    } finally {
-      setIsCompressing(false);
-      // Reset input so the same file can be re-selected if needed
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setMediaType('VIDEO');
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setErrorMsg('Format non supporté. Utilisez une image (JPG, PNG, WEBP) ou une vidéo (MP4).');
     }
   }, []);
 
   const removeMedia = () => {
-    setMediaUrl('');
+    setSelectedFile(null);
     setPreviewUrl(null);
     setMediaType('IMAGE');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -128,43 +81,52 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() && !mediaUrl.trim()) return;
+    if (!text.trim() && !selectedFile) return;
 
     setIsSubmitting(true);
     setErrorMsg(null);
     setSuccessMsg(null);
 
     try {
+      let finalMediaUrl: string | undefined;
+
+      // Upload vers Cloudinary / CDN
+      if (selectedFile) {
+        const folder = activeMode === 'POST' ? 'firestone/posts' : 'firestone/stories';
+        const res = await uploadMedia(selectedFile, folder, (p) => setUploadProgress(p));
+        finalMediaUrl = res.url;
+      }
+
       if (activeMode === 'POST') {
         const createdPost = await socialApi.createPost({
           content: text.trim(),
-          mediaUrl: mediaUrl.trim() || undefined,
+          mediaUrl: finalMediaUrl,
           clubId: asClub && activeClubId ? activeClubId : undefined,
         });
         onPostCreated?.(createdPost);
-        setSuccessMsg('Publication partagée sur le fil !');
+        setSuccessMsg('Publication partagée avec succès !');
       } else {
         const createdStory = await statusApi.createStatus({
           text: text.trim() || undefined,
           clubId: asClub && activeClubId ? activeClubId : undefined,
           visibility: 'PUBLIC',
-          media: mediaUrl.trim()
-            ? [{ type: mediaType, url: mediaUrl.trim() }]
+          media: finalMediaUrl
+            ? [{ type: mediaType, url: finalMediaUrl }]
             : undefined,
         });
         onStoryCreated?.(createdStory);
-        setSuccessMsg('Story publiée pour 24 heures !');
+        setSuccessMsg('Story diffusée pour 24 heures !');
       }
 
       setTimeout(() => {
         setText('');
-        setMediaUrl('');
+        setSelectedFile(null);
         setPreviewUrl(null);
         setSuccessMsg(null);
         onClose();
       }, 1000);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Une erreur est survenue lors de la création');
+      setErrorMsg(err.message || 'Une erreur est survenue lors du téléversement');
     } finally {
       setIsSubmitting(false);
     }
@@ -201,9 +163,8 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveMode('POST')}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              activeMode === 'POST' ? 'bg-[#FF2A3B] text-white shadow-md' : 'text-slate-400 hover:text-white'
-            }`}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeMode === 'POST' ? 'bg-[#FF2A3B] text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
           >
             <MessageSquare className="w-4 h-4" />
             <span>Publication Fil</span>
@@ -211,9 +172,8 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveMode('STORY')}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              activeMode === 'STORY' ? 'bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] text-white shadow-md' : 'text-slate-400 hover:text-white'
-            }`}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeMode === 'STORY' ? 'bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
           >
             <Clock className="w-4 h-4" />
             <span>Story (24h)</span>
@@ -261,15 +221,15 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
             />
 
             {/* Bouton upload ou preview */}
-            {!previewUrl && !isCompressing && (
+            {!previewUrl && !isSubmitting && (
               <label
                 htmlFor="media-upload-input"
                 className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 border-dashed text-xs text-slate-400 hover:border-[#FF2A3B] hover:text-white hover:bg-white/8 transition-all cursor-pointer group"
               >
                 <Upload className="w-4 h-4 text-slate-500 group-hover:text-[#FF2A3B] transition-colors shrink-0" />
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-semibold text-slate-300 group-hover:text-white">Ajouter une photo ou vidéo</span>
-                  <span className="text-[10px] text-slate-500">JPG, PNG, WEBP, MP4 — max 10 Mo</span>
+                  <span className="font-semibold text-slate-300 group-hover:text-white">Ajouter une photo ou vidéo (Cloudinary CDN)</span>
+                  <span className="text-[10px] text-slate-500">JPG, PNG, WEBP, MP4 — max 20 Mo</span>
                 </div>
                 <div className="ml-auto flex gap-2">
                   <Image className="w-4 h-4 text-blue-400" />
@@ -278,18 +238,18 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
               </label>
             )}
 
-            {/* Compression en cours */}
-            {isCompressing && (
+            {/* Téléversement Cloudinary en cours */}
+            {isSubmitting && selectedFile && (
               <div className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10">
                 <Loader2 className="w-4 h-4 animate-spin text-[#FF2A3B]" />
-                <span className="text-xs text-slate-400">
-                  {mediaType === 'IMAGE' ? 'Compression de l\'image...' : 'Chargement de la vidéo...'}
+                <span className="text-xs text-slate-300 font-semibold">
+                  Téléversement Cloudinary CDN en cours... {uploadProgress > 0 ? `${uploadProgress}%` : ''}
                 </span>
               </div>
             )}
 
             {/* Preview */}
-            {previewUrl && !isCompressing && (
+            {previewUrl && !isSubmitting && (
               <div className="relative rounded-xl overflow-hidden border border-white/15 bg-black">
                 {mediaType === 'VIDEO' ? (
                   <video src={previewUrl} controls className="w-full max-h-52 object-contain" />

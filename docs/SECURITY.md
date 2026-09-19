@@ -1,5 +1,7 @@
 # Sécurité
 
+- Les secrets sont stockés dans l'environnement et ne sont jamais codés en dur.
+
 - Les secrets sont fournis par l'environnement, jamais par le frontend.
 - Le rôle envoyé par un formulaire public est ignoré.
 - Les routes sensibles vérifient JWT et rôle côté serveur.

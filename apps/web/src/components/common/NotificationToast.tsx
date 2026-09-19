@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MessageSquare, Bell, X, Trophy, Users, Zap } from 'lucide-react';
+import { MessageSquare, Bell, X, Trophy, Users, Zap, Heart, Sparkles } from 'lucide-react';
 
 export interface ToastNotification {
     id: string;
@@ -17,6 +17,10 @@ interface NotificationToastProps {
 // ✅ Icône selon le type
 const getIcon = (type: string) => {
     switch (type) {
+        case 'STATUS_REACTION':
+            return <Heart className="w-5 h-5 text-rose-400 fill-rose-400/40" />;
+        case 'STATUS_REPLY':
+            return <Sparkles className="w-5 h-5 text-amber-400" />;
         case 'MESSAGE':
             return <MessageSquare className="w-5 h-5" />;
         case 'MATCH':
@@ -33,6 +37,10 @@ const getIcon = (type: string) => {
 // ✅ Couleur selon le type
 const getAccent = (type: string): string => {
     switch (type) {
+        case 'STATUS_REACTION':
+            return '#F43F5E';
+        case 'STATUS_REPLY':
+            return '#F59E0B';
         case 'MESSAGE':
             return '#FF2A3B';
         case 'MATCH':

@@ -10,6 +10,7 @@ import { miscRouter } from './misc.routes';
 import { clubRequestRouter } from './club-request.routes';
 import { statusRouter } from './status.routes';
 import { searchRouter } from './search.routes';
+import { uploadRouter } from './upload.routes';
 
 export const apiRouter = Router();
 
@@ -31,4 +32,5 @@ apiRouter.use('/admin', adminRouter);
 apiRouter.use('/marketplace', marketplaceRouter);
 apiRouter.use('/tickets', ticketingRouter);
 apiRouter.use('/search', searchRouter);
+apiRouter.use('/upload', uploadRouter);
 apiRouter.use('/', miscRouter);

@@ -9,6 +9,8 @@ import {
     X,
     Loader2,
     Trash,
+    Heart,
+    Sparkles,
 } from 'lucide-react';
 import { apiUrl } from '../../services/api';
 
@@ -41,6 +43,10 @@ const getAuthToken = (): string => {
 
 const getIcon = (type: string) => {
     switch (type) {
+        case 'STATUS_REACTION':
+            return <Heart className="w-4 h-4 text-rose-400 fill-rose-400/40" />;
+        case 'STATUS_REPLY':
+            return <Sparkles className="w-4 h-4 text-amber-400" />;
         case 'MESSAGE':
             return <MessageSquare className="w-4 h-4" />;
         case 'MATCH':
@@ -56,6 +62,10 @@ const getIcon = (type: string) => {
 
 const getAccent = (type: string): string => {
     switch (type) {
+        case 'STATUS_REACTION':
+            return '#F43F5E';
+        case 'STATUS_REPLY':
+            return '#F59E0B';
         case 'MESSAGE':
             return '#FF2A3B';
         case 'MATCH':

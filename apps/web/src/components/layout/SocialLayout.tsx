@@ -18,6 +18,7 @@ import {
   Settings,
   ShieldCheck,
   HelpCircle,
+  Trophy,
 } from 'lucide-react';
 import type { UserRole, Team } from '../../types';
 import { MobileNavBar } from './MobileNavBar';
@@ -66,6 +67,7 @@ const NAV_ITEMS: NavItemDef[] = [
   { id: 'accueil', label: 'Fil d’actualité', icon: Flame },
   { id: 'explorer', label: 'Explorer & Recherche', icon: Compass },
   { id: 'matchs', label: 'Match Center & Live', icon: Zap, isLive: true },
+  { id: 'stats', label: 'Statistiques Joueurs', icon: Trophy },
   { id: 'annuaire', label: 'Clubs & Franchises', icon: Shield },
   { id: 'messagerie', label: 'Messagerie', icon: MessageSquare },
   { id: 'mon-profil', label: 'Mon Profil Athlète', icon: User },
@@ -379,7 +381,12 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
     const withBadges = NAV_ITEMS.map((item) =>
       item.id === 'messagerie' ? { ...item, badge: liveUnreadMessages } : item
     );
-    return filterAccessibleTabs(withBadges, currentRole, 'social').filter(
+    return filterAccessibleTabs(
+      withBadges,
+      currentRole,
+      'social',
+      isAuthenticated
+    ).filter(
       (item) => {
         if (!isAuthenticated && PRIVATE_TABS.has(item.id)) return false;
         return true;
@@ -628,7 +635,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
                 aria-expanded={showAuthMenu}
                 className="flex items-center justify-center w-10 h-10 rounded-xl text-white hover:bg-white/10 transition-colors"
               >
-                <LogIn className="w-5 h-5" />
+                <UserPlus className="w-5 h-5" />
               </button>
 
               {showAuthMenu && (
@@ -881,6 +888,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
         activeTab={activeTab}
         onSelectTab={onSelectTab}
         userRole={currentRole}
+        isAuthenticated={isAuthenticated}
         unreadCount={liveUnreadNotifications}
         unreadMessagesCount={liveUnreadMessages}
         onCreateClick={onCreateClick}

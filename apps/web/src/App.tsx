@@ -47,6 +47,7 @@ import { SocialMessagingView } from './components/messaging/SocialMessagingView'
 import { CreateContentModal } from './components/common/CreateContentModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalMatchCenter } from './components/matches/GlobalMatchCenter';
+import { GlobalPlayerStatsView } from './components/stats/GlobalPlayerStatsView';
 import { socketService } from './services/socket';
 
 // ✅ Import des permissions centralisées
@@ -69,7 +70,6 @@ type AuthSession = {
 
 export function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('social');
-  const [publicTab, setPublicTab] = useState<string>('accueil');
   const [selectedClub, setSelectedClub] = useState<Team>({
     id: 'pending-club',
     name: 'Mon Club',
@@ -103,7 +103,7 @@ export function App() {
 
   // ✅ Mode-aware
   const canAccessPage = (tab: string, role: UserRole) =>
-    canAccessPageUtil(tab, role, viewMode);
+    canAccessPageUtil(tab, role, viewMode, isAuthenticated);
 
   const openAuthModal = (tab: 'LOGIN' | 'REGISTER' | 'FORGOT' = 'LOGIN') => {
     setAuthModalTab(tab);
@@ -316,27 +316,6 @@ export function App() {
     try { localStorage.setItem('firestone-theme', theme); } catch { /* ignore */ }
   }, [theme]);
 
-  const handlePublicNavigate = (tab: string) => {
-    setPublicTab(tab);
-    if (tab === 'accueil') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tab === 'equipes') {
-      setTimeout(() => {
-        document.getElementById('section-equipes')?.scrollIntoView({ behavior: 'smooth' });
-      }, 60);
-    } else if (tab === 'stars') {
-      setTimeout(() => {
-        document.getElementById('section-stars')?.scrollIntoView({ behavior: 'smooth' });
-      }, 60);
-    } else if (tab === 'equipe-du-mois') {
-      setTimeout(() => {
-        document.getElementById('section-equipe-mois')?.scrollIntoView({ behavior: 'smooth' });
-      }, 60);
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   const handleSelectTeamWorkspace = (team: Team) => {
     if (currentRole === 'SUPER_ADMIN') return setViewMode('super_admin');
     setSelectedClub(team);
@@ -484,10 +463,10 @@ export function App() {
         <div className="max-w-3xl mx-auto mb-6 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setViewMode('public')}
+              onClick={() => setViewMode('social')}
               className="text-sm text-slate-400 hover:text-white cursor-pointer transition-colors"
             >
-              ← Portail public
+              ← Réseau Social
             </button>
             <span className="text-slate-600">•</span>
             <button
@@ -515,7 +494,7 @@ export function App() {
     return (
       <SuperAdminPortal
         user={authUser}
-        onExit={() => setViewMode('public')}
+        onExit={() => setViewMode('social')}
         onLogout={handleLogout}
       />
     );
@@ -619,6 +598,35 @@ export function App() {
                 onNavigateToMessages={() => setActiveTab('messagerie')}
                 onNavigateToClub={(clubId) => void handleOpenClubById(clubId)}
                 onOpenAuth={() => openAuthModal('LOGIN')}
+              />
+            </ErrorBoundary>
+          ) : activeTab === 'stats' ? (
+            <ErrorBoundary scope="GlobalPlayerStatsView">
+              <GlobalPlayerStatsView
+                currentRole={currentRole}
+                onOpenProfile={handleOpenUserProfile}
+              />
+            </ErrorBoundary>
+          ) : activeTab === 'parametres' || activeTab === 'aide' ? (
+            <ErrorBoundary scope="SettingsPage">
+              <SettingsPage
+                authUser={authUser}
+                currentRole={currentRole as any}
+                onNavigateToProfile={() => setActiveTab('mon-profil')}
+                onLogout={handleLogout}
+                onSwitchToWorkspace={handleEnterWorkspace}
+                theme={theme}
+                onToggleTheme={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                onUserUpdate={(user) => {
+                  setAuthUser(user);
+                  const session = JSON.parse(localStorage.getItem('firestone-auth') || '{}');
+                  if (session?.token)
+                    localStorage.setItem(
+                      'firestone-auth',
+                      JSON.stringify({ ...session, user })
+                    );
+                  setCurrentRole(user.role);
+                }}
               />
             </ErrorBoundary>
           ) : (
@@ -871,6 +879,7 @@ export function App() {
               activeTab={activeTab}
               onSelectTab={setActiveTab}
               userRole={currentRole}
+              isAuthenticated={isAuthenticated}
               unreadCount={unreadNotifications}
             />
           </div>

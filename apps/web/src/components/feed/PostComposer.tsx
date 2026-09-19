@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Image, Video, Globe, Users, Send, X, Link, Loader2, Upload } from 'lucide-react';
 import type { SocialPost } from '../../types';
 import { socialApi } from '../../services/socialApi';
+import { uploadMedia } from '../../services/uploadService';
 
 interface PostComposerProps {
   currentUserAvatar?: string;
@@ -9,28 +10,6 @@ interface PostComposerProps {
   onPostCreated: (newPost: SocialPost) => void;
   onOpenAuth?: () => void;
   isAuthenticated?: boolean;
-}
-
-/** Redimensionne et compresse une image en JPEG base64 (max 1200px, qualité 0.85) */
-async function resizeImageToBase64(file: File, maxPx = 1200, quality = 0.85): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    const objectUrl = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      const { width, height } = img;
-      const scale = Math.min(1, maxPx / Math.max(width, height));
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(width * scale);
-      canvas.height = Math.round(height * scale);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) { reject(new Error('Canvas indisponible')); return; }
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.onerror = reject;
-    img.src = objectUrl;
-  });
 }
 
 export const PostComposer: React.FC<PostComposerProps> = ({
@@ -41,19 +20,22 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   isAuthenticated = true,
 }) => {
   const [content, setContent] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaPreview, setMediaPreview] = useState(''); // URL locale pour la preview
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [visibility, setVisibility] = useState<'PUBLIC' | 'CLUB_ONLY'>('PUBLIC');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   const clearMedia = useCallback(() => {
+    setSelectedFile(null);
     setMediaUrl('');
     setMediaPreview('');
     setShowUrlInput(false);
@@ -61,23 +43,15 @@ export const PostComposer: React.FC<PostComposerProps> = ({
     if (videoFileInputRef.current) videoFileInputRef.current.value = '';
   }, []);
 
-  const handleImageFile = useCallback(async (file: File) => {
-    if (file.size > 15 * 1024 * 1024) {
-      setErrorMsg('Fichier trop volumineux (max 15 Mo avant compression).');
+  const handleImageFile = useCallback((file: File) => {
+    if (file.size > 20 * 1024 * 1024) {
+      setErrorMsg('Fichier trop volumineux (max 20 Mo).');
       return;
     }
-    setIsProcessingFile(true);
     setErrorMsg(null);
-    try {
-      const base64 = await resizeImageToBase64(file);
-      setMediaUrl(base64);
-      setMediaPreview(base64);
-      setMediaType('image');
-    } catch {
-      setErrorMsg('Impossible de lire le fichier image.');
-    } finally {
-      setIsProcessingFile(false);
-    }
+    setSelectedFile(file);
+    setMediaPreview(URL.createObjectURL(file));
+    setMediaType('image');
   }, []);
 
   const handleVideoFile = useCallback((file: File) => {
@@ -86,30 +60,29 @@ export const PostComposer: React.FC<PostComposerProps> = ({
       return;
     }
     setErrorMsg(null);
-    const objectUrl = URL.createObjectURL(file);
-    setMediaPreview(objectUrl);
-    // Pour les vidéos on lit en base64 directement (FileReader)
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setMediaUrl(result);
-      setMediaType('video');
-    };
-    reader.onerror = () => setErrorMsg('Impossible de lire le fichier vidéo.');
-    reader.readAsDataURL(file);
+    setSelectedFile(file);
+    setMediaPreview(URL.createObjectURL(file));
+    setMediaType('video');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) { onOpenAuth?.(); return; }
-    if (!content.trim() && !mediaUrl.trim()) return;
+    if (!content.trim() && !selectedFile && !mediaUrl.trim()) return;
 
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
+      let finalMediaUrl: string | undefined = mediaUrl.trim() || undefined;
+
+      if (selectedFile) {
+        const uploadRes = await uploadMedia(selectedFile, 'firestone/posts', (p) => setUploadProgress(p));
+        finalMediaUrl = uploadRes.url;
+      }
+
       const created = await socialApi.createPost({
         content: content.trim(),
-        mediaUrl: mediaUrl.trim() || undefined,
+        mediaUrl: finalMediaUrl,
       });
       setContent('');
       clearMedia();

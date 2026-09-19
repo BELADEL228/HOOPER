@@ -1,4 +1,5 @@
 import express, { Express } from 'express';
+import path from 'path';
 import cors from 'cors';
 import { CORS_ORIGINS, MAX_JSON_BODY_SIZE } from './config/env';
 import { apiRouter } from './routes';
@@ -55,6 +56,9 @@ export const createApp = (): Express => {
 
   // Body parser
   app.use(express.json({ limit: MAX_JSON_BODY_SIZE }));
+
+  // Dossier statique pour les uploads locaux
+  app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
   // Root health check endpoint
   app.get('/health', (_req, res) => {

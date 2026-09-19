@@ -5,9 +5,10 @@ import { pushNotificationToUser } from './socketServer.service';
 export class PostService {
   static async listPosts(filters: {
     clubId?: string;
-    authorId?: string;         // ✅ Nouveau
+    authorId?: string;
     limit?: number;
     offset?: number;
+    userId?: string;
   }) {
     const where: any = {};
     if (filters.clubId) where.clubId = filters.clubId;
@@ -48,11 +49,13 @@ export class PostService {
       content: post.content,
       mediaUrl: post.mediaUrl,
       mediaType: post.mediaType || 'image',
+
       clubId: post.clubId,
       clubName: post.club?.name || null,
       clubSlug: post.club?.slug || null,
       clubLogo: post.club?.logoUrl || null,
       clubPrimaryColor: post.club?.primaryColor || null,
+
       authorName: post.author.name,
       authorAvatar:
         post.author.avatarUrl ||
@@ -61,10 +64,18 @@ export class PostService {
         )}`,
       authorRole: post.author.role,
       authorId: post.author.id,
+
       timestamp: post.createdAt.toISOString(),
       createdAtMs: post.createdAt.getTime(),
+
       likesCount: post.likes.length,
+
+      hasLiked: filters.userId
+        ? post.likes.some((like) => like.userId === filters.userId)
+        : false,
+
       likes: post.likes.map((l) => l.userId),
+
       comments: post.comments.map((c) => ({
         id: c.id,
         authorName: c.author.name,
@@ -77,6 +88,7 @@ export class PostService {
         text: c.content,
         timestamp: c.createdAt.toISOString(),
       })),
+
       reactions: [],
     }));
   }
@@ -117,32 +129,98 @@ export class PostService {
     };
   }
 
-  static async toggleLike(postId: string, userId: string) {
-    const existing = await prisma.like.findUnique({
-      where: { postId_userId: { postId, userId } },
+
+  static async deletePost(postId: string, userId: string) {
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
     });
 
-    // ── Retrait du like ────────────────────────────────────────────────
-    if (existing) {
-      await prisma.like.delete({
-        where: { postId_userId: { postId, userId } },
-      });
-      return { liked: false };
+    if (!post) {
+      const error = new Error('Publication non trouvée');
+      (error as any).statusCode = 404;
+      throw error;
     }
 
-    // ── Ajout du like ──────────────────────────────────────────────────
-    await prisma.like.create({
-      data: { postId, userId },
+    if (post.authorId !== userId) {
+      const error = new Error(
+        "Vous n'avez pas la permission de supprimer cette publication"
+      );
+      (error as any).statusCode = 403;
+      throw error;
+    }
+
+    await prisma.post.delete({
+      where: { id: postId },
     });
 
-    // ✅ Notification à l'auteur du post (s'il n'est pas celui qui like)
-    try {
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-        select: { authorId: true },
+    return { success: true };
+  }
+
+
+
+  static async toggleLike(postId: string, userId: string) {
+    // Vérifier que la publication existe
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!post) {
+      const error = new Error('Publication non trouvée');
+      (error as any).statusCode = 404;
+      throw error;
+    }
+
+    // Vérifier si l'utilisateur a déjà liké
+    const existing = await prisma.like.findUnique({
+      where: {
+        postId_userId: {
+          postId,
+          userId,
+        },
+      },
+    });
+
+    // ─────────────────────────────────────────────
+    // RETRAIT DU LIKE
+    // ─────────────────────────────────────────────
+    if (existing) {
+      await prisma.like.delete({
+        where: {
+          postId_userId: {
+            postId,
+            userId,
+          },
+        },
       });
 
-      if (post && post.authorId !== userId) {
+      const likesCount = await prisma.like.count({
+        where: { postId },
+      });
+
+      return {
+        liked: false,
+        likesCount,
+      };
+    }
+
+    // ─────────────────────────────────────────────
+    // AJOUT DU LIKE
+    // ─────────────────────────────────────────────
+    await prisma.like.create({
+      data: {
+        postId,
+        userId,
+      },
+    });
+
+    const likesCount = await prisma.like.count({
+      where: { postId },
+    });
+
+    // Notification à l'auteur
+    try {
+      if (post.authorId !== userId) {
         const liker = await prisma.user.findUnique({
           where: { id: userId },
           select: { name: true },
@@ -157,7 +235,6 @@ export class PostService {
           },
         });
 
-        // ✅ Push temps réel
         pushNotificationToUser(post.authorId, {
           id: notif.id,
           type: notif.type,
@@ -173,11 +250,19 @@ export class PostService {
         });
       }
     } catch (err) {
-      console.warn('[PostService.toggleLike] notification error', err);
+      console.warn(
+        '[PostService.toggleLike] notification error',
+        err
+      );
     }
 
-    return { liked: true };
+    return {
+      liked: true,
+      likesCount,
+    };
   }
+
+
 
   static async addComment(postId: string, authorId: string, content: string) {
     const comment = await prisma.comment.create({
