@@ -513,6 +513,11 @@ export function App() {
               setShowCreateModal(true);
               return;
             }
+
+            if (tab === 'mon-profil') {
+              setViewedUserId(null);
+            }
+
             setActiveTab(tab);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}

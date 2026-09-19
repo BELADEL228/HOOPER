@@ -91,6 +91,7 @@ export function MobileNavBar({
 
   // ─── Menu "Plus" selon le mode ────────────────────────────────────────
   const socialMoreItems: TabDef[] = [
+    { id: 'stats', label: 'Stats', icon: BarChart3 },
     { id: 'marketplace', label: 'Boutique', icon: ShoppingBag, desc: 'Maillots & billets' },
     { id: 'terrains', label: 'Terrains', icon: MapPin, desc: 'Géolocalisation' },
     { id: 'designer', label: 'Designer', icon: Sparkles, desc: 'AI Team Designer' },

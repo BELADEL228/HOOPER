@@ -80,6 +80,7 @@ export const socialPermissions: Record<string, UserRole[]> = {
     // ── Navigation publique ────────────────────────────────────────────────
     accueil: ALL_ROLES,
     explorer: ALL_ROLES,
+    stats: ALL_ROLES,
     annuaire: ALL_ROLES,
     equipes: ALL_ROLES,
     matchs: ALL_ROLES,
@@ -98,6 +99,7 @@ export const socialPermissions: Record<string, UserRole[]> = {
 
     // ── Profil / compte (authentifié) ──────────────────────────────────────
     'mon-profil': AUTHENTICATED_ROLES,
+    'user-profile': ALL_ROLES,
     parametres: AUTHENTICATED_ROLES,
 
     // ── Messagerie sociale ─────────────────────────────────────────────────
