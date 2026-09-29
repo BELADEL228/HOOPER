@@ -7,46 +7,110 @@ import { AuthenticatedUser } from '../types';
 
 export const toRole = (input?: string | null): UserRole => {
   const normalized = input?.toUpperCase();
-  // Gérer la compatibilité : CLUB_MANAGER -> CLUB_MANAGER
-  if (normalized === 'CLUB_MANAGER') return 'CLUB_MANAGER';
+  // Compatibilité anciens rôles
+  if (normalized === 'ADMIN') return 'CLUB_ADMIN';
+  if (normalized === 'CLUB_MANAGER') return 'CLUB_ADMIN';
   return userRoles.includes(normalized as UserRole)
     ? (normalized as UserRole)
     : 'VISITOR';
 };
 
-export const sanitizeUser = (user: {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  avatarUrl?: string | null;
-  phoneNumber?: string | null;
-  address?: string | null;
-  emergencyContact?: string | null;
-  bio?: string | null;
-  country?: string | null;
-  city?: string | null;
-  isSuspended?: boolean | null;
-  suspendReason?: string | null;
-  suspendedUntil?: Date | string | null;
-  createdAt?: Date | string | null;
-}): AuthenticatedUser => ({
-  id: user.id,
-  email: user.email,
-  name: user.name,
-  role: toRole(user.role),
-  avatarUrl: user.avatarUrl ?? null,
-  phoneNumber: user.phoneNumber ?? null,
-  address: user.address ?? null,
-  emergencyContact: user.emergencyContact ?? null,
-  bio: user.bio ?? null,
-  country: user.country ?? 'Togo',
-  city: user.city ?? null,
-  isSuspended: Boolean(user.isSuspended),
-  suspendReason: user.suspendReason ?? null,
-  suspendedUntil: user.suspendedUntil ? new Date(user.suspendedUntil).toISOString() : null,
-  createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString(),
-});
+/**
+ * Convertit un user Prisma (+ optionnellement ses ClubMember ACTIFS)
+ * en objet `AuthenticatedUser` enrichi pour le RBAC.
+ */
+export const sanitizeUser = (
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    avatarUrl?: string | null;
+    phoneNumber?: string | null;
+    address?: string | null;
+    emergencyContact?: string | null;
+    bio?: string | null;
+    country?: string | null;
+    city?: string | null;
+    isSuspended?: boolean | null;
+    suspendReason?: string | null;
+    suspendedUntil?: Date | string | null;
+    createdAt?: Date | string | null;
+  },
+  clubMemberships?: Array<{ clubId: string; role: string }>
+): AuthenticatedUser => {
+  const activeClubIds = clubMemberships?.map((m) => m.clubId) ?? [];
+  const clubRoles = (clubMemberships ?? []).reduce<Record<string, string>>(
+    (acc, m) => {
+      acc[m.clubId] = m.role;
+      return acc;
+    },
+    {}
+  );
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: toRole(user.role),
+    avatarUrl: user.avatarUrl ?? null,
+    phoneNumber: user.phoneNumber ?? null,
+    address: user.address ?? null,
+    emergencyContact: user.emergencyContact ?? null,
+    bio: user.bio ?? null,
+    country: user.country ?? 'Togo',
+    city: user.city ?? null,
+    isSuspended: Boolean(user.isSuspended),
+    suspendReason: user.suspendReason ?? null,
+    suspendedUntil: user.suspendedUntil
+      ? new Date(user.suspendedUntil).toISOString()
+      : null,
+    createdAt: user.createdAt
+      ? new Date(user.createdAt).toISOString()
+      : new Date().toISOString(),
+    // ✅ Contexte club pour le RBAC scoped
+    activeClubIds,
+    clubRoles,
+  };
+};
+
+// ─── Helpers internes ───────────────────────────────────────────────────────
+
+/**
+ * Charge l'utilisateur + ses ClubMember ACTIFS.
+ * Retourne `null` si introuvable ou en fallback (mode sans DB).
+ */
+async function loadUserWithClubs(userId: string): Promise<{
+  userRecord: any;
+  clubMemberships: Array<{ clubId: string; role: string }>;
+} | null> {
+  if (!isDatabaseAvailable()) {
+    const fallbackUser = fallbackUsers.find((u) => u.id === userId) ?? null;
+    return fallbackUser ? { userRecord: fallbackUser, clubMemberships: [] } : null;
+  }
+
+  const userRecord = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      clubMemberships: {
+        where: { status: 'ACTIVE' }, // ✅ Uniquement les membres validés
+        select: { clubId: true, role: true },
+      },
+    },
+  });
+
+  if (!userRecord) return null;
+
+  return {
+    userRecord,
+    clubMemberships: userRecord.clubMemberships.map((m) => ({
+      clubId: m.clubId,
+      role: m.role,
+    })),
+  };
+}
+
+// ─── Middlewares ────────────────────────────────────────────────────────────
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -57,19 +121,20 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   const token = authHeader.replace('Bearer ', '');
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { sub: string; email: string; role: UserRole };
-    let userRecord: any = null;
+    const payload = jwt.verify(token, JWT_SECRET) as {
+      sub: string;
+      email: string;
+      role: UserRole;
+    };
 
-    if (!isDatabaseAvailable()) {
-      userRecord = fallbackUsers.find((user) => user.id === payload.sub || user.email === payload.email) ?? null;
-    } else {
-      userRecord = await prisma.user.findUnique({ where: { id: payload.sub } });
-    }
-
-    if (!userRecord) {
+    const loaded = await loadUserWithClubs(payload.sub);
+    if (!loaded) {
       return res.status(401).json({ error: 'Utilisateur inconnu.' });
     }
 
+    const { userRecord, clubMemberships } = loaded;
+
+    // Gestion suspension
     if (userRecord.isSuspended) {
       if (userRecord.suspendedUntil && new Date(userRecord.suspendedUntil) < new Date()) {
         if (isDatabaseAvailable()) {
@@ -83,12 +148,15 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         userRecord.suspendedUntil = null;
       } else {
         return res.status(403).json({
-          error: `Votre compte est actuellement suspendu. Motif : ${userRecord.suspendReason || 'Non précisé'}${userRecord.suspendedUntil ? ` (jusqu'au ${new Date(userRecord.suspendedUntil).toLocaleDateString('fr-FR')})` : ''}`,
+          error: `Votre compte est actuellement suspendu. Motif : ${userRecord.suspendReason || 'Non précisé'}${userRecord.suspendedUntil
+              ? ` (jusqu'au ${new Date(userRecord.suspendedUntil).toLocaleDateString('fr-FR')})`
+              : ''
+            }`,
         });
       }
     }
 
-    (req as any).user = sanitizeUser(userRecord);
+    (req as any).user = sanitizeUser(userRecord, clubMemberships);
     next();
   } catch {
     return res.status(401).json({ error: 'Session expirée ou token invalide.' });
@@ -103,28 +171,29 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
 
   const token = authHeader.replace('Bearer ', '');
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { sub: string; email: string; role: UserRole };
-    let userRecord: any = null;
+    const payload = jwt.verify(token, JWT_SECRET) as {
+      sub: string;
+      email: string;
+      role: UserRole;
+    };
 
-    if (!isDatabaseAvailable()) {
-      userRecord = fallbackUsers.find((user) => user.id === payload.sub || user.email === payload.email) ?? null;
-    } else {
-      userRecord = await prisma.user.findUnique({ where: { id: payload.sub } });
-    }
-
-    if (userRecord && !userRecord.isSuspended) {
-      (req as any).user = sanitizeUser(userRecord);
+    const loaded = await loadUserWithClubs(payload.sub);
+    if (loaded && !loaded.userRecord.isSuspended) {
+      (req as any).user = sanitizeUser(loaded.userRecord, loaded.clubMemberships);
     }
   } catch {
-    // Silencieux pour auth optionnelle
+    // Silencieux en mode optionnel
   }
   next();
 };
 
-export const requireRole = (allowedRoles: UserRole[]) => (req: Request, res: Response, next: NextFunction) => {
-  const user = (req as any).user as AuthenticatedUser | undefined;
-  if (!user?.role || !allowedRoles.includes(user.role)) {
-    return res.status(403).json({ error: 'Accès refusé : autorisation insuffisante pour cette action.' });
-  }
-  next();
-};
+export const requireRole =
+  (allowedRoles: UserRole[]) => (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as any).user as AuthenticatedUser | undefined;
+    if (!user?.role || !allowedRoles.includes(user.role)) {
+      return res
+        .status(403)
+        .json({ error: 'Accès refusé : autorisation insuffisante pour cette action.' });
+    }
+    next();
+  };

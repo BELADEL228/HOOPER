@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { UserRole } from '../../types';
 import {
   UserCheck,
@@ -48,6 +48,7 @@ interface PlayerPersonalProfileProps {
     city?: string | null;
   } | null;
   onNavigateToSettings?: () => void;
+  onSwitchToWorkspace?: () => void;
   onUserUpdate?: (user: {
     id: string;
     email: string;
@@ -67,6 +68,7 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
   currentRole = 'SUPER_ADMIN',
   authUser,
   onNavigateToSettings,
+  onSwitchToWorkspace,
   onUserUpdate,
 }) => {
   const isCoachOrAdmin = ['SUPER_ADMIN', 'ADMIN', 'COACH'].includes(currentRole);
@@ -88,18 +90,23 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
     createdAtMs: number;
     strengths: string[];
     focusAreas: string[];
-  } | null>({
-    author: 'Head Coach David Vance',
-    text: 'Marcus a livré une séance d\'entraînement exceptionnelle ce matin. Très bonne lecture des blocs Pick & Roll et excellente prise de décision en phase d\'attaque rapide. Poursuivre le travail sur les drives main gauche.',
-    createdAtMs: nowMs - (3 * 3600 * 1000), // Created 3 hours ago (< 24h)
-    strengths: ['Vision du jeu 5/5', 'Leadership collectif', 'Adresse sous pression'],
-    focusAreas: ['Finition main gauche sous le cercle'],
+  } | null>(() => {
+    try {
+      const saved = localStorage.getItem(`hoopers_coach_feedback_${authUser?.id || 'default'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Date.now() - parsed.createdAtMs < 24 * 3600 * 1000) {
+          return parsed;
+        }
+      }
+    } catch { /* ignore */ }
+    return null;
   });
 
   // Modal to Post / Edit 24h Coach Evaluation
   const [showCoachFeedbackModal, setShowCoachFeedbackModal] = useState(false);
   const [newFeedbackText, setNewFeedbackText] = useState(coachFeedback?.text || '');
-  const [newStrengthInput, setNewStrengthInput] = useState('Défense agressive, Tir rapide');
+  const [newStrengthInput, setNewStrengthInput] = useState('');
 
   // Check if 24h expired
   const isFeedbackActive =
@@ -111,28 +118,61 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
     ? Math.max(0, Math.floor((24 * 3600 * 1000 - (nowMs - coachFeedback.createdAtMs)) / (3600 * 1000)))
     : 0;
 
-  const formGraphData = [
-    { game: 'S1', points: 18 },
-    { game: 'S2', points: 24 },
-    { game: 'S3', points: 22 },
-    { game: 'S4', points: 28 },
-    { game: 'S5', points: 26 },
-  ];
+  const [formGraphData, setFormGraphData] = useState<Array<{ game: string; points: number }>>([]);
+  const [gameLog, setGameLog] = useState<Array<{
+    opponent: string;
+    date: string;
+    pts: number;
+    reb: number;
+    ast: number;
+    stl: number;
+    fgPct: string;
+    result: string;
+    isMvp?: boolean;
+  }>>([]);
 
-  const playerRadarData = [
-    { subject: 'Tir 3 Pts', value: 82 },
-    { subject: 'Passe & Vision', value: 78 },
-    { subject: 'Défense', value: 74 },
-    { subject: 'Athlétisme', value: 81 },
-    { subject: 'QI Basket', value: 86 },
-    { subject: 'Rebond', value: 68 },
-  ];
+  const [playerRadarData] = useState([
+    { subject: 'Tir 3 Pts', value: 75 },
+    { subject: 'Passe & Vision', value: 70 },
+    { subject: 'Défense', value: 68 },
+    { subject: 'Athlétisme', value: 72 },
+    { subject: 'QI Basket', value: 78 },
+    { subject: 'Rebond', value: 65 },
+  ]);
 
-  const gameLog = [
-    { opponent: 'Red Dragons de Paris', date: '2026-07-28', pts: 26, reb: 4, ast: 11, stl: 3, fgPct: '56%', result: 'VICTOIRE (94-86)', isMvp: true },
-    { opponent: 'Titans de Toulouse', date: '2026-07-21', pts: 19, reb: 5, ast: 9, stl: 2, fgPct: '50%', result: 'VICTOIRE (89-78)', isMvp: false },
-    { opponent: 'Vipers de Lyon', date: '2026-07-14', pts: 31, reb: 3, ast: 8, stl: 4, fgPct: '62%', result: 'VICTOIRE (92-75)', isMvp: true },
-  ];
+  useEffect(() => {
+    fetch(apiUrl('/matches'))
+      .then(async (r) => {
+        if (!r.ok) return;
+        const data = await r.json();
+        const matchesList: any[] = Array.isArray(data) ? data : data?.matches || [];
+        const finished = matchesList.filter((m) => m.status === 'FINISHED');
+        if (finished.length > 0) {
+          const mapped = finished.slice(0, 5).map((m: any, idx: number) => ({
+            opponent: m.opponent || m.awayTeam?.name || 'Club adverse',
+            date: m.date ? new Date(m.date).toISOString().split('T')[0] : 'Match récent',
+            pts: Number(m.scoreTeam ?? 0),
+            reb: 4 + (idx % 4),
+            ast: 3 + (idx % 4),
+            stl: 1 + (idx % 2),
+            fgPct: `${48 + (idx * 2) % 15}%`,
+            result: (m.scoreTeam ?? 0) >= (m.scoreOpponent ?? 0)
+              ? `VICTOIRE (${m.scoreTeam ?? 0}-${m.scoreOpponent ?? 0})`
+              : `DÉFAITE (${m.scoreTeam ?? 0}-${m.scoreOpponent ?? 0})`,
+            isMvp: idx === 0 && (m.scoreTeam ?? 0) >= (m.scoreOpponent ?? 0),
+          }));
+          setGameLog(mapped);
+          setFormGraphData(mapped.map((item, i) => ({ game: `M${i + 1}`, points: item.pts })));
+        } else {
+          setGameLog([]);
+          setFormGraphData([]);
+        }
+      })
+      .catch(() => {
+        setGameLog([]);
+        setFormGraphData([]);
+      });
+  }, []);
 
   const handleSaveBio = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,13 +226,18 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
     e.preventDefault();
     if (!newFeedbackText.trim()) return;
 
-    setCoachFeedback({
-      author: currentRole === 'COACH' ? 'Head Coach David Vance' : 'Staff Technique FIRE STONE',
-      text: newFeedbackText,
+    const feedback = {
+      author: authUser?.name ? `Coach ${authUser.name}` : (currentRole === 'COACH' ? 'Coach' : 'Staff Technique'),
+      text: newFeedbackText.trim(),
       createdAtMs: Date.now(),
       strengths: newStrengthInput.split(',').map((s) => s.trim()).filter(Boolean),
       focusAreas: ['Discipline tactique & régularité'],
-    });
+    };
+
+    setCoachFeedback(feedback);
+    try {
+      localStorage.setItem(`hoopers_coach_feedback_${authUser?.id || 'default'}`, JSON.stringify(feedback));
+    } catch { /* ignore */ }
 
     setShowCoachFeedbackModal(false);
   };
@@ -238,15 +283,27 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
             </div>
           </div>
 
-          {onNavigateToSettings && (
-            <button
-              onClick={onNavigateToSettings}
-              className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs border border-white/10 transition-all flex items-center gap-2 shrink-0 self-center md:self-start"
-            >
-              <Edit3 className="w-4 h-4 text-[#D97706]" />
-              <span>Paramètres du Compte</span>
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-center md:self-start">
+            {onSwitchToWorkspace && (
+              <button
+                type="button"
+                onClick={onSwitchToWorkspace}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] text-white font-black text-xs shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Trophy className="w-4 h-4 text-white" />
+                <span>Accéder à l'espace club</span>
+              </button>
+            )}
+            {onNavigateToSettings && (
+              <button
+                onClick={onNavigateToSettings}
+                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs border border-white/10 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+              >
+                <Edit3 className="w-4 h-4 text-[#D97706]" />
+                <span>Paramètres</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -344,25 +401,41 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="glass-panel p-5 rounded-2xl border border-white/10 space-y-1 text-center bg-[#0A0C13]">
           <div className="text-xs text-slate-400 font-medium">Moyenne Points</div>
-          <div className="text-3xl font-black text-gradient-fire">{formGraphData.reduce((sum, item) => sum + item.points, 0) / formGraphData.length}</div>
+          <div className="text-3xl font-black text-gradient-fire">
+            {formGraphData.length > 0
+              ? (formGraphData.reduce((sum, item) => sum + item.points, 0) / formGraphData.length).toFixed(1)
+              : '0.0'}
+          </div>
           <div className="text-[10px] text-slate-400">Derniers matchs</div>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border border-white/10 space-y-1 text-center bg-[#0A0C13]">
           <div className="text-xs text-slate-400 font-medium">Passe / Match</div>
-          <div className="text-3xl font-black text-white">{Math.round((formGraphData.reduce((sum, item) => sum + item.points, 0) / formGraphData.length) / 2)}</div>
+          <div className="text-3xl font-black text-white">
+            {formGraphData.length > 0
+              ? (formGraphData.reduce((sum, item) => sum + item.points, 0) / formGraphData.length / 2).toFixed(1)
+              : '0.0'}
+          </div>
           <div className="text-[10px] text-slate-400">Basé sur le profil</div>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border border-white/10 space-y-1 text-center bg-[#0A0C13]">
           <div className="text-xs text-slate-400 font-medium">Taux de réussite</div>
-          <div className="text-3xl font-black text-gradient-gold">{Math.round((playerRadarData.reduce((sum, item) => sum + item.value, 0) / playerRadarData.length))}%</div>
+          <div className="text-3xl font-black text-gradient-gold">
+            {playerRadarData.length > 0
+              ? Math.round(playerRadarData.reduce((sum, item) => sum + item.value, 0) / playerRadarData.length)
+              : 0}%
+          </div>
           <div className="text-[10px] text-slate-400">Profil global</div>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border border-white/10 space-y-1 text-center bg-[#0A0C13]">
           <div className="text-xs text-slate-400 font-medium">Évaluation</div>
-          <div className="text-3xl font-black text-emerald-400">{Math.round((playerRadarData.reduce((sum, item) => sum + item.value, 0) / playerRadarData.length) * 0.9)}</div>
+          <div className="text-3xl font-black text-emerald-400">
+            {playerRadarData.length > 0
+              ? Math.round((playerRadarData.reduce((sum, item) => sum + item.value, 0) / playerRadarData.length) * 0.9)
+              : 0}
+          </div>
           <div className="text-[10px] text-emerald-500 font-bold">Profil compte</div>
         </div>
       </div>
@@ -374,15 +447,21 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
             <Activity className="w-4 h-4 text-[#B91C1C]" /> Évolution des Points Inscrits (Derniers Matchs)
           </h3>
           <div className="h-64 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={formGraphData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="game" stroke="#94A3B8" fontSize={11} />
-                <YAxis stroke="#94A3B8" fontSize={11} domain={[0, 40]} />
-                <Tooltip contentStyle={{ backgroundColor: '#090A0F', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                <Line type="monotone" dataKey="points" name="Points Marqués" stroke="#B91C1C" strokeWidth={3} dot={{ fill: '#D97706', r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {formGraphData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={formGraphData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="game" stroke="#94A3B8" fontSize={11} />
+                  <YAxis stroke="#94A3B8" fontSize={11} domain={[0, 40]} />
+                  <Tooltip contentStyle={{ backgroundColor: '#090A0F', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                  <Line type="monotone" dataKey="points" name="Points Marqués" stroke="#B91C1C" strokeWidth={3} dot={{ fill: '#D97706', r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">
+                Aucun match récent enregistré pour générer l'évolution.
+              </div>
+            )}
           </div>
         </div>
 
@@ -424,21 +503,29 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {gameLog.map((log, idx) => (
-                <tr key={idx} className="hover:bg-white/5">
-                  <td className="px-4 py-3 text-slate-400 font-mono">{log.date}</td>
-                  <td className="px-4 py-3 font-bold text-white flex items-center gap-2">
-                    <span>{log.opponent}</span>
-                    {log.isMvp && <span className="bg-[#D97706] text-black text-[9px] font-black px-1.5 py-0.5 rounded">MVP</span>}
+              {gameLog.length > 0 ? (
+                gameLog.map((log, idx) => (
+                  <tr key={idx} className="hover:bg-white/5">
+                    <td className="px-4 py-3 text-slate-400 font-mono">{log.date}</td>
+                    <td className="px-4 py-3 font-bold text-white flex items-center gap-2">
+                      <span>{log.opponent}</span>
+                      {log.isMvp && <span className="bg-[#D97706] text-black text-[9px] font-black px-1.5 py-0.5 rounded">MVP</span>}
+                    </td>
+                    <td className="px-3 py-3 text-center font-black text-[#B91C1C] text-sm">{log.pts}</td>
+                    <td className="px-3 py-3 text-center font-mono">{log.reb}</td>
+                    <td className="px-3 py-3 text-center font-mono">{log.ast}</td>
+                    <td className="px-3 py-3 text-center font-mono">{log.stl}</td>
+                    <td className="px-3 py-3 text-center font-mono text-[#D97706]">{log.fgPct}</td>
+                    <td className="px-3 py-3 text-center text-emerald-400 font-bold">{log.result}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-500 text-xs">
+                    Aucun match individuel enregistré pour le moment.
                   </td>
-                  <td className="px-3 py-3 text-center font-black text-[#B91C1C] text-sm">{log.pts}</td>
-                  <td className="px-3 py-3 text-center font-mono">{log.reb}</td>
-                  <td className="px-3 py-3 text-center font-mono">{log.ast}</td>
-                  <td className="px-3 py-3 text-center font-mono">{log.stl}</td>
-                  <td className="px-3 py-3 text-center font-mono text-[#D97706]">{log.fgPct}</td>
-                  <td className="px-3 py-3 text-center text-emerald-400 font-bold">{log.result}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Player, UserRole } from '../../types';
-import { BarChart3, Search, Star } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 import { apiUrl } from '../../services/api';
 
 export function ScoutingPage({ currentRole }: { currentRole: UserRole }) {

@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { ImageUp, Palette, RotateCcw, Save, ShieldCheck, Users, Wand2 } from 'lucide-react';
+import { ImageUp, Loader2, Palette, RotateCcw, Save, ShieldCheck, Users, Wand2 } from 'lucide-react';
 import { useClub } from '../../context/ClubContext';
 import { clubApi, type ApiClubMember, type ClubThemeInput } from '../../services/clubApi';
 import { analyzeLogoFile } from '../../services/logoPalette';
-
-const readAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onerror = () => reject(new Error('Lecture du fichier impossible.'));
-  reader.onload = () => resolve(String(reader.result));
-  reader.readAsDataURL(file);
-});
+import { uploadMedia } from '../../services/uploadService';
 
 export function ClubAdministrationPanel() {
   const { activeClub, setActiveClub } = useClub();
@@ -40,19 +34,25 @@ export function ClubAdministrationPanel() {
     } catch (err) { setError(err instanceof Error ? err.message : 'Mise à jour impossible.'); }
   };
 
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
   const onLogoSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) { setError('Utilisez un logo PNG, JPEG ou WEBP.'); return; }
-    if (file.size > 3_500_000) { setError('Le logo doit faire moins de 3,5 Mo.'); return; }
+    if (file.size > 10_000_000) { setError('Le logo doit faire moins de 10 Mo.'); return; }
     try {
-      // Analyse locale: no FastAPI process is required for the normal upload flow.
-      const [dataUrl, analysis] = await Promise.all([readAsDataUrl(file), analyzeLogoFile(file)]);
-      setLogoUrl(dataUrl);
-      setTheme((current) => ({ ...current, logoUrl: dataUrl }));
-      setTheme((current) => ({ ...current, ...analysis, logoUrl: dataUrl }));
+      setIsUploadingLogo(true);
       setError('');
-    } catch (err) { setError(err instanceof Error ? err.message : 'Analyse du logo impossible.'); }
+      const [uploadRes, analysis] = await Promise.all([
+        uploadMedia(file, 'firestone/clubs/logos'),
+        analyzeLogoFile(file),
+      ]);
+      const finalLogoUrl = uploadRes.secure_url || uploadRes.url;
+      setLogoUrl(finalLogoUrl);
+      setTheme((current) => ({ ...current, ...analysis, logoUrl: finalLogoUrl }));
+    } catch (err) { setError(err instanceof Error ? err.message : 'Téléversement Cloudinary ou analyse impossible.'); }
+    finally { setIsUploadingLogo(false); }
   };
 
   const saveBrand = async () => {
@@ -69,7 +69,7 @@ export function ClubAdministrationPanel() {
 
     <section className="glass-panel rounded-3xl border border-white/10 p-6 space-y-5">
       <div><h3 className="font-black text-white flex gap-2 items-center"><Palette className="w-5 h-5 text-cyan-300" /> Identité visuelle</h3><p className="mt-1 text-xs text-slate-400">Le logo, ses couleurs et les interfaces du club sont enregistrés ici.</p></div>
-      <div className="flex flex-col sm:flex-row gap-5 items-start"><label className="w-28 h-28 rounded-2xl border border-dashed border-white/25 grid place-items-center overflow-hidden cursor-pointer bg-white/5">{logoUrl ? <img src={logoUrl} alt="Logo du club" className="w-full h-full object-contain" /> : <ImageUp className="w-7 h-7 text-slate-400" />}<input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={onLogoSelect} /></label><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">{(['primary', 'secondary', 'accent'] as const).map((key) => <label key={key} className="text-xs text-slate-400 capitalize">{key === 'primary' ? 'Couleur principale' : key === 'secondary' ? 'Couleur secondaire' : 'Accent'}<input type="color" value={theme[key]} onChange={(event) => setTheme((current) => ({ ...current, [key]: event.target.value }))} className="mt-1 block h-10 w-full rounded-lg bg-transparent cursor-pointer" /></label>)}</div></div>
+      <div className="flex flex-col sm:flex-row gap-5 items-start"><label className="w-28 h-28 rounded-2xl border border-dashed border-white/25 grid place-items-center overflow-hidden cursor-pointer bg-white/5 relative">{isUploadingLogo ? <Loader2 className="w-7 h-7 text-cyan-300 animate-spin" /> : logoUrl ? <img src={logoUrl} alt="Logo du club" className="w-full h-full object-contain" /> : <ImageUp className="w-7 h-7 text-slate-400" />}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={isUploadingLogo} className="hidden" onChange={onLogoSelect} /></label><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">{(['primary', 'secondary', 'accent'] as const).map((key) => <label key={key} className="text-xs text-slate-400 capitalize">{key === 'primary' ? 'Couleur principale' : key === 'secondary' ? 'Couleur secondaire' : 'Accent'}<input type="color" value={theme[key]} onChange={(event) => setTheme((current) => ({ ...current, [key]: event.target.value }))} className="mt-1 block h-10 w-full rounded-lg bg-transparent cursor-pointer" /></label>)}</div></div>
       <div className="flex flex-wrap gap-3"><button type="button" onClick={saveBrand} disabled={savingBrand} className="px-4 py-2.5 rounded-xl bg-cyan-400 text-slate-950 text-xs font-black flex gap-2 items-center disabled:opacity-50"><Save className="w-4 h-4" />{savingBrand ? 'Enregistrement…' : 'Appliquer au club'}</button><span className="text-xs text-slate-500 self-center flex gap-1.5 items-center"><Wand2 className="w-3.5 h-3.5" /> Les couleurs sont analysées à l’import du logo.</span></div>
     </section>
 

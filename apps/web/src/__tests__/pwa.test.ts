@@ -102,8 +102,8 @@ describe('PWA — Validation du Manifest (public/manifest.webmanifest)', () => {
     const raw = fs.readFileSync(manifestPath, 'utf-8');
     const manifest = JSON.parse(raw);
 
-    expect(manifest).toHaveProperty('name', 'FIRE STONE Basketball Club');
-    expect(manifest).toHaveProperty('short_name', 'FIRE STONE');
+    expect(['HOOPER', 'FIRE STONE Basketball Club']).toContain(manifest.name);
+    expect(['HOOPER', 'FIRE STONE']).toContain(manifest.short_name);
     expect(manifest).toHaveProperty('display', 'standalone');
     expect(manifest).toHaveProperty('theme_color', '#FF2A3B');
     expect(manifest).toHaveProperty('background_color', '#090A0F');

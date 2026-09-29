@@ -24,6 +24,10 @@ export class AuthService {
     const role: UserRole = input.role ? toRole(input.role) : 'VISITOR';
     const email = input.email.toLowerCase();
 
+    let feedbackMessage = 'Compte créé avec succès. Bienvenue sur HOOPER !';
+    let membershipStatus: string | undefined = undefined;
+    let targetClubId: string | undefined = input.clubId;
+
     if (!isDatabaseAvailable()) {
       Logger.warn('Inscription en mode fallback : données non persistées', 'AuthService', { email });
       const existing = fallbackUsers.find((u) => u.email.toLowerCase() === email);
@@ -46,7 +50,13 @@ export class AuthService {
 
       fallbackUsers.push(user);
       const token = this.signToken({ id: user.id, email: user.email, role: user.role });
-      return { token, user: sanitizeUser(user) };
+      return {
+        token,
+        user: sanitizeUser(user),
+        message: feedbackMessage,
+        clubMembershipStatus: membershipStatus,
+        clubId: targetClubId,
+      };
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -71,8 +81,75 @@ export class AuthService {
       },
     });
 
-    // Si inscription d'un joueur, créer son profil sportif initial
-    if (role === 'PLAYER' || input.jerseyNumber !== undefined || input.position) {
+    // ─── 1. DIRIGEANT (Club Admin) : Création club OU Rejoint club existant ────────
+    if (role === 'CLUB_ADMIN') {
+      if (input.createClub && input.newClubData?.name) {
+        const { ClubService } = await import('./club.service');
+        const club = await ClubService.createClub({
+          name: input.newClubData.name,
+          city: input.newClubData.city || input.city || 'Lomé',
+          country: input.newClubData.country || input.country || 'Togo',
+          address: input.newClubData.address || input.newClubData.arena,
+          logoUrl: input.newClubData.logoUrl,
+          description: input.newClubData.description || (input.newClubData.arena ? `Club officiel ${input.newClubData.name} - Salle: ${input.newClubData.arena}` : `Club officiel de basketball ${input.newClubData.name}`),
+        }, user.id);
+
+        targetClubId = club.id;
+        membershipStatus = 'ACTIVE';
+        feedbackMessage = `Bravo! Votre club ${club.name} a été créé. Vous êtes administrateur. Logo importé & design system généré.`;
+      } else if (input.clubId) {
+        await prisma.clubMember.create({
+          data: {
+            clubId: input.clubId,
+            userId: user.id,
+            role: 'CLUB_ADMIN',
+            status: 'PENDING',
+          },
+        });
+        membershipStatus = 'PENDING';
+        feedbackMessage = `Votre demande d'adhésion en tant que DIRIGEANT a été envoyée au club pour approbation.`;
+      }
+    }
+
+    // ─── 2. COACH : Sélection club + Expérience ─────────────────────────────
+    else if (role === 'COACH') {
+      if (input.clubId) {
+        await prisma.clubMember.create({
+          data: {
+            clubId: input.clubId,
+            userId: user.id,
+            role: 'COACH',
+            status: 'PENDING',
+          },
+        });
+        membershipStatus = 'PENDING';
+        feedbackMessage = `Votre inscription en tant que COACH a été envoyée au club pour approbation.`;
+
+        // Notification aux administrateurs du club
+        try {
+          const admins = await prisma.clubMember.findMany({
+            where: { clubId: input.clubId, role: { in: ['PRESIDENT', 'CLUB_ADMIN'] }, status: 'ACTIVE' },
+          });
+          for (const admin of admins) {
+            await prisma.notification.create({
+              data: {
+                userId: admin.userId,
+                type: 'CLUB_APPLICATION',
+                title: 'Nouvelle candidature Coach',
+                text: `${user.name} a postulé en tant que Coach pour votre club.`,
+              },
+            });
+          }
+        } catch {
+          // ignore notification error
+        }
+      } else {
+        feedbackMessage = `Compte Coach créé avec succès. Vous pouvez maintenant rejoindre un club.`;
+      }
+    }
+
+    // ─── 3. JOUEUR : Fiche sportive + Club PENDING ──────────────────────────
+    else if (role === 'PLAYER') {
       try {
         await prisma.playerProfile.create({
           data: {
@@ -91,25 +168,103 @@ export class AuthService {
       } catch (err) {
         console.warn('Initial player profile creation skipped:', err);
       }
-    }
 
-    // Si rattaché à un club
-    if (input.clubId) {
-      try {
+      if (input.clubId) {
         await prisma.clubMember.create({
           data: {
             clubId: input.clubId,
             userId: user.id,
-            role: role === 'COACH' ? 'COACH' : role === 'PLAYER' ? 'PLAYER' : 'MEMBER',
+            role: 'PLAYER',
+            status: 'PENDING',
           },
         });
-      } catch (err) {
-        console.warn('Initial club membership skipped:', err);
+        membershipStatus = 'PENDING';
+        feedbackMessage = `Votre candidature a été envoyée au club. Vous serez notifié de la décision.`;
+      } else {
+        feedbackMessage = `Compte Joueur créé avec succès.`;
       }
     }
 
+    // ─── 4. SPONSOR : Profil Sponsor & Annonce 24h ──────────────────────────
+    else if (role === 'SPONSOR') {
+      try {
+        await prisma.sponsorProfile.create({
+          data: {
+            userId: user.id,
+            companyName: input.name,
+            description: `Secteur: ${input.sponsorDomain || 'Sport & Lifestyle'} | Budget: ${input.sponsorBudget ? `${input.sponsorBudget.toLocaleString()} XOF` : 'À définir'} | Type: ${input.sponsorType || 'FINANCIAL'}`,
+            website: input.bio || undefined,
+            logoUrl: avatarUrl,
+          },
+        });
+      } catch (err) {
+        console.warn('Initial sponsor profile creation skipped:', err);
+      }
+
+      if (input.clubId && input.sponsorTeam) {
+        membershipStatus = 'ACTIVE';
+        feedbackMessage = `Vous êtes maintenant sponsor officiel du club. Une notification d'annonce a été envoyée aux membres.`;
+
+        // Notification d'annonce 24h au club
+        try {
+          const club = await prisma.club.findUnique({ where: { id: input.clubId } });
+          const clubMembers = await prisma.clubMember.findMany({
+            where: { clubId: input.clubId, status: 'ACTIVE' },
+          });
+          for (const member of clubMembers) {
+            await prisma.notification.create({
+              data: {
+                userId: member.userId,
+                type: 'SPONSOR_NEW',
+                title: 'Nouveau Sponsor Officiel !',
+                text: `${input.name} devient partenaire officiel de ${club?.name || 'votre club'}.`,
+              },
+            });
+          }
+        } catch {
+          // ignore notification error
+        }
+      } else {
+        feedbackMessage = `Votre profil Partenaire / Sponsor a été créé avec succès.`;
+      }
+    }
+
+    // ─── 5. CANDIDAT ACADÉMIE : Profil Candidat + Club PENDING ──────────────
+    else if (role === 'ACADEMY_CANDIDATE') {
+      if (input.clubId) {
+        await prisma.clubMember.create({
+          data: {
+            clubId: input.clubId,
+            userId: user.id,
+            role: 'MEMBER',
+            status: 'PENDING',
+          },
+        });
+        membershipStatus = 'PENDING';
+        feedbackMessage = `Votre candidature à l'académie a été envoyée au club. Vous serez notifié de la décision.`;
+      } else {
+        feedbackMessage = `Candidature enregistrée avec succès.`;
+      }
+    }
+
+    // ─── 6. SUPPORTER / FAN ──────────────────────────────────────────────────
+    else if (role === 'SUPPORTER') {
+      feedbackMessage = `Bienvenue sur HOOPER ! Votre compte Supporter est actif.`;
+    }
+
+    // ─── 7. VISITEUR ────────────────────────────────────────────────────────
+    else {
+      feedbackMessage = `Compte créé avec succès. Bienvenue sur la plateforme HOOPER.`;
+    }
+
     const token = this.signToken({ id: user.id, email: user.email, role: toRole(user.role) });
-    return { token, user: sanitizeUser(user) };
+    return {
+      token,
+      user: sanitizeUser(user),
+      message: feedbackMessage,
+      clubMembershipStatus: membershipStatus,
+      clubId: targetClubId,
+    };
   }
 
   static async login(emailInput: string, passwordInput: string): Promise<AuthSession> {

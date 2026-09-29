@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Trophy,
   Flame,
-  Award,
   Search,
   Filter,
   ArrowUpDown,
@@ -51,157 +49,6 @@ interface GlobalPlayerStatsViewProps {
   onOpenAuth?: () => void;
 }
 
-// Données de secours réalistes basketball ligue africaine / Lomé si l'API n'a pas encore de stats détaillées
-const FALLBACK_PLAYERS: PlayerStatItem[] = [
-  {
-    id: 'p1',
-    userId: 'u1',
-    name: 'Koffi Mawuli Mensah',
-    jerseyNumber: 23,
-    position: 'Meneur (Point Guard)',
-    heightCm: 188,
-    weightKg: 82,
-    age: 24,
-    category: 'SENIOR',
-    clubName: 'FIRE STONE Lomé',
-    ppg: 24.8,
-    rpg: 6.2,
-    apg: 9.4,
-    spg: 2.3,
-    bpg: 0.6,
-    efficiency: 28.5,
-    fgPct: 52.4,
-    threePtPct: 41.2,
-    ftPct: 88.0,
-  },
-  {
-    id: 'p2',
-    userId: 'u2',
-    name: 'Emmanuel Amouzou',
-    jerseyNumber: 34,
-    position: 'Pivot (Center)',
-    heightCm: 206,
-    weightKg: 104,
-    age: 26,
-    category: 'SENIOR',
-    clubName: 'Étoile Filante Basket',
-    ppg: 21.4,
-    rpg: 13.8,
-    apg: 2.8,
-    spg: 1.1,
-    bpg: 3.2,
-    efficiency: 29.1,
-    fgPct: 61.0,
-    threePtPct: 22.0,
-    ftPct: 73.5,
-  },
-  {
-    id: 'p3',
-    userId: 'u3',
-    name: 'Samuel Lawson',
-    jerseyNumber: 7,
-    position: 'Arrière (Shooting Guard)',
-    heightCm: 194,
-    weightKg: 88,
-    age: 22,
-    category: 'SENIOR',
-    clubName: 'Swallows Basketball',
-    ppg: 22.1,
-    rpg: 5.1,
-    apg: 4.6,
-    spg: 1.9,
-    bpg: 0.4,
-    efficiency: 23.4,
-    fgPct: 48.6,
-    threePtPct: 43.8,
-    ftPct: 86.2,
-  },
-  {
-    id: 'p4',
-    userId: 'u4',
-    name: 'Fousseni Alassani',
-    jerseyNumber: 11,
-    position: 'Ailier Fort (Power Forward)',
-    heightCm: 202,
-    weightKg: 98,
-    age: 25,
-    category: 'SENIOR',
-    clubName: 'Modèle de Lomé',
-    ppg: 18.6,
-    rpg: 11.2,
-    apg: 3.4,
-    spg: 1.4,
-    bpg: 2.1,
-    efficiency: 25.0,
-    fgPct: 55.3,
-    threePtPct: 31.0,
-    ftPct: 76.0,
-  },
-  {
-    id: 'p5',
-    userId: 'u5',
-    name: 'Didier Kodjo Agbegninou',
-    jerseyNumber: 10,
-    position: 'Ailier (Small Forward)',
-    heightCm: 198,
-    weightKg: 91,
-    age: 23,
-    category: 'SENIOR',
-    clubName: 'Racing Club Togo',
-    ppg: 19.5,
-    rpg: 7.4,
-    apg: 5.1,
-    spg: 2.1,
-    bpg: 1.0,
-    efficiency: 24.2,
-    fgPct: 49.7,
-    threePtPct: 37.5,
-    ftPct: 81.4,
-  },
-  {
-    id: 'p6',
-    userId: 'u6',
-    name: 'Jean-Luc Dossou',
-    jerseyNumber: 15,
-    position: 'Arrière (Shooting Guard)',
-    heightCm: 191,
-    weightKg: 84,
-    age: 19,
-    category: 'U18',
-    clubName: 'FIRE STONE Academy',
-    ppg: 17.8,
-    rpg: 4.2,
-    apg: 6.0,
-    spg: 2.5,
-    bpg: 0.3,
-    efficiency: 21.0,
-    fgPct: 46.5,
-    threePtPct: 39.0,
-    ftPct: 84.0,
-  },
-  {
-    id: 'p7',
-    userId: 'u7',
-    name: 'Aminata Diallo',
-    jerseyNumber: 8,
-    position: 'Meneuse (Point Guard)',
-    heightCm: 176,
-    weightKg: 65,
-    age: 21,
-    category: 'FEMININ',
-    clubName: 'Lomé Queens',
-    ppg: 20.3,
-    rpg: 5.5,
-    apg: 8.2,
-    spg: 3.1,
-    bpg: 0.5,
-    efficiency: 26.8,
-    fgPct: 50.1,
-    threePtPct: 42.0,
-    ftPct: 89.5,
-  },
-];
-
 type SortField = 'ppg' | 'rpg' | 'apg' | 'spg' | 'bpg' | 'efficiency' | 'fgPct';
 
 export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
@@ -209,7 +56,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
   onOpenProfile,
   onOpenAuth: _onOpenAuth,
 }) => {
-  const [players, setPlayers] = useState<PlayerStatItem[]>(FALLBACK_PLAYERS);
+  const [players, setPlayers] = useState<PlayerStatItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -479,8 +326,8 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
               key={cat}
               onClick={() => setCategoryFilter(cat)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold tracking-tight transition-all cursor-pointer shrink-0 ${categoryFilter === cat
-                  ? 'bg-white/15 text-white border border-white/20'
-                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                ? 'bg-white/15 text-white border border-white/20'
+                : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                 }`}
             >
               {cat === 'ALL' ? 'Toutes catégories' : cat}

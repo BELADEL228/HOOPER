@@ -11,6 +11,9 @@ import { clubRequestRouter } from './club-request.routes';
 import { statusRouter } from './status.routes';
 import { searchRouter } from './search.routes';
 import { uploadRouter } from './upload.routes';
+import { conversationRouter } from './conversation.routes';
+import { notificationRouter } from './notification.routes';
+import { liveRouter } from './live.routes';
 
 export const apiRouter = Router();
 
@@ -33,4 +36,8 @@ apiRouter.use('/marketplace', marketplaceRouter);
 apiRouter.use('/tickets', ticketingRouter);
 apiRouter.use('/search', searchRouter);
 apiRouter.use('/upload', uploadRouter);
+apiRouter.use('/lives', liveRouter);
+apiRouter.use('/conversations', conversationRouter);
+apiRouter.use('/notifications', notificationRouter);
 apiRouter.use('/', miscRouter);
+

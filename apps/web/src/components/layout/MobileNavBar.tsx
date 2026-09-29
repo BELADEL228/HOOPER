@@ -13,6 +13,7 @@ import {
   UserCheck,
   ShoppingBag,
   Search,
+  Plus,
   User,
   MessageSquare,
   Calendar,
@@ -20,6 +21,7 @@ import {
   Users,
   Newspaper,
   BarChart3,
+  Zap,
 } from 'lucide-react';
 import type { UserRole } from '../../types';
 import { filterAccessibleTabs } from '../../config/permissions';
@@ -54,10 +56,11 @@ export function MobileNavBar({
   activeTab,
   onSelectTab,
   userRole = 'VISITOR',
-  isAuthenticated = false,
+  isAuthenticated = userRole !== 'VISITOR',
   unreadCount = 0,
   unreadMessagesCount = 0,
-  mode = 'club_workspace',
+  onCreateClick,
+  mode = 'social',
 }: MobileNavBarProps) {
   const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
 
@@ -65,6 +68,7 @@ export function MobileNavBar({
   const socialMainTabs: TabDef[] = [
     { id: 'accueil', label: 'Accueil', icon: Flame },
     { id: 'explorer', label: 'Explorer', icon: Search },
+    { id: 'create', label: 'Créer', icon: Plus, isCreate: true },
     {
       id: 'messagerie',
       label: 'Messages',
@@ -91,14 +95,16 @@ export function MobileNavBar({
 
   // ─── Menu "Plus" selon le mode ────────────────────────────────────────
   const socialMoreItems: TabDef[] = [
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'live', label: 'Live Center', icon: Zap, desc: 'Matchs en direct & replays' },
+    { id: 'stats', label: 'Statistiques joueurs & équipes', icon: BarChart3 },
     { id: 'marketplace', label: 'Boutique', icon: ShoppingBag, desc: 'Maillots & billets' },
-    { id: 'terrains', label: 'Terrains', icon: MapPin, desc: 'Géolocalisation' },
-    { id: 'designer', label: 'Designer', icon: Sparkles, desc: 'AI Team Designer' },
+    { id: 'terrains', label: 'Terrains de Lomé', icon: MapPin, desc: 'Géolocalisation' },
+    { id: 'designer', label: 'AI Team Designer', icon: Sparkles, desc: 'Studio visuel' },
     { id: 'badges', label: 'Badges', icon: Award, desc: 'Succès & MVP' },
     { id: 'recrutement', label: 'Recrutement', icon: UserPlus, desc: 'Détections & draft' },
     { id: 'scouting', label: 'Scouting', icon: UserCheck, desc: 'Fiches talents' },
     { id: 'parametres', label: 'Paramètres', icon: Settings, desc: 'Compte' },
+    { id: 'matchs', label: 'Matchs', icon: Trophy, desc: 'Matchs & compétitions' },
   ];
 
   const workspaceMoreItems: TabDef[] = [
@@ -149,6 +155,23 @@ export function MobileNavBar({
             const Icon = tab.icon;
             const isActive = activeTab === tab.id && !showMoreMenu;
             const badgeText = formatBadge(tab.badge ?? 0);   // ✅ Cap 99+
+
+            if (tab.isCreate) {
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (onCreateClick) onCreateClick();
+                    else handleTabClick('create');
+                  }}
+                  type="button"
+                  aria-label="Créer une publication ou une story"
+                  className="relative -top-3 flex flex-col items-center justify-center p-3 rounded-full bg-gradient-to-tr from-[#FF2A3B] to-[#FFB800] text-white shadow-xl shadow-[#FF2A3B]/40 hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-[#090A0F]"
+                >
+                  <Plus className="w-6 h-6 stroke-[3]" />
+                </button>
+              );
+            }
 
             return (
               <button
@@ -217,7 +240,7 @@ export function MobileNavBar({
                   {mode === 'social' ? 'Menu Social' : 'Menu Club Workspace'}
                 </span>
                 <h3 className="text-base font-black text-white">
-                  {mode === 'social' ? 'Modules FIRE STONE' : 'Outils de Gestion Club'}
+                  {mode === 'social' ? 'Menu Rapide Mobile' : 'Outils de Gestion Club'}
                 </h3>
               </div>
               <button

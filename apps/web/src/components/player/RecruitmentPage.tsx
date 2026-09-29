@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { UserRole } from '../../types';
-import { Search, Send, UserRound, Plus, X, CheckCircle2 } from 'lucide-react';
+import { Search, Send, Plus, X, CheckCircle2 } from 'lucide-react';
 import { apiUrl } from '../../services/api';
 
 interface RecruitmentPost {

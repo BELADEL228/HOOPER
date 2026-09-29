@@ -19,6 +19,9 @@ import {
   ShieldCheck,
   HelpCircle,
   Trophy,
+  ShoppingBag,
+  MapPin,
+  BarChart3,
 } from 'lucide-react';
 import type { UserRole, Team } from '../../types';
 import { MobileNavBar } from './MobileNavBar';
@@ -66,18 +69,39 @@ interface NavItemDef {
 const NAV_ITEMS: NavItemDef[] = [
   { id: 'accueil', label: 'Fil d’actualité', icon: Flame },
   { id: 'explorer', label: 'Explorer & Recherche', icon: Compass },
-  { id: 'matchs', label: 'Match Center & Live', icon: Zap, isLive: true },
-  { id: 'stats', label: 'Statistiques Joueurs', icon: Trophy },
+  { id: 'matchs', label: 'Match Center', icon: Trophy },
+  { id: 'live', label: 'Live Center', icon: Zap, isLive: true },
+  { id: 'stats', label: 'Statistiques Joueurs', icon: BarChart3 },
   { id: 'annuaire', label: 'Clubs & Franchises', icon: Shield },
   { id: 'messagerie', label: 'Messagerie', icon: MessageSquare },
   { id: 'mon-profil', label: 'Mon Profil Athlète', icon: User },
+];
+
+const HUB_ITEMS: NavItemDef[] = [
+  { id: 'marketplace', label: 'Boutique & Billets', icon: ShoppingBag },
+  { id: 'terrains', label: 'Terrains & Spots', icon: MapPin },
+  { id: 'tournois', label: 'Tournois & Cups', icon: Trophy },
 ];
 
 interface TrendingTopic {
   tag: string;
   postsCount: string;
   category: string;
+  icon: string;
 }
+
+// ✅ Déduit la catégorie et l'icône d'un hashtag
+const categorizeTopic = (tag: string): { category: string; icon: string } => {
+  const t = tag.toLowerCase();
+  if (/match|game|final|demi|quart|victoire|défaite|score/.test(t)) return { category: 'Résultats & Matchs', icon: '🏆' };
+  if (/training|entraîn|entrainement|practice|workout|prep/.test(t)) return { category: 'Entraînement', icon: '🏋️' };
+  if (/recruit|draft|talent|scouting|jeune|espoir|u18|u21/.test(t)) return { category: 'Recrutement', icon: '🎯' };
+  if (/club|equipe|team|franchise|ligue/.test(t)) return { category: 'Clubs & Équipes', icon: '🛡️' };
+  if (/basket|basketball|bball|nba|euro|africabasket/.test(t)) return { category: 'Basketball', icon: '🏀' };
+  if (/live|stream|direct|broadcast/.test(t)) return { category: 'Live', icon: '📡' };
+  if (/stats|stat|mvp|point|rebond|assist|record/.test(t)) return { category: 'Statistiques', icon: '📊' };
+  return { category: 'Basketball', icon: '🔥' };
+};
 
 const getAuthToken = (): string => {
   try {
@@ -105,6 +129,9 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
 }) => {
   const [suggestedClubs, setSuggestedClubs] = useState<ApiClub[]>([]);
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
+  const [nextMatch, setNextMatch] = useState<{
+    teamA: string; teamB: string; venue: string; date: string;
+  } | null>(null);
 
 
   const [showAuthMenu, setShowAuthMenu] = useState(false);
@@ -137,6 +164,31 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
       .then((data) => setSuggestedClubs(Array.isArray(data) ? data : []))
       .catch(() => setSuggestedClubs([]));
 
+    // Prochain match à venir
+    fetch(apiUrl('/matches'))
+      .then(async (r) => {
+        if (!r.ok) return;
+        const list: Array<{
+          id: string; opponent: string; venue: string;
+          date: string; time: string; status: string;
+          isHome: boolean;
+        }> = await r.json();
+        const upcoming = list
+          .filter((m) => m.status === 'UPCOMING')
+          .sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime())[0];
+        if (upcoming) {
+          const homeLabel = upcoming.isHome ? (selectedClub?.name || 'Fire Stone') : upcoming.opponent;
+          const awayLabel = upcoming.isHome ? upcoming.opponent : (selectedClub?.name || 'Fire Stone');
+          setNextMatch({
+            teamA: homeLabel,
+            teamB: awayLabel,
+            venue: upcoming.venue || 'Lomé',
+            date: new Date(`${upcoming.date}T${upcoming.time || '00:00'}`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+          });
+        }
+      })
+      .catch(() => undefined);
+
     fetch(apiUrl('/posts'))
       .then(async (r) => {
         if (!r.ok) return;
@@ -152,18 +204,53 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
           const content = typeof p?.content === 'string' ? p.content : '';
           const tagMatches = content.match(/#\w+/g) || [];
           tagMatches.forEach((t) => {
-            tagCounts[t] = (tagCounts[t] || 0) + 1;
+            tagCounts[t.toLowerCase()] = (tagCounts[t.toLowerCase()] || 0) + 1;
           });
         });
 
-        const topics: TrendingTopic[] = Object.entries(tagCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([tag, count]) => ({
-            tag,
-            postsCount: `${count} post${count > 1 ? 's' : ''}`,
-            category: 'Basketball',
-          }));
+        let topics: TrendingTopic[];
+
+        if (Object.keys(tagCounts).length > 0) {
+          // ✅ Hashtags trouvés → on les classe et catégorise dynamiquement
+          topics = Object.entries(tagCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([tag, count]) => {
+              const { category, icon } = categorizeTopic(tag);
+              return {
+                tag,
+                postsCount: `${count} post${count > 1 ? 's' : ''}`,
+                category,
+                icon,
+              };
+            });
+        } else {
+          // ✅ Fallback : aucun hashtag, on agrège les mots fréquents du fil
+          const wordCounts: Record<string, number> = {};
+          const stopWords = new Set(['le','la','les','de','du','des','un','une','et','en','à','au','je','il','elle','nous','vous','ils','que','qui','se','ce','son','sa','ses','par','pour','sur','dans','est','pas','plus','avec']);
+          posts.forEach((p) => {
+            const content = typeof p?.content === 'string' ? p.content.toLowerCase() : '';
+            content.replace(/[^a-zàâçéèêëîïôûùüÿæœ\s]/g, '').split(/\s+/).forEach((w) => {
+              if (w.length > 3 && !stopWords.has(w)) {
+                wordCounts[w] = (wordCounts[w] || 0) + 1;
+              }
+            });
+          });
+          topics = Object.entries(wordCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([word, count]) => {
+              const fakeTag = `#${word}`;
+              const { category, icon } = categorizeTopic(fakeTag);
+              return {
+                tag: fakeTag,
+                postsCount: `${count} mention${count > 1 ? 's' : ''}`,
+                category,
+                icon,
+              };
+            });
+        }
+
         setTrendingTopics(topics);
       })
       .catch(() => setTrendingTopics([]));
@@ -393,6 +480,15 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
       }
     );
   }, [currentRole, liveUnreadMessages, isAuthenticated]);
+
+  const visibleHubItems = useMemo(() => {
+    return filterAccessibleTabs(
+      HUB_ITEMS,
+      currentRole,
+      'social',
+      isAuthenticated
+    );
+  }, [currentRole, isAuthenticated]);
 
   const showRightSidebar = ['accueil', 'explorer'].includes(activeTab);
 
@@ -708,6 +804,34 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
               );
             })}
 
+            {visibleHubItems.length > 0 && (
+              <div className="pt-2 mt-2 border-t border-white/5 space-y-1">
+                <div className="px-3.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                  Hub & Services
+                </div>
+                {visibleHubItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onSelectTab(item.id)}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white shadow-lg shadow-[#FF2A3B]/30'
+                          : 'text-slate-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#FFB800]'}`} />
+                        <span>{item.label}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="pt-3">
               <button
                 onClick={onCreateClick}
@@ -718,28 +842,27 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
               </button>
             </div>
           </nav>
-
-          {onSwitchToWorkspace && (
-            <div className="social-card-border rounded-3xl p-4 space-y-2.5">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#FFB800]" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  Espace Club
-                </span>
+          {onSwitchToWorkspace && selectedClub &&
+            currentRole !== 'VISITOR' && currentRole !== 'SUPPORTER' && (
+              <div className="social-card-border rounded-3xl p-4 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-[#FFB800]" />
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">
+                    Espace Club
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {`Accédez aux feuilles de matchs, convocations et trésorerie de ${selectedClub?.name || 'votre club'}.`}
+                </p>
+                <button
+                  onClick={onSwitchToWorkspace}
+                  className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>Ouvrir le Vestiaire</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Accédez aux feuilles de matchs, convocations et trésorerie de{' '}
-                {selectedClub?.name || 'votre club'}.
-              </p>
-              <button
-                onClick={onSwitchToWorkspace}
-                className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span>Ouvrir le Vestiaire</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+            )}
         </aside>
 
         {/* ── COLONNE CENTRALE ── */}
@@ -748,33 +871,35 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
         {/* ── COLONNE DROITE ── */}
         {showRightSidebar && (
           <aside className="hidden xl:flex flex-col w-72 lg:w-80 shrink-0 space-y-4 sticky top-22 h-[calc(100vh-6.5rem)] overflow-y-auto no-scrollbar">
-            <div className="social-card-border rounded-3xl p-4 space-y-3 shadow-xl">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-[#FF2A3B]" /> Choc de la Ligue
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[#FF2A3B] text-white">
-                  SAMEDI
-                </span>
-              </div>
+            {nextMatch && (
+              <div className="social-card-border rounded-3xl p-4 space-y-3 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-[#FF2A3B]" /> Prochain Match
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[#FF2A3B] text-white animate-pulse">
+                    BIENTÔT
+                  </span>
+                </div>
 
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/5 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-white">
-                  <span>Fire Stone Lomé</span>
-                  <span className="text-slate-400 font-normal">VS</span>
-                  <span>Étoile Filante</span>
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-white">
+                    <span className="truncate max-w-[70px]">{nextMatch.teamA}</span>
+                    <span className="text-slate-400 font-normal mx-1">VS</span>
+                    <span className="truncate max-w-[70px] text-right">{nextMatch.teamB}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 text-center">
+                    {nextMatch.venue} • {nextMatch.date}
+                  </div>
+                  <button
+                    onClick={() => onSelectTab('matchs')}
+                    className="w-full py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white transition-colors cursor-pointer"
+                  >
+                    Voir le calendrier
+                  </button>
                 </div>
-                <div className="text-[11px] text-slate-400 text-center">
-                  Terrain Municipal Lomé • 16h30
-                </div>
-                <button
-                  onClick={() => onSelectTab('matchs')}
-                  className="w-full py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white transition-colors cursor-pointer"
-                >
-                  Détails & Convocation
-                </button>
               </div>
-            </div>
+            )}
 
             <div className="social-card-border rounded-3xl p-4 space-y-3 shadow-xl">
               <div className="flex items-center gap-1.5">
@@ -795,15 +920,18 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
                       onClick={() => onSelectTab('explorer')}
                       className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white/5 text-left transition-colors cursor-pointer group"
                     >
-                      <div>
-                        <span className="text-xs font-extrabold text-[#FFB800] group-hover:underline block">
-                          {topic.tag}
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          {topic.category}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base leading-none">{(topic as any).icon || '🔥'}</span>
+                        <div>
+                          <span className="text-xs font-extrabold text-[#FFB800] group-hover:underline block">
+                            {topic.tag}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {topic.category}
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-[10px] text-slate-500 font-semibold">
+                      <span className="text-[10px] text-slate-500 font-semibold shrink-0">
                         {topic.postsCount}
                       </span>
                     </button>

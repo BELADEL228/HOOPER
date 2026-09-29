@@ -2,10 +2,11 @@ import React, { useState, useRef, useCallback } from 'react';
 import {
   User, Lock, Shield, Bell, Palette, Building2, HelpCircle,
   ChevronDown, ChevronUp, Upload, Loader2, CheckCircle2, AlertCircle,
-  Eye, EyeOff, Trash2, ExternalLink, MessageSquare, Heart, UserPlus,
-  AtSign, Sun, Moon, Globe, Users, UserCheck, X
+  Eye, EyeOff, Trash2, ExternalLink, MessageSquare,
+  Sun, Moon, Globe, Users, UserCheck, X
 } from 'lucide-react';
 import { apiUrl } from '../../services/api';
+import { uploadMedia } from '../../services/uploadService';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface SettingsPageProps {
@@ -34,29 +35,6 @@ const getToken = (): string => {
 // ─── Toast local ─────────────────────────────────────────────────────────────
 type ToastType = 'success' | 'error';
 interface Toast { id: number; msg: string; type: ToastType; }
-
-// ─── Compressor image ────────────────────────────────────────────────────────
-const compressAvatar = (file: File, maxPx = 400, quality = 0.88): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new window.Image();
-      img.onload = () => {
-        const size = Math.min(img.width, img.height, maxPx);
-        const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d')!;
-        const sx = (img.width - size) / 2;
-        const sy = (img.height - size) / 2;
-        ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 
 // ─── Section accordéon ───────────────────────────────────────────────────────
 interface SectionProps {
@@ -177,7 +155,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(authUser?.avatarUrl || null);
-  const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -217,16 +196,29 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const toggle = (id: string) => setOpenSection((prev) => (prev === id ? null : id));
 
-  // ── Avatar upload ─────────────────────────────────────────────────────────
+  // ── Avatar upload via Cloudinary ───────────────────────────────────────────
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      pushToast('L\'image dépasse 10 Mo.', 'error');
+      return;
+    }
+
     try {
-      const b64 = await compressAvatar(file);
-      setAvatarPreview(b64);
-      setAvatarBase64(b64);
-    } catch {
-      pushToast('Impossible de charger cette image.', 'error');
+      setAvatarUploading(true);
+      const localPreview = URL.createObjectURL(file);
+      setAvatarPreview(localPreview);
+
+      const res = await uploadMedia(file, 'firestone/avatars');
+      const finalUrl = res.secure_url || res.url;
+      setUploadedAvatarUrl(finalUrl);
+      setAvatarPreview(finalUrl);
+      pushToast('Photo téléversée sur Cloudinary avec succès !', 'success');
+    } catch (err: any) {
+      pushToast(err?.message || 'Échec du téléversement vers Cloudinary.', 'error');
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -239,7 +231,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       const body: Record<string, any> = { name: name.trim(), email: email.trim() };
       if (city.trim()) body.city = city.trim();
       if (bio.trim()) body.bio = bio.trim();
-      if (avatarBase64) body.avatarUrl = avatarBase64;
+      if (uploadedAvatarUrl) body.avatarUrl = uploadedAvatarUrl;
 
       const res = await fetch(apiUrl('/auth/profile'), {
         method: 'PUT',
@@ -249,7 +241,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Erreur lors de la mise à jour.');
       onUserUpdate(data.user || { ...authUser, ...body });
-      setAvatarBase64(null);
+      setUploadedAvatarUrl(null);
       pushToast('Profil mis à jour avec succès !');
     } catch (err: any) {
       pushToast(err.message || 'Erreur inattendue.', 'error');
@@ -358,18 +350,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               alt="Avatar"
               className="w-16 h-16 rounded-2xl object-cover border-2 border-white/15 bg-slate-800"
             />
+            {avatarUploading && (
+              <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              </div>
+            )}
             <button
               type="button"
+              disabled={avatarUploading}
               onClick={() => avatarInputRef.current?.click()}
-              className="absolute -bottom-1.5 -right-1.5 p-1.5 rounded-full bg-[#FF2A3B] text-white shadow-md hover:bg-[#FF4555] transition-colors cursor-pointer"
+              className="absolute -bottom-1.5 -right-1.5 p-1.5 rounded-full bg-[#FF2A3B] text-white shadow-md hover:bg-[#FF4555] transition-colors cursor-pointer disabled:opacity-50"
             >
               <Upload className="w-3 h-3" />
             </button>
           </div>
           <div className="text-xs text-slate-500 space-y-0.5">
-            <p className="font-semibold text-slate-300">Photo de profil</p>
-            <p>JPG, PNG ou WEBP · max 5 Mo</p>
-            <p>Recadrée en carré (400×400px)</p>
+            <p className="font-semibold text-slate-300">Photo de profil (Cloudinary CDN)</p>
+            <p>JPG, PNG ou WEBP · max 10 Mo</p>
+            <p className="text-amber-300/80 font-medium">Hébergée en haute définition sur Cloudinary</p>
           </div>
           <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
         </div>
@@ -582,10 +580,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         accent="#A855F7"
       >
         <div className="divide-y divide-white/5">
-          <Toggle checked={notifLikes} onChange={setNotifLikes} label="Likes sur mes publications" description={<><Heart className="w-3 h-3 inline mr-1 text-[#FF2A3B]" />Quand quelqu'un like ton post</>} />
-          <Toggle checked={notifComments} onChange={setNotifComments} label="Commentaires" description={<><MessageSquare className="w-3 h-3 inline mr-1 text-blue-400" />Quand quelqu'un commente</>} />
-          <Toggle checked={notifFollows} onChange={setNotifFollows} label="Nouveaux abonnés" description={<><UserPlus className="w-3 h-3 inline mr-1 text-emerald-400" />Quand quelqu'un te suit</>} />
-          <Toggle checked={notifMentions} onChange={setNotifMentions} label="Mentions @" description={<><AtSign className="w-3 h-3 inline mr-1 text-[#FFB800]" />Quand tu es mentionné</>} />
+          <Toggle checked={notifLikes} onChange={setNotifLikes} label="Likes sur mes publications" description="Quand quelqu'un like ton post" />
+          <Toggle checked={notifComments} onChange={setNotifComments} label="Commentaires" description="Quand quelqu'un commente" />
+          <Toggle checked={notifFollows} onChange={setNotifFollows} label="Nouveaux abonnés" description="Quand quelqu'un te suit" />
+          <Toggle checked={notifMentions} onChange={setNotifMentions} label="Mentions @" description="Quand tu es mentionné" />
           <Toggle checked={notifMessages} onChange={setNotifMessages} label="Messages directs" description="Nouveaux messages dans ta boîte" />
           <Toggle checked={notifMatchResults} onChange={setNotifMatchResults} label="Résultats de matchs" description="Scores et résultats de tes équipes favorites" />
         </div>

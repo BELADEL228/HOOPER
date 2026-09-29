@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { NewsArticle, SocialPost } from '../../types';
 import { apiUrl } from '../../services/api';
 import {
@@ -134,59 +134,51 @@ export const NewsGallery: React.FC = () => {
     }
   };
 
-  // Gallery items with both HD photos and videos
-  const galleryItems: GalleryMediaItem[] = [
-    {
-      id: 'g1',
-      type: 'VIDEO',
-      url: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop&q=80',
-      title: 'Résumé HD : Victoire Explosive vs Red Dragons (94-86)',
-      category: 'Matchs',
-      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      date: '29 Juillet 2026',
-    },
-    {
-      id: 'g2',
-      type: 'IMAGE',
-      url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=80',
-      title: 'Atelier Dunk Darius Jackson au-dessus du cercle',
-      category: 'Entraînements',
-      date: '28 Juillet 2026',
-    },
-    {
-      id: 'g3',
-      type: 'VIDEO',
-      url: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&auto=format&fit=crop&q=80',
-      title: 'Highlights : Les 3 Pointers Létaux de Marcus Vance',
-      category: 'Pro',
-      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      date: '25 Juillet 2026',
-    },
-    {
-      id: 'g4',
-      type: 'IMAGE',
-      url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=80',
-      title: 'Shoot-off Lucas Dubois lors de la séance matinale',
-      category: 'Matchs',
-      date: '24 Juillet 2026',
-    },
-    {
-      id: 'g5',
-      type: 'IMAGE',
-      url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80',
-      title: 'Séance Mixte Académie U18 & Groupe Pro',
-      category: 'Académie',
-      date: '22 Juillet 2026',
-    },
-    {
-      id: 'g6',
-      type: 'IMAGE',
-      url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80',
-      title: 'Gala Annuel des Partenaires & Sponsors',
-      category: 'Événements',
-      date: '20 Juillet 2026',
-    },
-  ];
+  // Helper pour extraire les embeds YouTube ou vidéo
+  const getEmbedUrl = (url: string): string | null => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname.includes('youtube.com')) {
+        const v = parsed.searchParams.get('v');
+        return v ? `https://www.youtube-nocookie.com/embed/${v}?autoplay=1` : null;
+      }
+      if (parsed.hostname.includes('youtu.be')) {
+        const id = parsed.pathname.slice(1);
+        return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1` : null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  };
+
+  // Dérivation dynamique des médias réels de la galerie depuis les publications
+  const galleryItems: GalleryMediaItem[] = useMemo(() => {
+    return socialPosts
+      .filter((p) => Boolean(p.mediaUrl))
+      .map((p) => {
+        const mediaUrl = p.mediaUrl!;
+        const isVideo =
+          /\.(mp4|webm|ogg|mov)$/i.test(mediaUrl) ||
+          mediaUrl.includes('youtube.com') ||
+          mediaUrl.includes('youtu.be');
+
+        return {
+          id: p.id,
+          type: isVideo ? 'VIDEO' : 'IMAGE',
+          url: mediaUrl,
+          videoUrl: isVideo ? mediaUrl : undefined,
+          title: p.content ? p.content.slice(0, 80) : 'Moment fort du club',
+          category:
+            p.authorRole === 'COACH'
+              ? 'Staff'
+              : p.authorRole === 'CLUB_ADMIN'
+              ? 'Club'
+              : 'Communauté',
+          date: p.timestamp,
+        };
+      });
+  }, [socialPosts]);
 
   return (
     <div className="space-y-8 pb-12">
@@ -399,44 +391,56 @@ export const NewsGallery: React.FC = () => {
 
       {/* 3. GALLERY PHOTOS & VIDEOS WITH LIGHTBOX */}
       {activeTab === 'GALLERY' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {galleryItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => {
-                if (item.type === 'VIDEO' && item.videoUrl) {
-                  setActiveMedia({ type: 'VIDEO', url: item.videoUrl, title: item.title });
-                } else {
-                  setActiveMedia({ type: 'IMAGE', url: item.url, title: item.title });
-                }
-              }}
-              className="glass-panel rounded-3xl overflow-hidden border border-white/10 group relative h-64 cursor-pointer bg-[#0A0C13] hover:border-[#B91C1C]/50 transition-all duration-300"
-            >
-              <img
-                src={item.url}
-                alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-transparent p-5 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#B91C1C] text-white text-[10px] font-extrabold uppercase">
-                    {item.category}
-                  </span>
-                  <span className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                    {item.type === 'VIDEO' ? <Play className="w-4 h-4 fill-current text-[#D97706]" /> : <Maximize2 className="w-4 h-4" />}
-                  </span>
-                </div>
+        galleryItems.length === 0 ? (
+          <div className="glass-panel p-12 text-center rounded-3xl border border-white/10 space-y-4 bg-[#0A0C13]">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mx-auto">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Galerie en cours de constitution</h3>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">
+              Les photos et vidéos officielles publiées par le staff et les joueurs apparaîtront automatiquement ici dès leur mise en ligne.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {galleryItems.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => {
+                  if (item.type === 'VIDEO' && item.videoUrl) {
+                    setActiveMedia({ type: 'VIDEO', url: item.videoUrl, title: item.title });
+                  } else {
+                    setActiveMedia({ type: 'IMAGE', url: item.url, title: item.title });
+                  }
+                }}
+                className="glass-panel rounded-3xl overflow-hidden border border-white/10 group relative h-64 cursor-pointer bg-[#0A0C13] hover:border-[#B91C1C]/50 transition-all duration-300"
+              >
+                <img
+                  src={item.url}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-transparent p-5 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#B91C1C] text-white text-[10px] font-extrabold uppercase">
+                      {item.category}
+                    </span>
+                    <span className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                      {item.type === 'VIDEO' ? <Play className="w-4 h-4 fill-current text-[#D97706]" /> : <Maximize2 className="w-4 h-4" />}
+                    </span>
+                  </div>
 
-                <div className="space-y-1">
-                  {item.date && <div className="text-[10px] text-slate-400">{item.date}</div>}
-                  <h4 className="text-sm font-extrabold text-white group-hover:text-[#D97706] transition-colors line-clamp-2">
-                    {item.title}
-                  </h4>
+                  <div className="space-y-1">
+                    {item.date && <div className="text-[10px] text-slate-400">{item.date}</div>}
+                    <h4 className="text-sm font-extrabold text-white group-hover:text-[#D97706] transition-colors line-clamp-2">
+                      {item.title}
+                    </h4>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
 
       {/* ============================================================== */}
@@ -587,13 +591,22 @@ export const NewsGallery: React.FC = () => {
 
             {activeMedia.type === 'VIDEO' ? (
               <div className="relative aspect-video w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl bg-black">
-                <iframe
-                  src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1"
-                  title={activeMedia.title}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                {getEmbedUrl(activeMedia.url) ? (
+                  <iframe
+                    src={getEmbedUrl(activeMedia.url)!}
+                    title={activeMedia.title}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={activeMedia.url}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain"
+                  />
+                )}
               </div>
             ) : (
               <div className="flex justify-center">

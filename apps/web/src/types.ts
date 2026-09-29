@@ -1,4 +1,4 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'TREASURER' | 'COACH' | 'PLAYER' | 'VISITOR' | 'SPONSOR' | 'ACADEMY_CANDIDATE' | 'CLUB_MANAGER';
+export type UserRole = 'SUPER_ADMIN' | 'CLUB_ADMIN' | 'TREASURER' | 'COACH' | 'PLAYER' | 'SPONSOR' | 'ACADEMY_CANDIDATE' | 'SUPPORTER' | 'VISITOR';
 
 export interface User {
   id: string;
@@ -272,6 +272,10 @@ export interface SocialPostComment {
   authorRole?: UserRole;
   text: string;
   timestamp: string;
+  parentId?: string;
+  likesCount?: number;
+  hasLiked?: boolean;
+  replies?: SocialPostComment[];
 }
 
 export type SocialComment = SocialPostComment;
@@ -297,6 +301,11 @@ export interface SocialPost {
   teamId?: string;
   teamName?: string;
   videoDuration?: string;
+  // ── Post au nom d'un club ──────────────────────────────────
+  clubId?: string | null;
+  clubName?: string | null;
+  clubLogo?: string | null;
+  clubPrimaryColor?: string | null;
 }
 
 export interface JerseyKitConfig {

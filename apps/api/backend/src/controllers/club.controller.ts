@@ -207,4 +207,37 @@ export class ClubController {
       return res.status(500).json({ error: 'Erreur serveur' });
     }
   }
+
+  /** ── GET /clubs/my-clubs ──────────────────────────────────────────────────
+   * Retourne les clubs dont l'utilisateur connecté est admin ou coach.
+   * Utilisé par le PostComposer pour la sélection "Poster au nom du club".
+   */
+  static async getMyClubs(req: Request, res: Response) {
+    const user = (req as any).user as AuthenticatedUser;
+    try {
+      // Cherche dans ClubMember les clubs où cet user a un rôle élevé
+      const memberships = await prisma.clubMember.findMany({
+        where: {
+          userId: user.id,
+          status: 'ACTIVE',
+          role: { in: ['ADMIN', 'COACH', 'CLUB_ADMIN'] },
+        },
+        include: {
+          club: { select: { id: true, name: true, logoUrl: true, primaryColor: true } },
+        },
+      });
+
+      const clubs = memberships.map((m) => ({
+        id: m.club.id,
+        name: m.club.name,
+        logoUrl: m.club.logoUrl,
+        primaryColor: m.club.primaryColor,
+      }));
+
+      return res.json(clubs);
+    } catch (error) {
+      console.error('[ClubController.getMyClubs]', error);
+      return res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
 }

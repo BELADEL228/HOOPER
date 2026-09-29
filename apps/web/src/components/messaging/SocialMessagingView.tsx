@@ -128,7 +128,6 @@ const QUICK_EMOJIS = ['🏀', '🔥', '👏', '👍', '❤️', '😂'];
 export const SocialMessagingView: React.FC<SocialMessagingViewProps> = ({
   currentRole: _currentRole,
   authUser,
-  onOpenProfile,
 }) => {
   const currentUserId = authUser?.id ?? '';
 
@@ -262,21 +261,25 @@ export const SocialMessagingView: React.FC<SocialMessagingViewProps> = ({
     socket.on('disconnect', handleDisconnect);
     setIsSocketConnected(socket.connected);
 
-    // Nouveau message
+    // ✅ Nouveau message
     const offNewMessage = socketService.onNewMessage((msg: SocketMessage) => {
       setMessages((prev) => {
         if (msg.conversationId !== activeConvId) return prev;
         if (prev.some((m) => m.id === msg.id)) return prev;
 
-        const withoutPending = prev.filter((m) => {
-          if (!m.isPending) return true;
-          return m.text !== msg.text;
-        });
-
-        return [
-          ...withoutPending,
-          normalizeMessage(msg, currentUserId),
-        ];
+        const isOwnMessage = msg.senderId === currentUserId;
+        if (isOwnMessage) {
+          const hasPending = prev.some(
+            (m) => m.isPending && m.text === msg.text && m.senderId === currentUserId
+          );
+          if (!hasPending) return prev;
+          return prev.map((m) =>
+            m.isPending && m.text === msg.text && m.senderId === currentUserId
+              ? normalizeMessage(msg, currentUserId)
+              : m
+          );
+        }
+        return [...prev, normalizeMessage(msg, currentUserId)];
       });
 
       setConversations((prev) =>
@@ -300,21 +303,29 @@ export const SocialMessagingView: React.FC<SocialMessagingViewProps> = ({
       }
     });
 
-    const offTyping = socketService.onUserTyping((data) => {
+    // ✅ Typing — on réutilise `socket` (plus de doublon)
+    const handleTypingStart = (data: {
+      conversationId: string;
+      userId: string;
+      userName: string;
+    }) => {
       if (data.conversationId !== activeConvId) return;
       if (data.userId === currentUserId) return;
       setTypingUser(data.userName);
-    });
+    };
 
-    const offStopTyping = socketService.onUserStopTyping((data) => {
+    const handleTypingStop = (data: { conversationId: string; userId: string }) => {
       if (data.conversationId !== activeConvId) return;
       setTypingUser(null);
-    });
+    };
+
+    socket.on('typing:start', handleTypingStart);
+    socket.on('typing:stop', handleTypingStop);
 
     return () => {
       offNewMessage();
-      offTyping();
-      offStopTyping();
+      socket.off('typing:start', handleTypingStart);
+      socket.off('typing:stop', handleTypingStop);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
     };
@@ -397,8 +408,13 @@ export const SocialMessagingView: React.FC<SocialMessagingViewProps> = ({
       }
     }
 
+    const msgText = text || (uploadedMediaUrl ? '📷 Photo' : '');
+    if (!msgText) return;
+
+    // ✅ Message optimiste local (affichage immédiat)
+    const tempId = `temp_${Date.now()}_${Math.random()}`;
     const tempMsg: ChatMessage = {
-      id: `temp_${Date.now()}`,
+      id: tempId,
       senderId: currentUserId,
       senderName: authUser?.name || 'Moi',
       senderAvatar:
@@ -406,7 +422,7 @@ export const SocialMessagingView: React.FC<SocialMessagingViewProps> = ({
         `https://ui-avatars.com/api/?name=${encodeURIComponent(
           authUser?.name || 'Moi'
         )}&background=1E293B&color=fff`,
-      text: text || (uploadedMediaUrl ? '📷 Photo' : ''),
+      text: msgText,
       mediaUrl: uploadedMediaUrl,
       timestamp: new Date().toLocaleTimeString('fr-FR', {
         hour: '2-digit',
@@ -420,9 +436,18 @@ export const SocialMessagingView: React.FC<SocialMessagingViewProps> = ({
     setMessages((prev) => [...prev, tempMsg]);
     setInputText('');
     removeAttachment();
+    socketService.stopTyping(activeConvId);
 
-    // Envoi par fallback REST avec mediaUrl si présent
-    if (token) {
+    // ✅ BUG 1 CORRIGÉ : on n'utilise QUE le socket OU QUE le REST — pas les deux.
+    // Le socket backend persiste en DB et broadcast aux participants.
+    // Le REST est utilisé uniquement si le socket n'est pas connecté (fallback).
+    if (socketService.isConnected()) {
+      // ── Envoi via Socket.IO (persist + broadcast côté serveur) ──────────
+      socketService.sendMessage(activeConvId, msgText);
+      // Le serveur va broadcaster via message:new à tous les participants.
+      // Notre listener ci-dessus remplacera le temp quand ce broadcast arrive.
+    } else if (token) {
+      // ── Fallback REST si socket déconnecté ──────────────────────────────
       try {
         const res = await fetch(apiUrl(`/conversations/${activeConvId}/messages`), {
           method: 'POST',
@@ -430,25 +455,25 @@ export const SocialMessagingView: React.FC<SocialMessagingViewProps> = ({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            text: text || (uploadedMediaUrl ? '📷 Photo' : ''),
-            mediaUrl: uploadedMediaUrl,
-          }),
+          body: JSON.stringify({ text: msgText, mediaUrl: uploadedMediaUrl }),
         });
 
         if (res.ok) {
           const savedMsg = await res.json();
+          // Remplace le message optimiste par le vrai
           setMessages((prev) =>
-            prev.map((m) => (m.id === tempMsg.id ? normalizeMessage(savedMsg, currentUserId) : m))
+            prev.map((m) => (m.id === tempId ? normalizeMessage(savedMsg, currentUserId) : m))
+          );
+        } else {
+          // Marquer le message comme en erreur
+          setMessages((prev) =>
+            prev.map((m) => m.id === tempId ? { ...m, isPending: false, text: `⚠️ Échec: ${m.text}` } : m)
           );
         }
       } catch (err) {
         console.warn('[Messaging] Erreur envoi REST:', err);
       }
     }
-
-    socketService.sendMessage(activeConvId, text || '📷 Photo');
-    socketService.stopTyping(activeConvId);
   };
 
   // ═══════════════════════════════════════════════════════════════════

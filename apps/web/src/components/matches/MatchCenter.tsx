@@ -21,6 +21,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { apiUrl } from '../../services/api';
+import { uploadMedia } from '../../services/uploadService';
 import { useClub } from '../../context/ClubContext';
 import { MatchRequestsPanel } from './MatchRequestsPanel';
 import { LiveScorePanel } from './LiveScorePanel';
@@ -29,15 +30,15 @@ interface MatchCenterProps {
   currentRole?: UserRole;
 }
 
-// Presets visuels proposés à l'admin pour choisir rapidement un logo adverse.
-// Il ne s'agit pas de données mockées : ce sont des options de formulaire.
+// Presets visuels proposés à l'admin pour choisir rapidement un logo adverse lors de la création de match.
 const PRESET_LOGOS = [
-  { name: 'Vipers Lyon (Image)', logo: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=150&auto=format&fit=crop&q=80' },
-  { name: 'Spartans Marseille (Image)', logo: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=150&auto=format&fit=crop&q=80' },
-  { name: 'Red Dragons Paris (Image)', logo: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?w=150&auto=format&fit=crop&q=80' },
-  { name: 'Eclairs (Emoji)', logo: '⚡' },
+  { name: 'Black Stars Cotonou', logo: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=150&auto=format&fit=crop&q=80' },
+  { name: 'Cobras Dakar', logo: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=150&auto=format&fit=crop&q=80' },
+  { name: 'Titans Accra', logo: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?w=150&auto=format&fit=crop&q=80' },
+  { name: 'Éclair (Emoji)', logo: '⚡' },
+  { name: 'Flamme (Emoji)', logo: '🔥' },
   { name: 'Bouclier (Emoji)', logo: '🛡️' },
-  { name: 'Dragon (Emoji)', logo: '🐉' },
+  { name: 'Étoile (Emoji)', logo: '⭐' },
 ];
 
 export const MatchCenter: React.FC<MatchCenterProps> = ({ currentRole = 'SUPER_ADMIN' }) => {
@@ -83,6 +84,27 @@ export const MatchCenter: React.FC<MatchCenterProps> = ({ currentRole = 'SUPER_A
     q4Team: 0,
     q4Opp: 0,
   });
+
+  const [uploadingMatchPhoto, setUploadingMatchPhoto] = useState(false);
+
+  const handleUploadMatchPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingMatchPhoto(true);
+      const res = await uploadMedia(file, 'firestone/matches');
+      const finalUrl = res.secure_url || res.url;
+      setFormData((prev) => {
+        const existing = prev.photosStr.trim();
+        const updated = existing ? `${existing}, ${finalUrl}` : finalUrl;
+        return { ...prev, photosStr: updated };
+      });
+    } catch (err: any) {
+      alert(err?.message || 'Erreur lors du téléversement de la photo sur Cloudinary.');
+    } finally {
+      setUploadingMatchPhoto(false);
+    }
+  };
 
   const isAuthorized = ['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH'].includes(currentRole);
 
@@ -1110,18 +1132,39 @@ export const MatchCenter: React.FC<MatchCenterProps> = ({ currentRole = 'SUPER_A
                     </div>
 
                     <div>
-                      <label className="text-slate-400 font-bold mb-1 flex items-center gap-1">
-                        <ImageIcon className="w-3.5 h-3.5 text-[#D97706]" /> URLs Galerie Photos
-                        (séparées par virgules) :
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-slate-400 font-bold flex items-center gap-1 text-xs">
+                          <ImageIcon className="w-3.5 h-3.5 text-[#D97706]" /> URLs Galerie Photos (Cloudinary CDN) :
+                        </label>
+                        <label className="text-[11px] text-amber-300 hover:text-amber-200 cursor-pointer flex items-center gap-1 font-semibold">
+                          {uploadingMatchPhoto ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <span>Téléversement CDN...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-3 h-3" />
+                              <span>Ajouter photo (Cloudinary)</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingMatchPhoto}
+                            onChange={handleUploadMatchPhoto}
+                          />
+                        </label>
+                      </div>
                       <input
                         type="text"
                         value={formData.photosStr}
                         onChange={(e) =>
                           setFormData({ ...formData, photosStr: e.target.value })
                         }
-                        placeholder="https://...1, https://...2"
-                        className="w-full bg-[#090A0F] border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-[#B91C1C]"
+                        placeholder="https://...1, https://...2 (ou téléversez via le bouton ci-dessus)"
+                        className="w-full bg-[#090A0F] border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-[#B91C1C] text-xs"
                       />
                     </div>
                   </div>

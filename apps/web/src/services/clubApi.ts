@@ -468,6 +468,28 @@ export const clubApi = {
       stats: best.stats,
     };
   },
+
+  /** ── Récupère les clubs dont l'utilisateur connecté est admin/coach ── */
+  async getMyClubs(): Promise<{ id: string; name: string; logoUrl?: string | null }[]> {
+    try {
+      const session = JSON.parse(localStorage.getItem('firestone-auth') || '{}');
+      const token = session?.token;
+      if (!token) return [];
+
+      const res = await fetch(`${API_BASE_URL}/clubs/my-clubs`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (Array.isArray(data) ? data : data.clubs ?? []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        logoUrl: c.logoUrl ?? null,
+      }));
+    } catch {
+      return [];
+    }
+  },
 };
 
 export default clubApi;

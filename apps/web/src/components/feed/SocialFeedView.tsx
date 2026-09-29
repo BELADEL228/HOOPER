@@ -97,7 +97,7 @@ export const SocialFeedView: React.FC<SocialFeedViewProps> = ({
     void loadFeedData();
   };
   const handleStatusViewed = useCallback(
-    (statusId: string, groupIndex: number) => {
+    (_statusId: string, groupIndex: number) => {
       setStoryGroups((prevGroups) =>
         prevGroups.map((group, index) =>
           index === groupIndex
@@ -167,6 +167,7 @@ export const SocialFeedView: React.FC<SocialFeedViewProps> = ({
           onPostCreated={handlePostCreated}
           onOpenAuth={onOpenAuth}
           isAuthenticated={isAuthenticated}
+          authUser={authUser}
         />
       </section>
 
@@ -237,9 +238,7 @@ export const SocialFeedView: React.FC<SocialFeedViewProps> = ({
         onClose={() => setIsCreateModalOpen(false)}
         onPostCreated={handlePostCreated}
         onStoryCreated={handleStoryCreated}
-        isClubManager={
-          currentRole === 'CLUB_MANAGER' || currentRole === 'ADMIN'
-        }
+        isClubManager={currentRole === 'CLUB_ADMIN'}
       />
     </div>
   );

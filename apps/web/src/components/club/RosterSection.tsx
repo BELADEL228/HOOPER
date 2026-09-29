@@ -94,7 +94,8 @@ export const RosterSection: React.FC<RosterSectionProps> = ({ currentRole = 'SUP
     setRemovingBg(true);
     setRemoveBgError(null);
     try {
-      const response = await fetch('http://localhost:5050/remove-bg', {
+      const removeBgUrl = import.meta.env.VITE_REMOVE_BG_URL || 'http://localhost:5050/remove-bg';
+      const response = await fetch(removeBgUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: photoUrl }),
@@ -107,7 +108,7 @@ export const RosterSection: React.FC<RosterSectionProps> = ({ currentRole = 'SUP
         setRemoveBgError(data.error || 'Erreur inconnue lors du traitement.');
       }
     } catch {
-      setRemoveBgError('Serveur de suppression de fond inaccessible. Lancez remove_bg_server.py d\'abord.');
+      setRemoveBgError('Serveur de suppression de fond inaccessible.');
     } finally {
       setRemovingBg(false);
     }
@@ -116,32 +117,32 @@ export const RosterSection: React.FC<RosterSectionProps> = ({ currentRole = 'SUP
   // Full Form Data for Player
   const [formData, setFormData] = useState({
     name: '',
-    number: 7,
+    number: 1,
     position: 'Meneur' as 'Meneur' | 'Arrière' | 'Ailier' | 'Ailier Fort' | 'Pivot',
     category: 'SENIOR' as PlayerCategory,
     gender: 'MASCULIN' as PlayerGender,
-    height: '1m90',
-    weight: '85 kg',
-    age: 22,
-    photo: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&auto=format&fit=crop&q=80',
+    height: '',
+    weight: '',
+    age: 20,
+    photo: '',
     bio: '',
-    experienceYears: 3,
-    ppg: 18.5,
-    rpg: 5.4,
-    apg: 6.2,
-    spg: 1.8,
-    bpg: 0.6,
-    fgPct: 49.0,
-    threePtPct: 40.5,
-    ftPct: 84.0,
-    efficiency: 22.0,
-    achievementsStr: 'MVP Tournoi, Sélection All-Star',
-    shooting: 88,
-    passing: 90,
-    defense: 84,
-    athleticism: 88,
-    iq: 90,
-    rebounding: 72
+    experienceYears: 1,
+    ppg: 0,
+    rpg: 0,
+    apg: 0,
+    spg: 0,
+    bpg: 0,
+    fgPct: 0,
+    threePtPct: 0,
+    ftPct: 0,
+    efficiency: 0,
+    achievementsStr: '',
+    shooting: 70,
+    passing: 70,
+    defense: 70,
+    athleticism: 70,
+    iq: 70,
+    rebounding: 70
   });
 
   // Filtering Logic (Positions, Categories, Genders)
@@ -171,31 +172,31 @@ export const RosterSection: React.FC<RosterSectionProps> = ({ currentRole = 'SUP
     setEditingPlayerId(null);
     setFormData({
       name: '',
-      number: 10,
+      number: 1,
       position: 'Meneur',
       category: 'SENIOR',
       gender: 'MASCULIN',
-      height: '1m88',
-      weight: '82 kg',
-      age: 21,
-      photo: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&auto=format&fit=crop&q=80',
+      height: '',
+      weight: '',
+      age: 20,
+      photo: '',
       bio: '',
-      experienceYears: 3,
-      ppg: 16.5,
-      rpg: 4.8,
-      apg: 5.2,
-      spg: 1.5,
-      bpg: 0.4,
-      fgPct: 48.5,
-      threePtPct: 39.0,
-      ftPct: 82.0,
-      efficiency: 20.0,
+      experienceYears: 1,
+      ppg: 0,
+      rpg: 0,
+      apg: 0,
+      spg: 0,
+      bpg: 0,
+      fgPct: 0,
+      threePtPct: 0,
+      ftPct: 0,
+      efficiency: 0,
       achievementsStr: '',
-      shooting: 85,
-      passing: 84,
-      defense: 82,
-      athleticism: 86,
-      iq: 85,
+      shooting: 70,
+      passing: 70,
+      defense: 70,
+      athleticism: 70,
+      iq: 70,
       rebounding: 70
     });
     setShowAdminModal(true);

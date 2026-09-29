@@ -59,6 +59,11 @@ export const socialApi = {
       mediaUrl: p.mediaUrl || undefined,
       likesCount: p.likesCount ?? 0,
       hasLiked: Boolean(p.hasLiked),
+      // ── Infos club (post au nom du club) ──────────────────────
+      clubId: p.clubId || null,
+      clubName: p.clubName || null,
+      clubLogo: p.clubLogo || null,
+      clubPrimaryColor: p.clubPrimaryColor || null,
       comments: (p.comments || []).map(
         (c: any): SocialComment => ({
           id: c.id,
@@ -116,6 +121,11 @@ export const socialApi = {
       hasLiked: false,
       comments: [],
       reactions: [],
+      // ── Infos club (post au nom du club) ──────────────────────
+      clubId: p.clubId || payload.clubId || null,
+      clubName: p.clubName || null,
+      clubLogo: p.clubLogo || null,
+      clubPrimaryColor: p.clubPrimaryColor || null,
     };
   },
 

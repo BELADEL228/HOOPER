@@ -10,9 +10,17 @@
     "strict": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node"],
-    "lib": ["ES2020"]
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "ES2020"
+    ]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/__tests__"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/__tests__"
+  ]
 }

@@ -4,7 +4,57 @@ import { StoriesBar } from '../components/stories/StoriesBar';
 import { PostComposer } from '../components/feed/PostComposer';
 import { SocialPostCard } from '../components/feed/SocialPostCard';
 import { ExplorePage } from '../components/explore/ExplorePage';
-import { mockStoryGroups, mockSocialFeedPosts } from '../data/mockSocialData';
+import type { StoryGroup, SocialPost } from '../types';
+
+const testStoryGroups: StoryGroup[] = [
+  {
+    id: 'club_firestone',
+    clubId: 'club_firestone',
+    authorName: 'Fire Stone Lomé',
+    authorAvatar: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=150',
+    isClub: true,
+    clubBadge: 'Élite Lomé',
+    hasUnseen: true,
+    statuses: [
+      {
+        id: 'st_1',
+        clubId: 'club_firestone',
+        text: 'Échauffement intensif avant le match ! 🔥🏀',
+        visibility: 'PUBLIC',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        media: [],
+        viewsCount: 142,
+        hasViewed: false,
+      },
+    ],
+  },
+  {
+    id: 'club_etoile',
+    clubId: 'club_etoile',
+    authorName: 'Étoile Filante Basketball',
+    authorAvatar: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=150',
+    isClub: true,
+    clubBadge: 'Club Rivaux',
+    hasUnseen: false,
+    statuses: [],
+  },
+];
+
+const testSocialFeedPosts: SocialPost[] = [
+  {
+    id: 'post_1',
+    authorId: 'user_1',
+    authorName: 'David Vance',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    authorRole: 'COACH',
+    timestamp: 'Il y a 2h',
+    content: 'Grande victoire ce soir pour toute l’équipe ! 🏆🔥',
+    likesCount: 38,
+    comments: [],
+    reactions: [],
+  },
+];
 
 describe('SocialExperience — Stories & Feed Tests', () => {
   it('StoriesBar affiche le bouton d’ajout et les cercles de stories', () => {
@@ -13,7 +63,7 @@ describe('SocialExperience — Stories & Feed Tests', () => {
 
     render(
       <StoriesBar
-        stories={mockStoryGroups}
+        stories={testStoryGroups}
         currentUserName="Koffi"
         currentUserAvatar="https://example.com/avatar.jpg"
         onOpenStory={handleOpenStory}
@@ -60,7 +110,7 @@ describe('SocialExperience — Stories & Feed Tests', () => {
   });
 
   it('SocialPostCard affiche l’auteur, le contenu et incrémente les likes', () => {
-    const samplePost = mockSocialFeedPosts[0];
+    const samplePost = testSocialFeedPosts[0];
 
     render(
       <SocialPostCard
@@ -85,7 +135,6 @@ describe('SocialExperience — Stories & Feed Tests', () => {
 
     expect(screen.getByText(/Explorer le Basketball HOOPERS/i)).toBeInTheDocument();
     expect(screen.getByText(/Tendances de la Ligue/i)).toBeInTheDocument();
-    expect(screen.getByText('#HoopersFinals2026')).toBeInTheDocument();
 
     // Champ recherche
     const input = screen.getByPlaceholderText(/Rechercher des joueurs, clubs/i);

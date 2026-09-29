@@ -28,6 +28,8 @@ model User {
   player           PlayerProfile?
   transactions     FinancialTransaction[]
   clubMemberships  ClubMember[]
+  // ✅ NOUVEAU : relation inverse pour les approbations de ClubMember
+  clubMembershipsApproved ClubMember[] @relation("ClubMemberApprover")
   teamMemberships  TeamMember[]
   posts            Post[]
   comments         Comment[]
@@ -51,6 +53,8 @@ model User {
   statusMentions    StatusMention[]
   statusAudiences   StatusAudience[]
   clubFollows       ClubFollow[]
+  liveSessionsHosted LiveSession[] @relation("LiveHost")
+  liveComments      LiveComment[] @relation("LiveCommentAuthor")
 }
 
 model Club {
@@ -87,23 +91,46 @@ model Club {
   statuses       Status[]
   statusMentions StatusMention[]
   followers      ClubFollow[]
+  liveSessions   LiveSession[]
 
   @@index([city])
   @@index([country])
 }
 
+// ─── ClubMember avec workflow d'approbation ───────────────────────────────────
 model ClubMember {
   id       String   @id @default(uuid())
   clubId   String
   userId   String
-  role     String   @default("MEMBER")
-  joinedAt DateTime @default(now())
 
-  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Rôle DANS le club (scope club)
+  // Values: PRESIDENT, CLUB_ADMIN, TREASURER, COACH, PLAYER, MEMBER
+  role     String   @default("MEMBER")
+
+  // ✅ Status du workflow d'approbation
+  // Values: PENDING | ACTIVE | REJECTED | SUSPENDED
+  status   String   @default("PENDING")
+
+  // ✅ Metadata d'approbation
+  requestedAt     DateTime  @default(now())
+  approvedAt      DateTime?
+  approvedById    String?
+  rejectionReason String?
+
+  // Date d'adhésion officielle (quand status devient ACTIVE)
+  joinedAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  club       Club  @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvedBy User? @relation("ClubMemberApprover", fields: [approvedById], references: [id], onDelete: SetNull)
 
   @@unique([clubId, userId])
   @@index([userId])
+  @@index([clubId, status])
+  @@index([approvedById])
 }
 
 model Team {
@@ -790,4 +817,68 @@ model ClubFollow {
 
   @@unique([userId, clubId])
   @@index([clubId])
+}
+
+// ─── LIVE CENTER ─────────────────────────────────────────────────────────────
+// Un live = une session vidéo temps réel (WebRTC + HLS)
+// Status: SCHEDULED | LIVE | ENDED
+
+model LiveSession {
+  id            String    @id @default(uuid())
+
+  // Qui stream
+  hostId        String
+  host          User      @relation("LiveHost", fields: [hostId], references: [id], onDelete: Cascade)
+
+  // Au nom d'un club (optionnel)
+  clubId        String?
+  club          Club?     @relation(fields: [clubId], references: [id], onDelete: SetNull)
+
+  title         String
+  description   String?
+  category      String    @default("SPORT")  // SPORT | MATCH | TRAINING | EVENT | OTHER
+  thumbnailUrl  String?
+
+  // État du live
+  status        String    @default("SCHEDULED")  // SCHEDULED | LIVE | ENDED
+  startedAt     DateTime?
+  endedAt       DateTime?
+  scheduledAt   DateTime?
+
+  // Stats
+  peakViewers   Int       @default(0)
+  totalViews    Int       @default(0)
+
+  // Diffusion
+  streamKey     String    @unique @default(uuid())  // Clé privée RTMP/WebRTC
+  hlsUrl        String?   // URL publique HLS une fois le live démarré
+  playbackUrl   String?   // URL de rediffusion après le live
+
+  // Options
+  isRecorded    Boolean   @default(true)
+  isChatEnabled Boolean   @default(true)
+  visibility    String    @default("PUBLIC")  // PUBLIC | CLUB_ONLY | PRIVATE
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  comments      LiveComment[]
+
+  @@index([hostId])
+  @@index([clubId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model LiveComment {
+  id            String       @id @default(uuid())
+  sessionId     String
+  session       LiveSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  authorId      String
+  author        User         @relation("LiveCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  text          String
+  createdAt     DateTime     @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
 }

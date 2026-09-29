@@ -24,15 +24,6 @@ interface ExplorePageProps {
   currentRole?: UserRole;
 }
 
-interface ApiPlayer {
-  id: string;
-  name?: string | null;
-  position?: string;
-  avatarUrl?: string | null;
-  club?: { name?: string | null } | null;
-  seasonStats?: { ppg?: number } | null;
-}
-
 interface ApiMatch {
   id: string;
   opponent: string;
@@ -56,6 +47,8 @@ interface TrendingTopic {
   postsCount: string;
   category: string;
 }
+
+
 
 // Résultats de la recherche globale
 interface GlobalSearchResults {
@@ -196,14 +189,15 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           const matches = (typeof p?.content === 'string' ? p.content : '').match(/#\w+/g) || [];
           matches.forEach((t) => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
         });
-        setTrendingTopics(
-          Object.entries(tagCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 6)
-            .map(([tag, count]) => ({ tag, postsCount: `${count} post${count > 1 ? 's' : ''}`, category: 'Basketball' }))
-        );
+        const extracted = Object.entries(tagCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([tag, count]) => ({ tag, postsCount: `${count} post${count > 1 ? 's' : ''}`, category: 'Basketball' }));
+        if (extracted.length > 0) {
+          setTrendingTopics(extracted);
+        }
       })
-      .catch(() => setTrendingTopics([]));
+      .catch(() => {});
   }, []);
 
   // ── Recherche globale (debounce 300ms) ──────────────────────────────────
@@ -252,6 +246,14 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
 
+      {/* ── En-tête Explorer le Basketball HOOPERS ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-white">Explorer le Basketball HOOPERS</h2>
+          <p className="text-xs text-slate-400">Découvrez les clubs, joueurs et actualités de la ligue.</p>
+        </div>
+      </div>
+
       {/* ── Bandeau CTA invité ── */}
       {!isAuthenticated && (
         <div className="social-card-border rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl bg-gradient-to-r from-[#FF2A3B]/10 via-[#0D1018] to-[#FFB800]/10">
@@ -286,7 +288,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Joueurs, clubs, posts, hashtags…"
+            placeholder="Rechercher des joueurs, clubs, posts, hashtags…"
             className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/10 text-white placeholder-slate-400 border border-white/10 focus:outline-none focus:border-[#FF2A3B] text-sm transition-colors"
           />
         </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Player, UserRole } from '../../types';
-import { Award, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { apiUrl } from '../../services/api';
 
 interface Badge { id: string; code: string; name: string; description: string; icon: string; color: string; _count?: { holders: number } }

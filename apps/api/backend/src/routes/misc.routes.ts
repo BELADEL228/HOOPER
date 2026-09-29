@@ -19,14 +19,14 @@ miscRouter.post('/tournaments', requireAuth, requireRole(['SUPER_ADMIN']), MiscC
 
 // Recrutement & Détection
 miscRouter.get('/recruitment', MiscController.listRecruitment);
-miscRouter.post('/recruitment', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireTeamManager, MiscController.createRecruitment);
+miscRouter.post('/recruitment', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireTeamManager, MiscController.createRecruitment);
 miscRouter.post('/recruitment/:id/apply', requireAuth, MiscController.applyRecruitment);
-miscRouter.patch('/recruitment/applications/:id', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH']), MiscController.updateApplicationStatus);
+miscRouter.patch('/recruitment/applications/:id', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH']), MiscController.updateApplicationStatus);
 
 // Scouting
-miscRouter.get('/scouting/shortlist', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH']), MiscController.listScoutShortlist);
-miscRouter.post('/scouting/shortlist', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH']), MiscController.addToScoutShortlist);
-miscRouter.delete('/scouting/shortlist/:playerProfileId', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH']), MiscController.removeFromScoutShortlist);
+miscRouter.get('/scouting/shortlist', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH']), MiscController.listScoutShortlist);
+miscRouter.post('/scouting/shortlist', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH']), MiscController.addToScoutShortlist);
+miscRouter.delete('/scouting/shortlist/:playerProfileId', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH']), MiscController.removeFromScoutShortlist);
 
 // Badges
 miscRouter.get('/badges', MiscController.listBadges);

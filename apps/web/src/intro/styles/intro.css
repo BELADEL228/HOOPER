@@ -1,0 +1,572 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  CONTENEUR RACINE
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-intro {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: #050505;
+}
+
+.hoopers-canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    background: #050505;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  ÉCRAN DE DÉMARRAGE (avant que l'utilisateur clique)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-start-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #0a0a0e 0%, #050505 70%);
+    animation: hoopersFadeIn 0.6s ease-out;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+}
+
+.hoopers-start-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+    padding: 24px;
+}
+
+.hoopers-start-title {
+    margin: 0;
+    font-size: clamp(2.8rem, 8vw, 5rem);
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    background: linear-gradient(180deg, #ffffff 0%, #ffe1b4 60%, #ffb862 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 40px rgba(255, 184, 0, 0.25);
+}
+
+.hoopers-start-subtitle {
+    margin: 0 0 24px 0;
+    font-size: clamp(0.72rem, 1.4vw, 0.9rem);
+    font-weight: 500;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.hoopers-start-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 40px;
+    font-family: inherit;
+    font-size: clamp(0.72rem, 1.1vw, 0.85rem);
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: linear-gradient(135deg, #ff2a3b 0%, #ffb800 100%);
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    box-shadow:
+        0 10px 40px rgba(255, 42, 59, 0.4),
+        0 0 0 0 rgba(255, 184, 0, 0);
+    transition:
+        transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: hoopersButtonPulse 2.4s ease-in-out infinite;
+}
+
+.hoopers-start-button:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow:
+        0 15px 50px rgba(255, 42, 59, 0.6),
+        0 0 0 8px rgba(255, 184, 0, 0.08);
+}
+
+.hoopers-start-button:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.hoopers-start-button:focus-visible {
+    outline: 2px solid #ffb800;
+    outline-offset: 4px;
+}
+
+.hoopers-start-arrow {
+    font-size: 1.4em;
+    line-height: 0.8;
+    opacity: 0.85;
+    transition: transform 0.28s ease;
+}
+
+.hoopers-start-button:hover .hoopers-start-arrow {
+    transform: translateX(4px);
+}
+
+@keyframes hoopersFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes hoopersButtonPulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 10px 40px rgba(255, 42, 59, 0.4),
+            0 0 0 0 rgba(255, 184, 0, 0);
+    }
+
+    50% {
+        box-shadow:
+            0 15px 50px rgba(255, 184, 0, 0.5),
+            0 0 0 10px rgba(255, 184, 0, 0.06);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  LOADER
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: radial-gradient(ellipse at center, #0a0a0e 0%, #050505 70%);
+    transition: opacity 600ms ease-out;
+    opacity: 1;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+}
+
+.hoopers-loader--out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hoopers-loader__spinner {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hoopers-loader__svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.hoopers-loader__arc {
+    transform-origin: 50% 50%;
+    animation: hoopersSpin 1.2s cubic-bezier(0.6, 0.15, 0.4, 0.85) infinite;
+    filter: drop-shadow(0 0 8px rgba(255, 184, 0, 0.5));
+}
+
+.hoopers-loader__arc--reverse {
+    animation: hoopersSpinReverse 1.8s cubic-bezier(0.6, 0.15, 0.4, 0.85) infinite;
+    filter: drop-shadow(0 0 8px rgba(255, 42, 59, 0.5));
+}
+
+@keyframes hoopersSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes hoopersSpinReverse {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
+.hoopers-loader__logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 12px rgba(255, 184, 0, 0.35));
+    animation: hoopersLogoPulse 2s ease-in-out infinite;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+@keyframes hoopersLogoPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+
+    50% {
+        transform: scale(1.08);
+        opacity: 1;
+    }
+}
+
+.hoopers-loader__track {
+    width: min(260px, 60vw);
+    height: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    border-radius: 2px;
+    position: relative;
+}
+
+.hoopers-loader__bar {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #FF2A3B 0%, #FFB800 50%, #FF2A3B 100%);
+    transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform 120ms linear;
+    box-shadow: 0 0 10px rgba(255, 184, 0, 0.6);
+}
+
+.hoopers-loader__meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.hoopers-loader__label {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.hoopers-loader__pct {
+    color: #FFB800;
+    font-variant-numeric: tabular-nums;
+    min-width: 42px;
+    text-align: right;
+    text-shadow: 0 0 8px rgba(255, 184, 0, 0.45);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  LOGO FINAL
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-logo-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 24px;
+    z-index: 10;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    text-align: center;
+    pointer-events: none;
+}
+
+.hoopers-logo-frame {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.35));
+    border: 1.5px solid rgba(255, 255, 255, 0.18);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        inset 0 0 24px rgba(255, 255, 255, 0.05);
+    will-change: transform, opacity;
+}
+
+.hoopers-logo-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 16px;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.hoopers-logo-title {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 4.2rem);
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    color: #ffffff;
+    text-shadow:
+        0 0 24px rgba(255, 184, 0, 0.35),
+        0 0 60px rgba(255, 42, 59, 0.18);
+    will-change: transform, opacity;
+}
+
+.hoopers-logo-divider {
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #FFB800, #FF2A3B, #FFB800, transparent);
+    transform-origin: center;
+    will-change: transform, opacity;
+    box-shadow: 0 0 12px rgba(255, 184, 0, 0.5);
+}
+
+.hoopers-logo-slogan {
+    margin: 0;
+    font-size: clamp(0.85rem, 1.6vw, 1.1rem);
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+    text-shadow: 0 0 12px rgba(255, 184, 0, 0.25);
+    will-change: transform, opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  RESPONSIVE
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+    .hoopers-logo-frame {
+        width: 112px;
+        height: 112px;
+    }
+}
+
+@media (max-width: 768px) {
+    .hoopers-start-title {
+        letter-spacing: 0.18em;
+    }
+
+    .hoopers-start-subtitle {
+        letter-spacing: 0.34em;
+    }
+
+    .hoopers-start-button {
+        padding: 16px 32px;
+        letter-spacing: 0.18em;
+    }
+
+    .hoopers-loader__spinner {
+        width: 92px;
+        height: 92px;
+    }
+
+    .hoopers-loader__logo {
+        width: 38px;
+        height: 38px;
+    }
+
+    .hoopers-loader__track {
+        width: 200px;
+    }
+
+    .hoopers-loader__meta {
+        font-size: 0.62rem;
+        letter-spacing: 0.24em;
+    }
+
+    .hoopers-logo-overlay {
+        gap: 18px;
+        padding: 20px;
+    }
+
+    .hoopers-logo-frame {
+        width: 96px;
+        height: 96px;
+    }
+
+    .hoopers-logo-image {
+        padding: 12px;
+    }
+
+    .hoopers-logo-divider {
+        width: 90px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hoopers-start-title {
+        font-size: clamp(2.2rem, 12vw, 3.4rem);
+    }
+
+    .hoopers-start-button {
+        padding: 14px 26px;
+        font-size: 0.7rem;
+        gap: 8px;
+    }
+
+    .hoopers-loader__spinner {
+        width: 76px;
+        height: 76px;
+    }
+
+    .hoopers-loader__logo {
+        width: 32px;
+        height: 32px;
+    }
+
+    .hoopers-loader__track {
+        width: 160px;
+    }
+
+    .hoopers-loader__meta {
+        font-size: 0.56rem;
+    }
+
+    .hoopers-logo-frame {
+        width: 76px;
+        height: 76px;
+    }
+
+    .hoopers-logo-image {
+        padding: 10px;
+    }
+
+    .hoopers-logo-divider {
+        width: 70px;
+    }
+
+    .hoopers-logo-slogan {
+        letter-spacing: 0.18em;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  ACCESSIBILITÉ
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .hoopers-loader__arc,
+    .hoopers-loader__arc--reverse,
+    .hoopers-loader__logo,
+    .hoopers-start-button {
+        animation: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  QUICK LOGO INTRO — visite répétée
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-quick-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px;
+    background: #0a0a0e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    text-align: center;
+    transition: opacity 150ms linear;
+}
+
+.hoopers-quick-intro__frame {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #14141a;
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+}
+
+.hoopers-quick-intro__logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 14px;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.hoopers-quick-intro__title {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 3.6rem);
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    color: #ffffff;
+}
+
+.hoopers-quick-intro__divider {
+    width: 96px;
+    height: 2px;
+    background: #ff2a3b;
+    transform-origin: center;
+}
+
+.hoopers-quick-intro__slogan {
+    margin: 0;
+    font-size: clamp(0.72rem, 1.4vw, 0.9rem);
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 480px) {
+    .hoopers-quick-intro__frame {
+        width: 88px;
+        height: 88px;
+    }
+
+    .hoopers-quick-intro__logo {
+        padding: 10px;
+    }
+
+    .hoopers-quick-intro__divider {
+        width: 72px;
+    }
+
+    .hoopers-quick-intro__slogan {
+        letter-spacing: 0.22em;
+    }
+}

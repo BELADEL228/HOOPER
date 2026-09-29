@@ -59,9 +59,11 @@ const getRoleShortLabel = (role?: string): string => {
       return 'Sponsor';
     case 'ACADEMY_CANDIDATE':
       return 'Candidat';
-    case 'ADMIN':
+    case 'CLUB_ADMIN':
     case 'SUPER_ADMIN':
       return 'Admin';
+    case 'SUPPORTER':
+      return 'Supporter';
     case 'VISITOR':
     default:
       return 'Fan';
@@ -424,7 +426,7 @@ export const AccountSettings: React.FC<AccountSettingsProps> = ({
               rows={4}
               value={bioText}
               onChange={(e) => setBioText(e.target.value)}
-              placeholder="Ex: Passionné de basket, meneur de jeu au Fire Stone Lomé depuis 2023..."
+              placeholder="Ex: Passionné de basket, meneur de jeu depuis plusieurs années..."
               maxLength={280}
               className="w-full bg-[#090A0F] border border-white/10 rounded-xl p-3 text-xs text-white leading-relaxed focus:outline-none focus:border-[#B91C1C] resize-none"
             />

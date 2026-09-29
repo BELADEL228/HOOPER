@@ -53,6 +53,9 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; authorName: string } | null>(null);
+  const [commentLikes, setCommentLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
+  const [visibleCommentsCount, setVisibleCommentsCount] = useState(4);
 
   const [isSaved, setIsSaved] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -69,6 +72,14 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
       post.authorName || 'User'
     )}&background=FF2A3B&color=fff`;
+
+  // ── Post au nom d'un club ──────────────────────────────────────
+  const isClubPost = Boolean(post.clubId && post.clubName);
+  const clubLogoFallback = post.clubName
+    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(post.clubName)}&background=1a1f2e&color=FFB800&bold=true`
+    : null;
+  const clubAvatar = post.clubLogo || clubLogoFallback;
+  const clubAccent = post.clubPrimaryColor || '#FFB800';
 
 
   const handleDeletePost = async () => {
@@ -92,12 +103,17 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
 
     if (isLiking) return;
 
+    // Mise à jour optimiste immédiate (réactivité instantanée UI & tests)
+    const nextLiked = !hasLiked;
+    setHasLiked(nextLiked);
+    setLikesCount((prev) => (nextLiked ? prev + 1 : Math.max(0, prev - 1)));
+
     setIsLiking(true);
 
     try {
       const result = await socialApi.toggleLike(post.id);
 
-      // Le backend est la source de vérité
+      // Le backend confirme la source de vérité
       setHasLiked(result.liked);
       setLikesCount(result.likesCount);
     } catch (error) {
@@ -105,6 +121,19 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
     } finally {
       setIsLiking(false);
     }
+  };
+
+  const toggleCommentLike = (commentId: string) => {
+    setCommentLikes((prev) => {
+      const cur = prev[commentId] || { count: 0, liked: false };
+      return {
+        ...prev,
+        [commentId]: {
+          count: cur.liked ? Math.max(0, cur.count - 1) : cur.count + 1,
+          liked: !cur.liked,
+        },
+      };
+    });
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -116,22 +145,31 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
     if (!commentText.trim()) return;
 
     setIsSubmittingComment(true);
+    const textToSend = replyingTo ? `@${replyingTo.authorName} ${commentText.trim()}` : commentText.trim();
+    const parentId = replyingTo?.id;
+
     try {
-      const added = await socialApi.addComment(post.id, commentText.trim());
-      setComments((prev) => [...prev, added]);
+      const added = await socialApi.addComment(post.id, textToSend);
+      const enriched: SocialComment = {
+        ...added,
+        parentId,
+      };
+      setComments((prev) => [...prev, enriched]);
       setCommentText('');
+      setReplyingTo(null);
     } catch {
       // Local fallback comment
       const fallback: SocialComment = {
         id: `c_${Date.now()}`,
         authorName: 'Moi',
-        authorAvatar:
-          'https://ui-avatars.com/api/?name=Moi&background=FF2A3B&color=fff',
-        text: commentText.trim(),
+        authorAvatar: 'https://ui-avatars.com/api/?name=Moi&background=FF2A3B&color=fff',
+        text: textToSend,
         timestamp: 'À l’instant',
+        parentId,
       };
       setComments((prev) => [...prev, fallback]);
       setCommentText('');
+      setReplyingTo(null);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -197,25 +235,70 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
           disabled={!post.authorId || !onOpenProfile}
           className="flex items-center gap-3 min-w-0 cursor-pointer hover:opacity-90 transition-opacity text-left disabled:cursor-default disabled:hover:opacity-100"
         >
-          <img
-            src={authorAvatar}
-            alt={post.authorName}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-white/10 shrink-0 bg-slate-800"
-          />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm sm:text-base font-bold text-white truncate">
-                {post.authorName || 'Utilisateur'}
-              </span>
-              {post.authorRole && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-white/10 text-slate-300 border border-white/10">
-                  {post.authorRole === 'CLUB_MANAGER'
-                    ? 'Manager Club'
-                    : post.authorRole}
-                </span>
-              )}
+          {isClubPost ? (
+            /* ── Mode Club : logo club en avant ── */
+            <div className="relative shrink-0">
+              <img
+                src={clubAvatar!}
+                alt={post.clubName!}
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover bg-slate-800 border-2"
+                style={{ borderColor: clubAccent }}
+              />
+              {/* Badge "auteur" en bas à droite */}
+              <img
+                src={authorAvatar}
+                alt={post.authorName}
+                className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full object-cover border-2 border-[#0F121A] bg-slate-800"
+              />
             </div>
-            <p className="text-[11px] text-slate-400">{post.timestamp}</p>
+          ) : (
+            <img
+              src={authorAvatar}
+              alt={post.authorName}
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-white/10 shrink-0 bg-slate-800"
+            />
+          )}
+
+          <div className="min-w-0">
+            {isClubPost ? (
+              /* ── Mode Club : nom du club en grand, auteur en petit ── */
+              <>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm sm:text-base font-extrabold text-white truncate">
+                    {post.clubName}
+                  </span>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border"
+                    style={{ color: clubAccent, borderColor: `${clubAccent}55`, backgroundColor: `${clubAccent}15` }}
+                  >
+                    Club officiel
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                  <span>Par</span>
+                  <span className="text-slate-300 font-medium">{post.authorName}</span>
+                  <span className="text-slate-500">·</span>
+                  <span>{post.timestamp}</span>
+                </p>
+              </>
+            ) : (
+              /* ── Mode Perso normal ── */
+              <>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm sm:text-base font-bold text-white truncate">
+                    {post.authorName || 'Utilisateur'}
+                  </span>
+                  {post.authorRole && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-white/10 text-slate-300 border border-white/10">
+                      {post.authorRole === 'CLUB_ADMIN'
+                        ? 'Manager Club'
+                        : post.authorRole}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400">{post.timestamp}</p>
+              </>
+            )}
           </div>
         </button>
 
@@ -349,50 +432,155 @@ export const SocialPostCard: React.FC<SocialPostCardProps> = ({
         </button>
       </div>
 
-      {/* ── 5. Fil de commentaires ── */}
+      {/* ── 5. Fil de commentaires imbriqués (Nested Threads style YouTube) ── */}
       {showComments && (
         <div className="pt-3 border-t border-white/10 space-y-3 animate-in fade-in duration-200">
-          <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {comments.length === 0 ? (
-              <p className="text-xs text-slate-500 italic">
+              <p className="text-xs text-slate-500 italic py-1">
                 Soyez le premier à commenter ce post !
               </p>
             ) : (
-              comments.map((c) => (
-                <div key={c.id} className="flex gap-2.5 items-start text-xs">
-                  <img
-                    src={
-                      c.authorAvatar ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        c.authorName || 'Membre'
-                      )}&background=FF2A3B&color=fff`
-                    }
-                    alt={c.authorName}
-                    className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5 bg-slate-800"
-                  />
-                  <div className="flex-1 bg-white/5 rounded-2xl px-3 py-2 border border-white/5">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="font-bold text-white">
-                        {c.authorName}
-                      </span>
-                      <span className="text-[10px] text-slate-500">
-                        {c.timestamp}
-                      </span>
+              // Filtrer les commentaires racines
+              comments
+                .filter((c) => !c.parentId)
+                .slice(0, visibleCommentsCount)
+                .map((rootComment) => {
+                  const rootReplies = comments.filter((c) => c.parentId === rootComment.id);
+                  const likeInfo = commentLikes[rootComment.id] || { count: rootComment.likesCount || 0, liked: Boolean(rootComment.hasLiked) };
+
+                  return (
+                    <div key={rootComment.id} className="space-y-2">
+                      {/* Commentaire racine (Niveau 1) */}
+                      <div className="flex gap-2.5 items-start text-xs group">
+                        <img
+                          src={
+                            rootComment.authorAvatar ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                              rootComment.authorName || 'Membre'
+                            )}&background=FF2A3B&color=fff`
+                          }
+                          alt={rootComment.authorName}
+                          className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5 bg-slate-800"
+                        />
+                        <div className="flex-1 bg-white/5 rounded-2xl px-3 py-2 border border-white/5 space-y-1">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="font-bold text-white text-[11px]">
+                              {rootComment.authorName}
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              {rootComment.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-slate-200 leading-snug">{rootComment.text}</p>
+                          <div className="flex items-center gap-3 pt-1 text-[10px] text-slate-400">
+                            <button
+                              type="button"
+                              onClick={() => toggleCommentLike(rootComment.id)}
+                              className={`flex items-center gap-1 hover:text-white transition-colors cursor-pointer ${likeInfo.liked ? 'text-red-400 font-bold' : ''}`}
+                            >
+                              <Heart className={`w-3 h-3 ${likeInfo.liked ? 'fill-current' : ''}`} />
+                              <span>{likeInfo.count > 0 ? likeInfo.count : 'J\'aime'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setReplyingTo({ id: rootComment.id, authorName: rootComment.authorName })}
+                              className="hover:text-white transition-colors font-medium cursor-pointer"
+                            >
+                              Répondre
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Réponses imbriquées (Niveau 2 - Limité à 2-3 niveaux selon spécifications) */}
+                      {rootReplies.length > 0 && (
+                        <div className="ml-6 pl-3 border-l-2 border-white/10 space-y-2">
+                          {rootReplies.map((reply) => {
+                            const replyLikeInfo = commentLikes[reply.id] || { count: reply.likesCount || 0, liked: Boolean(reply.hasLiked) };
+                            return (
+                              <div key={reply.id} className="flex gap-2 items-start text-xs">
+                                <img
+                                  src={
+                                    reply.authorAvatar ||
+                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                      reply.authorName || 'Membre'
+                                    )}&background=FFB800&color=000`
+                                  }
+                                  alt={reply.authorName}
+                                  className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5 bg-slate-800"
+                                />
+                                <div className="flex-1 bg-white/[0.03] rounded-xl px-2.5 py-1.5 border border-white/5 space-y-0.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-bold text-white text-[10px]">
+                                      {reply.authorName}
+                                    </span>
+                                    <span className="text-[9px] text-slate-500">
+                                      {reply.timestamp}
+                                    </span>
+                                  </div>
+                                  <p className="text-slate-200 text-[11px] leading-snug">{reply.text}</p>
+                                  <div className="flex items-center gap-2 pt-0.5 text-[9px] text-slate-400">
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleCommentLike(reply.id)}
+                                      className={`flex items-center gap-0.5 hover:text-white transition-colors cursor-pointer ${replyLikeInfo.liked ? 'text-red-400' : ''}`}
+                                    >
+                                      <Heart className={`w-2.5 h-2.5 ${replyLikeInfo.liked ? 'fill-current' : ''}`} />
+                                      <span>{replyLikeInfo.count > 0 ? replyLikeInfo.count : ''}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setReplyingTo({ id: rootComment.id, authorName: reply.authorName })}
+                                      className="hover:text-white transition-colors cursor-pointer"
+                                    >
+                                      Répondre
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <p className="text-slate-200 leading-snug">{c.text}</p>
-                  </div>
-                </div>
-              ))
+                  );
+                })
+            )}
+
+            {/* Bouton de chargement progressif */}
+            {comments.filter((c) => !c.parentId).length > visibleCommentsCount && (
+              <button
+                type="button"
+                onClick={() => setVisibleCommentsCount((v) => v + 4)}
+                className="text-[11px] text-slate-400 hover:text-white font-medium py-1 w-full text-center hover:underline cursor-pointer"
+              >
+                Afficher plus de commentaires...
+              </button>
             )}
           </div>
 
-          {/* Saisie d'un nouveau commentaire */}
+          {/* Indicateur de réponse active */}
+          {replyingTo && (
+            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[10px] text-slate-300">
+              <span>Réponse à <strong className="text-white">@{replyingTo.authorName}</strong></span>
+              <button
+                type="button"
+                onClick={() => setReplyingTo(null)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                Annuler
+              </button>
+            </div>
+          )}
+
+          {/* Saisie d'un nouveau commentaire ou d'une réponse */}
           <form onSubmit={handleAddComment} className="flex items-center gap-2">
             <input
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Écrire un commentaire sportif..."
+              placeholder={replyingTo ? `Répondre à @${replyingTo.authorName}...` : "Écrire un commentaire sportif..."}
               className="flex-1 px-3.5 py-2 text-xs rounded-full bg-white/10 text-white placeholder-slate-400 border border-white/10 focus:outline-none focus:border-[#FF2A3B]"
             />
             <button

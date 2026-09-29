@@ -23,6 +23,7 @@ export class UploadController {
         resourceType: result.resourceType,
         format: result.format,
         bytes: result.bytes,
+        provider: CloudinaryService.isConfigured() ? 'cloudinary' : 'local',
       });
     } catch (err: any) {
       console.error('[UploadController]', err?.message);

@@ -9,8 +9,9 @@ import {
   ShieldCheck,
   Eye,
   EllipsisVertical,
-  Trash,
   Trash2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import type { StoryGroup, StatusReactionType } from '../../types';
 import { statusApi } from '../../services/statusApi';
@@ -27,7 +28,8 @@ interface StoryViewerModalProps {
   onStatusDelete?: (statusId: string) => void;
 }
 
-const STORY_DURATION_MS = 6000;
+/** Durée par défaut pour images et textes */
+const DEFAULT_STORY_DURATION_MS = 6000;
 
 export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   isOpen,
@@ -46,73 +48,76 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   const [replyText, setReplyText] = useState('');
   const [showReactionFeedback, setShowReactionFeedback] = useState<string | null>(null);
 
-  // ✅ État pour la vue propriétaire
+  /* ─── Vue propriétaire ──────────────────────────────────────────── */
   const [ownerViewStatusId, setOwnerViewStatusId] = useState<string | null>(null);
 
   const [showChoices, setShowChoices] = useState(false);
   const [optionPanelOpen, setOptionPanelOpen] = useState(false);
 
+  /* ─── 🔊 États SON ──────────────────────────────────────────────── */
+  /** true si l'autoplay avec son a été bloqué → affiche le bouton "Activer le son" */
+  const [soundBlocked, setSoundBlocked] = useState(false);
+  /** true si l'utilisateur a explicitement coupé le son via le bouton */
+  const [userMuted, setUserMuted] = useState(false);
+
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const elapsedBeforePauseRef = useRef<number>(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const statuses = currentGroup?.statuses || [];
   const currentStatus = statuses[currentStatusIndex];
 
-  // ✅ Détecte si l'utilisateur courant est propriétaire du groupe affiché
+  const currentMedia = currentStatus?.media?.[0];
+  const isVideo = currentMedia?.type === 'VIDEO';
+
   const isOwnerOfCurrentGroup =
     Boolean(currentUserId) &&
     (currentGroup?.authorId === currentUserId ||
       currentGroup?.clubId === currentUserId);
 
-  // ✅ Pause effective : soit manuelle, soit parce que l'owner view est ouvert
   const effectiveIsPaused = isPaused || Boolean(ownerViewStatusId);
 
-  // Reset status index when group changes
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  RESET À CHAQUE CHANGEMENT
+   * ═══════════════════════════════════════════════════════════════════════ */
+
   useEffect(() => {
     setCurrentStatusIndex(0);
     setProgress(0);
     elapsedBeforePauseRef.current = 0;
   }, [activeGroupIndex]);
 
-  // ✅ Reset la vue propriétaire à la fermeture du modal
   useEffect(() => {
-    if (!isOpen) {
-      setOwnerViewStatusId(null);
-    }
+    setProgress(0);
+    elapsedBeforePauseRef.current = 0;
+    startTimeRef.current = Date.now();
+    // 🔊 Reset l'état "son bloqué" à chaque nouvelle story vidéo
+    if (isVideo) setSoundBlocked(false);
+  }, [currentStatusIndex, isVideo]);
+
+  useEffect(() => {
+    if (!isOpen) setOwnerViewStatusId(null);
   }, [isOpen]);
 
-  // ✅ Sauvegarde le temps écoulé avant d'ouvrir l'owner view
   useEffect(() => {
     if (ownerViewStatusId) {
       elapsedBeforePauseRef.current = Date.now() - startTimeRef.current;
     }
   }, [ownerViewStatusId]);
 
-  // Mark status as viewed (mais PAS si on est le propriétaire)
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  MARK AS VIEWED
+   * ═══════════════════════════════════════════════════════════════════════ */
   useEffect(() => {
-    if (
-      !isOpen ||
-      !currentStatus?.id ||
-      isOwnerOfCurrentGroup
-    ) {
-      return;
-    }
-
+    if (!isOpen || !currentStatus?.id || isOwnerOfCurrentGroup) return;
     void statusApi.markAsViewed(currentStatus.id);
+    onStatusViewed?.(currentStatus.id, activeGroupIndex);
+  }, [isOpen, currentStatus?.id, isOwnerOfCurrentGroup, activeGroupIndex, onStatusViewed]);
 
-    onStatusViewed?.(
-      currentStatus.id,
-      activeGroupIndex
-    );
-  }, [
-    isOpen,
-    currentStatus?.id,
-    isOwnerOfCurrentGroup,
-    activeGroupIndex,
-    onStatusViewed,
-  ]);
-
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  NAVIGATION
+   * ═══════════════════════════════════════════════════════════════════════ */
   const handleNext = useCallback(() => {
     if (currentStatusIndex < statuses.length - 1) {
       setCurrentStatusIndex((prev) => prev + 1);
@@ -142,19 +147,21 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     }
   }, [currentStatusIndex, activeGroupIndex, onGroupChange]);
 
-  // Animation de la barre de progression
-  // ✅ Utilise `effectiveIsPaused` pour se mettre en pause quand l'owner view est ouvert
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  TIMER — UNIQUEMENT IMAGES / TEXTES
+   * ═══════════════════════════════════════════════════════════════════════ */
   useEffect(() => {
     if (!isOpen || effectiveIsPaused || !currentStatus) return;
+    if (isVideo) return;
 
     startTimeRef.current = Date.now() - elapsedBeforePauseRef.current;
 
     const interval = window.setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
-      const pct = Math.min(100, (elapsed / STORY_DURATION_MS) * 100);
+      const pct = Math.min(100, (elapsed / DEFAULT_STORY_DURATION_MS) * 100);
       setProgress(pct);
 
-      if (elapsed >= STORY_DURATION_MS) {
+      if (elapsed >= DEFAULT_STORY_DURATION_MS) {
         clearInterval(interval);
         handleNext();
       }
@@ -165,11 +172,128 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isOpen, effectiveIsPaused, currentStatus, handleNext]);
+  }, [isOpen, effectiveIsPaused, currentStatus, isVideo, handleNext]);
 
-  // Pause au toucher / clic long
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  🔊 AUDIO — LOGIQUE SNAP/INSTA
+   *
+   *  1. On tente l'autoplay AVEC SON (le clic d'ouverture du modal
+   *     fournit le "user gesture" requis par les navigateurs)
+   *  2. Si bloqué → fallback muet + affichage du bouton "Activer le son"
+   *  3. L'utilisateur clique → son réactivé pour cette story ET les suivantes
+   *  4. Un bouton mute/unmute permanent est disponible en haut à droite
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  /** Tente de jouer la vidéo avec son — appelé à chaque nouvelle vidéo */
+  const tryPlayWithSound = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Si l'utilisateur a manuellement muté, on respecte son choix
+    if (userMuted) {
+      video.muted = true;
+      try {
+        await video.play();
+        setSoundBlocked(false);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
+    // 1️⃣ ESSAI AVEC SON
+    video.muted = false;
+    video.volume = 1;
+
+    try {
+      await video.play();
+      // ✅ Succès : autoplay avec son autorisé
+      setSoundBlocked(false);
+      return;
+    } catch {
+      // ❌ Autoplay bloqué → fallback muet
+      video.muted = true;
+      try {
+        await video.play();
+        // Vidéo joue mais en muet → afficher le bouton "Activer le son"
+        setSoundBlocked(true);
+      } catch {
+        // Même muet refuse de jouer — rare
+        setSoundBlocked(true);
+      }
+    }
+  }, [userMuted]);
+
+  /** Au chargement des metadata → tente la lecture */
+  const handleVideoLoadedMetadata = useCallback(() => {
+    void tryPlayWithSound();
+  }, [tryPlayWithSound]);
+
+  /** Met à jour la barre de progression */
+  const handleVideoTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video || !video.duration || !isFinite(video.duration)) return;
+    const pct = Math.min(100, (video.currentTime / video.duration) * 100);
+    setProgress(pct);
+  };
+
+  /** Fin de la vidéo → story suivante */
+  const handleVideoEnded = () => {
+    handleNext();
+  };
+
+  /** Synchronise pause/play avec l'état global */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVideo) return;
+
+    if (effectiveIsPaused) {
+      video.pause();
+    } else {
+      video.play().catch(() => {
+        /* ignore */
+      });
+    }
+  }, [effectiveIsPaused, isVideo, currentStatusIndex]);
+
+  /** Reset la vidéo au changement de status */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVideo) return;
+    video.currentTime = 0;
+  }, [currentStatusIndex, isVideo]);
+
+  /** 🔊 BOUTON MUTE / UNMUTE (comme Insta/Snap en haut à droite) */
+  const handleToggleSound = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (userMuted || video.muted) {
+      // Activer le son
+      video.muted = false;
+      video.volume = 1;
+      setUserMuted(false);
+      setSoundBlocked(false);
+      // Si la lecture est en pause, on relance
+      if (video.paused) {
+        video.play().catch(() => {
+          /* ignore */
+        });
+      }
+    } else {
+      // Couper le son
+      video.muted = true;
+      setUserMuted(true);
+    }
+  };
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  HOLD (clic long pour pauser)
+   * ═══════════════════════════════════════════════════════════════════════ */
   const handleHoldStart = () => {
-    elapsedBeforePauseRef.current = Date.now() - startTimeRef.current;
+    if (!isVideo) {
+      elapsedBeforePauseRef.current = Date.now() - startTimeRef.current;
+    }
     setIsPaused(true);
   };
 
@@ -177,23 +301,31 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     setIsPaused(false);
   };
 
-  // Gestion du clavier
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  CLAVIER
+   * ═══════════════════════════════════════════════════════════════════════ */
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      // ✅ Ignore les raccourcis clavier quand l'owner view est ouvert
       if (ownerViewStatusId) return;
-
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'ArrowLeft') handlePrev();
-      if (e.key === ' ') setIsPaused((p) => !p);
+      if (e.key === ' ') {
+        e.preventDefault();
+        setIsPaused((p) => !p);
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        handleToggleSound();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleNext, handlePrev, onClose, ownerViewStatusId]);
 
-  // Réaction rapide
+  /* ═══════════════════════════════════════════════════════════════════════
+   *  RÉACTIONS & RÉPONSES
+   * ═══════════════════════════════════════════════════════════════════════ */
   const handleSendReaction = async (reaction: StatusReactionType) => {
     if (!currentStatus) return;
     try {
@@ -201,11 +333,10 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
       setShowReactionFeedback(reaction);
       setTimeout(() => setShowReactionFeedback(null), 1200);
     } catch {
-      // ignore
+      /* ignore */
     }
   };
 
-  // Réponse textuelle
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyText.trim() || !currentStatus) return;
@@ -215,13 +346,11 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
       setShowReactionFeedback('SENT');
       setTimeout(() => setShowReactionFeedback(null), 1500);
     } catch {
-      // ignore
+      /* ignore */
     }
   };
 
   if (!isOpen || !currentGroup || !currentStatus) return null;
-
-  const currentMedia = currentStatus.media?.[0];
 
   return (
     <div
@@ -230,12 +359,12 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
       aria-label={`Story de ${currentGroup.authorName}`}
       className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center select-none"
     >
-      {/* Conteneur Format Téléphone Vertical */}
       <div className="relative w-full h-full sm:h-[90vh] sm:max-w-md sm:rounded-3xl overflow-hidden bg-[#090A0F] border border-white/10 flex flex-col justify-between shadow-2xl">
 
-        {/* ── 1. En-tête : Barres de progression segments + Profil auteur ── */}
+        {/* ═══ 1. EN-TÊTE ═══ */}
         <div className="absolute top-0 left-0 right-0 z-30 p-3 sm:p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-          {/* Segments de progression */}
+
+          {/* Barres de progression */}
           <div className="flex items-center gap-1.5 mb-3">
             {statuses.map((_, idx) => {
               let fillWidth = '0%';
@@ -245,15 +374,18 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
               return (
                 <div key={idx} className="flex-1 h-1 rounded-full bg-white/25 overflow-hidden">
                   <div
-                    className="h-full bg-white transition-all duration-75 ease-linear"
-                    style={{ width: fillWidth }}
+                    className="h-full bg-white"
+                    style={{
+                      width: fillWidth,
+                      transition: isVideo ? 'none' : 'width 75ms linear',
+                    }}
                   />
                 </div>
               );
             })}
           </div>
 
-          {/* Profil Auteur & Boutons Contrôle */}
+          {/* Profil + boutons */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
               <img
@@ -281,6 +413,32 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
             <div className="flex items-center gap-2">
 
+              {/* 🔊 Bouton SON — visible uniquement pour les vidéos */}
+              {isVideo && (
+                <button
+                  type="button"
+                  onClick={handleToggleSound}
+                  aria-label={
+                    userMuted ? 'Activer le son' : 'Couper le son'
+                  }
+                  title={
+                    userMuted
+                      ? 'Activer le son (M)'
+                      : 'Couper le son (M)'
+                  }
+                  className={`w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center transition-colors cursor-pointer ${soundBlocked && !userMuted
+                      ? 'ring-2 ring-[#FFB800] animate-pulse'
+                      : 'hover:bg-black/60'
+                    }`}
+                >
+                  {userMuted ? (
+                    <VolumeX className="w-4 h-4" />
+                  ) : (
+                    <Volume2 className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+
               {/* Pause / Reprendre */}
               <button
                 type="button"
@@ -288,11 +446,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                 aria-label={effectiveIsPaused ? 'Reprendre' : 'Mettre en pause'}
                 className="w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
               >
-                {effectiveIsPaused ? (
-                  <Play className="w-4 h-4" />
-                ) : (
-                  <Pause className="w-4 h-4" />
-                )}
+                {effectiveIsPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               </button>
 
               {/* Options propriétaire */}
@@ -305,7 +459,6 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                   }}
                   aria-expanded={optionPanelOpen}
                   aria-label="Options"
-                  title="Options"
                   className="w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-[#FF2A3B] transition-colors cursor-pointer"
                 >
                   <EllipsisVertical className="w-4 h-4" />
@@ -317,20 +470,16 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                 type="button"
                 onClick={onClose}
                 aria-label="Fermer"
-                title="Fermer"
                 className="w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-[#FF2A3B] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
-
             </div>
           </div>
 
-          {/* ── Panneau options flottant ── */}
+          {/* Panneau options */}
           {optionPanelOpen && isOwnerOfCurrentGroup && currentStatus && (
             <div className="absolute top-16 right-4 z-30 w-56 rounded-2xl bg-[#0D111A]/95 backdrop-blur-md border border-white/10 shadow-2xl shadow-black/50 overflow-hidden">
-
-              {/* Voir les statistiques */}
               <button
                 type="button"
                 onClick={() => {
@@ -343,7 +492,6 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                 <span>Voir les statistiques</span>
               </button>
 
-              {/* Supprimer */}
               <button
                 type="button"
                 onClick={() => {
@@ -355,27 +503,19 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                 <Trash2 className="w-4 h-4" />
                 <span>Supprimer la story</span>
               </button>
-
             </div>
           )}
 
-          {/* ── Confirmation de suppression ── */}
+          {/* Confirmation suppression */}
           {showChoices && currentStatus && (
             <div className="absolute top-16 right-4 z-40 w-64 rounded-2xl bg-[#0D111A]/95 backdrop-blur-md border border-white/10 shadow-2xl shadow-black/50 overflow-hidden">
-
               <div className="px-4 py-3 border-b border-white/10">
-                <p className="text-sm font-bold text-white">
-                  Supprimer la story ?
-                </p>
-
+                <p className="text-sm font-bold text-white">Supprimer la story ?</p>
                 <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                   Cette action est définitive. Ta story sera supprimée immédiatement.
                 </p>
               </div>
-
               <div className="p-2 flex items-center gap-2">
-
-                {/* Annuler */}
                 <button
                   type="button"
                   onClick={() => setShowChoices(false)}
@@ -383,8 +523,6 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                 >
                   Annuler
                 </button>
-
-                {/* Confirmer */}
                 <button
                   type="button"
                   onClick={() => {
@@ -395,28 +533,32 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                 >
                   Supprimer
                 </button>
-
               </div>
             </div>
           )}
-
         </div>
 
-        {/* ── 2. Corps du média (Image ou Vidéo ou Texte seul) ── */}
+        {/* ═══ 2. CORPS MÉDIA ═══ */}
         <div
           className="relative w-full h-full flex items-center justify-center overflow-hidden"
           onMouseDown={handleHoldStart}
           onMouseUp={handleHoldEnd}
+          onMouseLeave={handleHoldEnd}
           onTouchStart={handleHoldStart}
           onTouchEnd={handleHoldEnd}
         >
           {currentMedia ? (
             currentMedia.type === 'VIDEO' ? (
               <video
+                ref={videoRef}
+                key={currentStatus.id}
                 src={currentMedia.url}
                 autoPlay
                 playsInline
-                muted
+                preload="auto"
+                onLoadedMetadata={handleVideoLoadedMetadata}
+                onTimeUpdate={handleVideoTimeUpdate}
+                onEnded={handleVideoEnded}
                 className="w-full h-full object-contain"
               />
             ) : (
@@ -434,16 +576,43 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             </div>
           )}
 
-          {/* Légende textuelle si image présente */}
+          {/* Légende textuelle */}
           {currentMedia && currentStatus.text && (
-            <div className="absolute bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+            <div className="absolute bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none">
               <p className="text-sm sm:text-base font-semibold text-white leading-relaxed drop-shadow-md">
                 {currentStatus.text}
               </p>
             </div>
           )}
 
-          {/* Zones tactiles Précédent (gauche) & Suivant (droite) */}
+          {/* 🔊 INDICATEUR "TAP POUR ACTIVER LE SON" — comme Snap/Insta */}
+          {isVideo && soundBlocked && !userMuted && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleSound();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              className="absolute top-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-semibold hover:bg-black/90 transition-colors cursor-pointer shadow-lg animate-[pulse_2s_ease-in-out_infinite]"
+              aria-label="Activer le son de la story"
+            >
+              <VolumeX className="w-4 h-4" />
+              <span>Appuyer pour activer le son</span>
+            </button>
+          )}
+
+          {/* Indicateur "lecture en pause" (comme Insta) */}
+          {effectiveIsPaused && !soundBlocked && (
+            <div className="absolute inset-0 z-25 flex items-center justify-center pointer-events-none">
+              <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                <Play className="w-8 h-8 text-white/90 ml-1" fill="currentColor" />
+              </div>
+            </div>
+          )}
+
+          {/* Zones tactiles */}
           <button
             onClick={handlePrev}
             aria-label="Story précédente"
@@ -455,7 +624,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             className="absolute right-0 top-16 bottom-20 w-1/3 cursor-pointer z-20 opacity-0"
           />
 
-          {/* Feedback animation réaction */}
+          {/* Feedback réaction */}
           {showReactionFeedback && (
             <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
               <span className="text-5xl sm:text-6xl animate-bounce">
@@ -469,9 +638,8 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           )}
         </div>
 
-        {/* ── 3. Pied : Réactions rapides & Entrée de message ── */}
+        {/* ═══ 3. PIED ═══ */}
         <div className="relative z-30 p-3 sm:p-4 bg-gradient-to-t from-black/95 via-black/80 to-transparent space-y-2">
-          {/* Boutons d'emojis rapides */}
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => handleSendReaction('FIRE')}
@@ -482,7 +650,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             </button>
             <button
               onClick={() => handleSendReaction('BASKET')}
-              aria-label="Réagir Ballon de Basket"
+              aria-label="Réagir Ballon"
               className="p-1.5 rounded-full hover:scale-125 transition-transform cursor-pointer text-xl"
             >
               🏀
@@ -503,7 +671,6 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             </button>
           </div>
 
-          {/* Formulaire de réponse textuelle */}
           <form onSubmit={handleSendReply} className="flex items-center gap-2">
             <input
               type="text"
@@ -515,7 +682,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             <button
               type="submit"
               disabled={!replyText.trim()}
-              aria-label="Envoyer la réponse"
+              aria-label="Envoyer"
               className="w-9 h-9 rounded-full bg-[#FF2A3B] text-white flex items-center justify-center hover:bg-[#E60023] disabled:opacity-40 transition-colors cursor-pointer"
             >
               <Send className="w-4 h-4" />
@@ -523,7 +690,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           </form>
         </div>
 
-        {/* Flèches externes de navigation group (Desktop) */}
+        {/* Flèches navigation groupe */}
         {activeGroupIndex > 0 && (
           <button
             onClick={() => onGroupChange(activeGroupIndex - 1)}
@@ -544,14 +711,13 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         )}
       </div>
 
-      {/* ✅ Vue propriétaire (overlay) */}
+      {/* Vue propriétaire */}
       <StoryOwnerView
         isOpen={Boolean(ownerViewStatusId)}
         statusId={ownerViewStatusId}
         onClose={() => setOwnerViewStatusId(null)}
         onDelete={(deletedStatusId) => {
           setOwnerViewStatusId(null);
-
           setTimeout(() => {
             onStatusDelete?.(deletedStatusId);
           }, 500);

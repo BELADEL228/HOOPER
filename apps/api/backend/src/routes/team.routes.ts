@@ -7,5 +7,5 @@ export const teamRouter = Router();
 
 teamRouter.get('/', TeamController.listTeams);
 teamRouter.get('/:id', TeamController.getTeam);
-teamRouter.post('/', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireTeamManager, TeamController.createTeam);
-teamRouter.patch('/:id/theme', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireTeamManager, TeamController.patchTeamTheme);
+teamRouter.post('/', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireTeamManager, TeamController.createTeam);
+teamRouter.patch('/:id/theme', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireTeamManager, TeamController.patchTeamTheme);

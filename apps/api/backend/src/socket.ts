@@ -198,18 +198,13 @@ export function attachSocketIO(httpServer: HttpServer): SocketIOServer {
                         ),
                     };
 
-                    // ✅ 5. Broadcast à CHAQUE participant via sa room personnelle
-                    const participantIds = conversation.participants.map((p) => p.id);
-
-                    participantIds.forEach((pid) => {
-                        io.to(`user:${pid}`).emit('message:new', formatted);
-                    });
-
-                    // Room de conv (fallback pour ceux qui l'ont rejointe)
+                    // ✅ 5. Broadcast uniquement via la room de conversation
+                    //    (les participants rejoignent cette room via conversation:join)
+                    //    → évite le double-envoi (user:pid + conversation:id à la fois)
                     io.to(`conversation:${conversationId}`).emit('message:new', formatted);
 
                     console.log(
-                        `[socket] message from ${userName} → conv:${conversationId} → ${participantIds.length} participants`
+                        `[socket] message from ${userName} → conv:${conversationId} → ${conversation.participants.length} participants`
                     );
                 } catch (err) {
                     console.error('[socket] message:send error', err);
@@ -307,6 +302,186 @@ export function attachSocketIO(httpServer: HttpServer): SocketIOServer {
         socket.on('disconnect', (reason) => {
             console.log(`[socket] disconnected: ${userName} (${reason})`);
             socket.broadcast.emit('user:offline', { userId });
+
+            // ── Si le user était dans un live, notifier la room ──────────
+            const liveRooms = Array.from(socket.rooms).filter((r) => r.startsWith('live:'));
+            for (const room of liveRooms) {
+                const sessionId = room.replace('live:', '');
+                io.to(room).emit('live:viewer_left', { userId, userName, sessionId });
+
+                // Recompte et broadcast
+                io.in(room).fetchSockets().then((sockets) => {
+                    const count = sockets.length;
+                    io.to(room).emit('live:viewers_count', { sessionId, count });
+                }).catch(() => {});
+            }
+        });
+
+        // ════════════════════════════════════════════════════════════════
+        // ── LIVE CENTER — WebRTC Signaling + Chat ─────────────────────
+        // ════════════════════════════════════════════════════════════════
+
+        // ─── Rejoindre la room d'un live ─────────────────────────────
+        socket.on('live:join', async (payload: { sessionId?: string }) => {
+            const { sessionId } = payload || {};
+            if (!sessionId) return;
+
+            const room = `live:${sessionId}`;
+            socket.join(room);
+
+            // Compte les viewers
+            const sockets = await io.in(room).fetchSockets();
+            const viewerCount = sockets.length;
+
+            // Informer les autres viewers
+            socket.to(room).emit('live:viewer_joined', {
+                sessionId,
+                userId,
+                userName,
+                viewerCount,
+            });
+
+            // Confirmer au nouveau viewer + envoyer le count
+            socket.emit('live:joined', { sessionId, viewerCount });
+            io.to(room).emit('live:viewers_count', { sessionId, count: viewerCount });
+
+            // Incrémenter les vues en DB (silencieux)
+            try {
+                const { LiveService } = await import('./services/live.service');
+                await LiveService.updatePeakViewers(sessionId, viewerCount);
+            } catch { /* silencieux */ }
+
+            console.log(`[live] ${userName} joined live:${sessionId} (${viewerCount} viewers)`);
+        });
+
+        // ─── Quitter la room d'un live ───────────────────────────────
+        socket.on('live:leave', async (payload: { sessionId?: string }) => {
+            const { sessionId } = payload || {};
+            if (!sessionId) return;
+
+            const room = `live:${sessionId}`;
+            socket.leave(room);
+
+            const sockets = await io.in(room).fetchSockets();
+            const viewerCount = sockets.length;
+
+            io.to(room).emit('live:viewer_left', { userId, userName, sessionId });
+            io.to(room).emit('live:viewers_count', { sessionId, count: viewerCount });
+        });
+
+        // ─── WebRTC : Offer (streamer → viewers via serveur) ─────────
+        socket.on('live:offer', (payload: { sessionId?: string; sdp?: any }) => {
+            const { sessionId, sdp } = payload || {};
+            if (!sessionId || !sdp) return;
+
+            const room = `live:${sessionId}`;
+            // Broadcast l'offer à tous les viewers dans la room (sauf le streamer)
+            socket.to(room).emit('live:offer', {
+                sessionId,
+                sdp,
+                streamerId: userId,
+                streamerName: userName,
+            });
+        });
+
+        // ─── WebRTC : Answer (viewer → streamer) ─────────────────────
+        socket.on('live:answer', (payload: { sessionId?: string; sdp?: any; targetId?: string }) => {
+            const { sessionId, sdp, targetId } = payload || {};
+            if (!sessionId || !sdp || !targetId) return;
+
+            // Envoie l'answer directement au streamer
+            io.to(`user:${targetId}`).emit('live:answer', {
+                sessionId,
+                sdp,
+                viewerId: userId,
+                viewerName: userName,
+            });
+        });
+
+        // ─── WebRTC : ICE Candidate ──────────────────────────────────
+        socket.on('live:ice_candidate', (payload: {
+            sessionId?: string;
+            candidate?: any;
+            targetId?: string;
+        }) => {
+            const { sessionId, candidate, targetId } = payload || {};
+            if (!sessionId || !candidate) return;
+
+            if (targetId) {
+                // Envoie ciblé (1-to-1)
+                io.to(`user:${targetId}`).emit('live:ice_candidate', {
+                    sessionId,
+                    candidate,
+                    fromId: userId,
+                });
+            } else {
+                // Broadcast à la room (streamer → tous)
+                socket.to(`live:${sessionId}`).emit('live:ice_candidate', {
+                    sessionId,
+                    candidate,
+                    fromId: userId,
+                });
+            }
+        });
+
+        // ─── Chat du live ────────────────────────────────────────────
+        socket.on('live:chat', async (payload: { sessionId?: string; text?: string }) => {
+            const { sessionId, text } = payload || {};
+            if (!sessionId || !text?.trim()) return;
+
+            try {
+                const { LiveService } = await import('./services/live.service');
+
+                // Persiste en DB
+                const comment = await LiveService.addComment(sessionId, userId, text);
+
+                // Broadcast à toute la room
+                io.to(`live:${sessionId}`).emit('live:chat', comment);
+
+            } catch (err: any) {
+                socket.emit('live:chat_error', { error: err.message || 'Erreur envoi message' });
+            }
+        });
+
+        // ─── Réaction emoji live (fire, clap...) ────────────────────
+        socket.on('live:reaction', (payload: { sessionId?: string; emoji?: string }) => {
+            const { sessionId, emoji } = payload || {};
+            if (!sessionId || !emoji) return;
+
+            io.to(`live:${sessionId}`).emit('live:reaction', {
+                sessionId,
+                emoji,
+                userId,
+                userName,
+            });
+        });
+
+        // ─── Streamer démarre le live (signal aux viewers) ───────────
+        socket.on('live:started', (payload: { sessionId?: string }) => {
+            const { sessionId } = payload || {};
+            if (!sessionId) return;
+
+            io.to(`live:${sessionId}`).emit('live:started', {
+                sessionId,
+                streamerId: userId,
+                streamerName: userName,
+            });
+
+            console.log(`[live] 🔴 LIVE STARTED by ${userName}: session ${sessionId}`);
+        });
+
+        // ─── Streamer termine le live (signal aux viewers) ───────────
+        socket.on('live:ended', (payload: { sessionId?: string }) => {
+            const { sessionId } = payload || {};
+            if (!sessionId) return;
+
+            io.to(`live:${sessionId}`).emit('live:ended', {
+                sessionId,
+                streamerId: userId,
+                streamerName: userName,
+            });
+
+            console.log(`[live] ⭕ LIVE ENDED by ${userName}: session ${sessionId}`);
         });
     });
 

@@ -189,13 +189,30 @@ export const ChampionsDayManager: React.FC<ChampionsDayManagerProps> = ({ curren
     { name: 'Kwame Asante', team: 'Titans Accra', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', number: 14, ppg: 19.5, rpg: 9.8, apg: 3.1, spg: 0.8, efficiency: 21.4, achievements: ['Meilleur Pivot Adverse', 'Top Défenseur Adverse'] },
   ];
 
+  const getEmbedUrl = (url: string): string | null => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname.includes('youtube.com')) {
+        const v = parsed.searchParams.get('v');
+        return v ? `https://www.youtube-nocookie.com/embed/${v}?autoplay=1` : null;
+      }
+      if (parsed.hostname.includes('youtu.be')) {
+        const id = parsed.pathname.slice(1);
+        return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1` : null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  };
+
   const pastEditionVideos = [
-    { id: 'v1', year: 2025, title: 'Revivez la Grande Finale 2025 en Intégralité (HD)', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&auto=format&fit=crop&q=80', views: 4800, duration: '1h 42min' },
-    { id: 'v2', year: 2025, title: 'Dunk Contest Légendaire 2025 — 360° de Yannis Konda (Note Parfaite)', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&auto=format&fit=crop&q=80', views: 6200, duration: '18min' },
-    { id: 'v3', year: 2025, title: 'Cérémonie Officielle des Trophées & Discours du Coach Vance', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?w=600&auto=format&fit=crop&q=80', views: 3100, duration: '32min' },
-    { id: 'v4', year: 2024, title: 'Edition 2024 — Match d\'Ouverture Magique vs Spartans de Bordeaux', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&auto=format&fit=crop&q=80', views: 2800, duration: '48min' },
-    { id: 'v5', year: 2024, title: 'Concert & Show Musical Édition 2024 — Nuit des Champions', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80', views: 1950, duration: '1h 10min' },
-    { id: 'v6', year: 2023, title: 'Top 10 Plays All-Time Journée des Champions 2023', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80', views: 8400, duration: '12min' },
+    { id: 'v1', year: 2025, title: 'Revivez la Grande Finale 2025 en Intégralité (HD)', url: 'https://www.youtube.com/watch?v=34wKjRfnz4M', thumbnail: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&auto=format&fit=crop&q=80', views: 4800, duration: '1h 42min' },
+    { id: 'v2', year: 2025, title: 'Dunk Contest Légendaire 2025 — 360° de Yannis Konda (Note Parfaite)', url: 'https://www.youtube.com/watch?v=d_kXmQ00l1E', thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&auto=format&fit=crop&q=80', views: 6200, duration: '18min' },
+    { id: 'v3', year: 2025, title: 'Cérémonie Officielle des Trophées & Discours du Coach Vance', url: 'https://www.youtube.com/watch?v=yY3pYf9s9mY', thumbnail: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?w=600&auto=format&fit=crop&q=80', views: 3100, duration: '32min' },
+    { id: 'v4', year: 2024, title: 'Edition 2024 — Match d\'Ouverture vs Cobras de Dakar', url: 'https://www.youtube.com/watch?v=k4T0h9A9yPQ', thumbnail: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&auto=format&fit=crop&q=80', views: 2800, duration: '48min' },
+    { id: 'v5', year: 2024, title: 'Concert & Show Musical Édition 2024 — Nuit des Champions', url: 'https://www.youtube.com/watch?v=7X8II6J-6mU', thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80', views: 1950, duration: '1h 10min' },
+    { id: 'v6', year: 2023, title: 'Top 10 Plays All-Time Journée des Champions', url: 'https://www.youtube.com/watch?v=9No-FiEInLA', thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80', views: 8400, duration: '12min' },
   ];
 
   const pastEditionPhotos = [
@@ -870,13 +887,22 @@ export const ChampionsDayManager: React.FC<ChampionsDayManagerProps> = ({ curren
             <div className="text-white text-sm font-extrabold">{activeMedia.title}</div>
             {activeMedia.type === 'VIDEO' ? (
               <div className="relative aspect-video w-full rounded-3xl overflow-hidden border border-white/20 shadow-2xl bg-black">
-                <iframe
-                  src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1"
-                  title={activeMedia.title}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                {getEmbedUrl(activeMedia.url) ? (
+                  <iframe
+                    src={getEmbedUrl(activeMedia.url)!}
+                    title={activeMedia.title}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={activeMedia.url}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain"
+                  />
+                )}
               </div>
             ) : (
               <div className="flex justify-center">

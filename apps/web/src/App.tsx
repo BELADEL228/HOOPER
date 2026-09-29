@@ -42,12 +42,14 @@ import { SuperAdminPortal } from './components/admin/SuperAdminPortal';
 import { SocialLayout } from './components/layout/SocialLayout';
 import { SocialFeedView } from './components/feed/SocialFeedView';
 import { ExplorePage } from './components/explore/ExplorePage';
+import { Intro } from './intro/Intro';
 import { SocialProfileView } from './components/profile/SocialProfileView';
 import { SocialMessagingView } from './components/messaging/SocialMessagingView';
 import { CreateContentModal } from './components/common/CreateContentModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalMatchCenter } from './components/matches/GlobalMatchCenter';
 import { GlobalPlayerStatsView } from './components/stats/GlobalPlayerStatsView';
+import { LiveCenter } from './components/live/LiveCenter';
 import { socketService } from './services/socket';
 
 // ✅ Import des permissions centralisées
@@ -69,6 +71,9 @@ type AuthSession = {
 };
 
 export function App() {
+  const [introCompleted, setIntroCompleted] = useState(false);
+  const [showIntro, setShowIntro] = useState(!introCompleted);
+
   const [viewMode, setViewMode] = useState<ViewMode>('social');
   const [selectedClub, setSelectedClub] = useState<Team>({
     id: 'pending-club',
@@ -140,7 +145,7 @@ export function App() {
                 ? club.themeJson
                 : JSON.stringify(club.themeJson || {}),
           });
-          if (['CLUB_MANAGER', 'ADMIN', 'TREASURER'].includes(role)) {
+          if (['CLUB_ADMIN', 'TREASURER'].includes(role)) {
             setViewMode('club_workspace');
           }
           return;
@@ -326,6 +331,7 @@ export function App() {
 
   const handleEnterWorkspace = () => {
     if (currentRole === 'SUPER_ADMIN') return setViewMode('super_admin');
+    // VISITOR et SUPPORTER peuvent accéder au workspace en lecture seule
     setViewMode('club_workspace');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -386,7 +392,10 @@ export function App() {
     if (activeTab === 'recrutement') return <RecruitmentPage currentRole={currentRole} />;
     if (activeTab === 'scouting') return <ScoutingPage currentRole={currentRole} />;
     if (activeTab === 'badges') return <BadgesPage currentRole={currentRole} />;
-    if (activeTab === 'designer') return <TeamDesignerPage />;
+    if (activeTab === 'designer') {
+      if (currentRole !== 'SUPER_ADMIN') return null;
+      return <TeamDesignerPage />;
+    }
     if (activeTab === 'stats') return <StatsDashboard />;
     if (activeTab === 'equipe') return <RosterSection currentRole={currentRole} />;
     if (activeTab === 'evenements') return <EventCalendar />;
@@ -403,6 +412,7 @@ export function App() {
           currentRole={currentRole}
           authUser={authUser}
           onNavigateToSettings={() => setActiveTab('parametres')}
+          onSwitchToWorkspace={() => setViewMode('club_workspace')}
           onUserUpdate={(user) => {
             setAuthUser(user);
             const session = JSON.parse(localStorage.getItem('firestone-auth') || '{}');
@@ -452,6 +462,27 @@ export function App() {
       />
     );
   };
+
+
+
+  if (showIntro) {
+    return (
+      <ErrorBoundary scope="HoopersIntro">
+        <Intro
+          logoSrc="/favicon.ico"
+          title="HOOPERS"
+          subtitle="Dribbler avec intention."
+          musicSrc="/audio/intro-rap.m4a"
+          musicVolume={0.45}
+          musicStopAt={19.5}
+          showOnboarding={true}
+          onComplete={() => {
+            setShowIntro(false);
+          }}
+        />
+      </ErrorBoundary>
+    );
+  }
 
   if (viewMode === 'club_request' && authUser) {
     const session = JSON.parse(localStorage.getItem('firestone-auth') || '{}') as AuthSession;
@@ -505,159 +536,176 @@ export function App() {
   // ═══════════════════════════════════════════════════════════════════════════════
   if (viewMode === 'social') {
     return (
-      <ErrorBoundary scope="SocialLayout" onReset={() => setActiveTab('accueil')}>
-        <SocialLayout
-          activeTab={activeTab}
-          onSelectTab={(tab) => {
-            if (tab === 'create') {
-              setShowCreateModal(true);
-              return;
-            }
+      <ClubProvider initialClub={selectedClub}>
+        <ErrorBoundary scope="SocialLayout" onReset={() => setActiveTab('accueil')}>
+          <SocialLayout
+            activeTab={activeTab}
+            onSelectTab={(tab) => {
+              if (tab === 'create') {
+                setShowCreateModal(true);
+                return;
+              }
 
-            if (tab === 'mon-profil') {
-              setViewedUserId(null);
-            }
+              if (tab === 'mon-profil') {
+                setViewedUserId(null);
+              }
 
-            setActiveTab(tab);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          authUser={authUser}
-          currentRole={currentRole}
-          onOpenAuth={openAuthModal}
-          onLogout={handleLogout}
-          onCreateClick={() => setShowCreateModal(true)}
-          onSwitchToWorkspace={handleEnterWorkspace}
-          selectedClub={selectedClub}
-          onSelectClubProfile={(clubId) => void handleOpenClubById(clubId)}
-        >
-          {activeTab === 'accueil' ? (
-            <ErrorBoundary scope="SocialFeedView">
-              <SocialFeedView
-                currentRole={currentRole}
-                authUser={authUser}
-                onOpenAuth={openAuthModal}
-                onNavigateToMatches={() => setActiveTab('matchs')}
-                onOpenProfile={handleOpenUserProfile}
-              />
-            </ErrorBoundary>
-          ) : activeTab === 'explorer' ? (
-            <ErrorBoundary scope="ExplorePage">
-              <ExplorePage
-                onSelectClubProfile={(clubId) => void handleOpenClubById(clubId)}
-                onNavigateToMatches={() => setActiveTab('matchs')}
-                onOpenAuth={() => openAuthModal('LOGIN')}
-                isAuthenticated={isAuthenticated}
-                currentRole={currentRole}
-              />
-            </ErrorBoundary>
-          ) : activeTab === 'matchs' ? (
-            <ErrorBoundary scope="GlobalMatchCenter">
-              <GlobalMatchCenter
-                currentRole={currentRole}
-                onNavigateToMatch={() => {
-                  /* optionnel : ouvrir une page détail */
-                }}
-              />
-            </ErrorBoundary>
-          ) : activeTab === 'annuaire' || activeTab === 'equipes' ? (
-            <ErrorBoundary scope="ClubsDirectoryPage">
-              <ClubsDirectoryPage
-                onSelectTeamWorkspace={handleSelectTeamWorkspace}
-                onSelectClubProfile={(club, team) => {
-                  setViewedClubProfile(club);
-                  setFocusedTeam(team);
-                  setActiveTab('club-profile');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                onOpenAuth={openAuthModal}
-                currentUserRole={currentRole}
-                isAuthenticated={isAuthenticated}
-              />
-            </ErrorBoundary>
-          ) : activeTab === 'club-profile' && viewedClubProfile ? (
-            <ErrorBoundary scope="ClubProfilePage">
-              <ClubProfilePage
-                club={viewedClubProfile}
-                focusedTeam={focusedTeam}
-                onBack={() => {
-                  setActiveTab('annuaire');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                onEnterWorkspace={handleSelectTeamWorkspace}
-                onOpenAuth={openAuthModal}
-                authUser={authUser}
-                currentRole={currentRole}
-              />
-            </ErrorBoundary>
-          ) : activeTab === 'messagerie' ? (
-            <ErrorBoundary scope="SocialMessagingView">
-              <SocialMessagingView currentRole={currentRole} authUser={authUser} />
-            </ErrorBoundary>
-          ) : activeTab === 'mon-profil' || activeTab === 'user-profile' ? (
-            <ErrorBoundary scope="SocialProfileView">
-              <SocialProfileView
-                userId={activeTab === 'user-profile' ? viewedUserId : null}
-                authUser={authUser}
-                currentRole={currentRole}
-                onNavigateToSettings={() => setActiveTab('parametres')}
-                onNavigateToMessages={() => setActiveTab('messagerie')}
-                onNavigateToClub={(clubId) => void handleOpenClubById(clubId)}
-                onOpenAuth={() => openAuthModal('LOGIN')}
-              />
-            </ErrorBoundary>
-          ) : activeTab === 'stats' ? (
-            <ErrorBoundary scope="GlobalPlayerStatsView">
-              <GlobalPlayerStatsView
-                currentRole={currentRole}
-                onOpenProfile={handleOpenUserProfile}
-              />
-            </ErrorBoundary>
-          ) : activeTab === 'parametres' || activeTab === 'aide' ? (
-            <ErrorBoundary scope="SettingsPage">
-              <SettingsPage
-                authUser={authUser}
-                currentRole={currentRole as any}
-                onNavigateToProfile={() => setActiveTab('mon-profil')}
-                onLogout={handleLogout}
-                onSwitchToWorkspace={handleEnterWorkspace}
-                theme={theme}
-                onToggleTheme={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-                onUserUpdate={(user) => {
-                  setAuthUser(user);
-                  const session = JSON.parse(localStorage.getItem('firestone-auth') || '{}');
-                  if (session?.token)
-                    localStorage.setItem(
-                      'firestone-auth',
-                      JSON.stringify({ ...session, user })
-                    );
-                  setCurrentRole(user.role);
-                }}
-              />
-            </ErrorBoundary>
-          ) : (
-            renderAccessiblePage()
-          )}
+              setActiveTab(tab);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            authUser={authUser}
+            currentRole={currentRole}
+            onOpenAuth={openAuthModal}
+            onLogout={handleLogout}
+            onCreateClick={() => setShowCreateModal(true)}
+            onSwitchToWorkspace={handleEnterWorkspace}
+            selectedClub={selectedClub}
+            onSelectClubProfile={(clubId) => void handleOpenClubById(clubId)}
+          >
+            {activeTab === 'accueil' ? (
+              <ErrorBoundary scope="SocialFeedView">
+                <SocialFeedView
+                  currentRole={currentRole}
+                  authUser={authUser}
+                  onOpenAuth={openAuthModal}
+                  onNavigateToMatches={() => setActiveTab('matchs')}
+                  onOpenProfile={handleOpenUserProfile}
+                />
+              </ErrorBoundary>
+            ) : activeTab === 'explorer' ? (
+              <ErrorBoundary scope="ExplorePage">
+                <ExplorePage
+                  onSelectClubProfile={(clubId) => void handleOpenClubById(clubId)}
+                  onNavigateToMatches={() => setActiveTab('matchs')}
+                  onOpenAuth={() => openAuthModal('LOGIN')}
+                  isAuthenticated={isAuthenticated}
+                  currentRole={currentRole}
+                />
+              </ErrorBoundary>
+            ) : activeTab === 'matchs' ? (
+              <ErrorBoundary scope="GlobalMatchCenter">
+                <div className="space-y-4">
+                  {/* Bouton rapide vers le Live Center */}
+                  <button
+                    onClick={() => setActiveTab('live')}
+                    className="w-full flex items-center justify-between px-5 py-3 rounded-2xl bg-gradient-to-r from-[#FF2A3B]/20 to-[#FF2A3B]/5 border border-[#FF2A3B]/30 text-white hover:from-[#FF2A3B]/30 transition-all group"
+                  >
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <span className="w-2 h-2 rounded-full bg-[#FF2A3B] animate-pulse" />
+                      Live Center — Lives & Replays
+                    </span>
+                    <span className="text-xs text-[#FF2A3B] font-bold group-hover:translate-x-1 transition-transform">Voir →</span>
+                  </button>
+                  <GlobalMatchCenter
+                    currentRole={currentRole}
+                    onNavigateToMatch={() => { /* optionnel */ }}
+                  />
+                </div>
+              </ErrorBoundary>
+            ) : activeTab === 'live' ? (
+              <ErrorBoundary scope="LiveCenter">
+                <LiveCenter currentRole={currentRole} authUser={authUser} />
+              </ErrorBoundary>
+            ) : activeTab === 'annuaire' || activeTab === 'equipes' ? (
+              <ErrorBoundary scope="ClubsDirectoryPage">
+                <ClubsDirectoryPage
+                  onSelectTeamWorkspace={handleSelectTeamWorkspace}
+                  onSelectClubProfile={(club, team) => {
+                    setViewedClubProfile(club);
+                    setFocusedTeam(team);
+                    setActiveTab('club-profile');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  onOpenAuth={openAuthModal}
+                  currentUserRole={currentRole}
+                  isAuthenticated={isAuthenticated}
+                />
+              </ErrorBoundary>
+            ) : activeTab === 'club-profile' && viewedClubProfile ? (
+              <ErrorBoundary scope="ClubProfilePage">
+                <ClubProfilePage
+                  club={viewedClubProfile}
+                  focusedTeam={focusedTeam}
+                  onBack={() => {
+                    setActiveTab('annuaire');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  onEnterWorkspace={handleSelectTeamWorkspace}
+                  onOpenAuth={openAuthModal}
+                  authUser={authUser}
+                  currentRole={currentRole}
+                />
+              </ErrorBoundary>
+            ) : activeTab === 'messagerie' ? (
+              <ErrorBoundary scope="SocialMessagingView">
+                <SocialMessagingView currentRole={currentRole} authUser={authUser} />
+              </ErrorBoundary>
+            ) : activeTab === 'mon-profil' || activeTab === 'user-profile' ? (
+              <ErrorBoundary scope="SocialProfileView">
+                <SocialProfileView
+                  userId={activeTab === 'user-profile' ? viewedUserId : null}
+                  authUser={authUser}
+                  currentRole={currentRole}
+                  onNavigateToSettings={() => setActiveTab('parametres')}
+                  onNavigateToMessages={() => setActiveTab('messagerie')}
+                  onNavigateToClub={(clubId) => void handleOpenClubById(clubId)}
+                  onOpenAuth={() => openAuthModal('LOGIN')}
+                />
+              </ErrorBoundary>
+            ) : activeTab === 'stats' ? (
+              <ErrorBoundary scope="GlobalPlayerStatsView">
+                <GlobalPlayerStatsView
+                  currentRole={currentRole}
+                  onOpenProfile={handleOpenUserProfile}
+                />
+              </ErrorBoundary>
+            ) : activeTab === 'parametres' || activeTab === 'aide' ? (
+              <ErrorBoundary scope="SettingsPage">
+                <SettingsPage
+                  authUser={authUser}
+                  currentRole={currentRole as any}
+                  onNavigateToProfile={() => setActiveTab('mon-profil')}
+                  onLogout={handleLogout}
+                  onSwitchToWorkspace={handleEnterWorkspace}
+                  theme={theme}
+                  onToggleTheme={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                  onUserUpdate={(user) => {
+                    setAuthUser(user);
+                    const session = JSON.parse(localStorage.getItem('firestone-auth') || '{}');
+                    if (session?.token)
+                      localStorage.setItem(
+                        'firestone-auth',
+                        JSON.stringify({ ...session, user })
+                      );
+                    setCurrentRole(user.role);
+                  }}
+                />
+              </ErrorBoundary>
+            ) : (
+              renderAccessiblePage()
+            )}
 
-          {/* Modal de Création Universelle */}
-          <CreateContentModal
-            isOpen={showCreateModal}
-            onClose={() => setShowCreateModal(false)}
-            isClubManager={currentRole === 'CLUB_MANAGER' || currentRole === 'ADMIN'}
-            activeClubId={selectedClub?.id}
-          />
+            {/* Modal de Création Universelle */}
+            <CreateContentModal
+              isOpen={showCreateModal}
+              onClose={() => setShowCreateModal(false)}
+              isClubManager={currentRole === 'CLUB_ADMIN'}
+              activeClubId={selectedClub?.id}
+            />
 
-          {/* Modals partagés */}
-          <AuthModal
-            isOpen={showAuthModal}
-            onClose={() => setShowAuthModal(false)}
-            onLoginSuccess={handleLoginSuccess}
-            initialTab={authModalTab}
-          />
+            {/* Modals partagés */}
+            <AuthModal
+              isOpen={showAuthModal}
+              onClose={() => setShowAuthModal(false)}
+              onLoginSuccess={handleLoginSuccess}
+              initialTab={authModalTab}
+            />
 
-          <NetworkStatusBanner />
-          <PwaInstallPrompt />
-        </SocialLayout>
-      </ErrorBoundary>
+            <NetworkStatusBanner />
+            <PwaInstallPrompt />
+          </SocialLayout>
+        </ErrorBoundary>
+      </ClubProvider>
     );
   }
 

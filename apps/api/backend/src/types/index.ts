@@ -16,16 +16,31 @@ export interface AuthenticatedUser {
   suspendReason?: string | null;
   suspendedUntil?: string | null;
   createdAt?: string;
+
+  // ✅ NOUVEAU : Contexte club pour le RBAC scoped
+  /** IDs des clubs où l'utilisateur est ClubMember ACTIVE. */
+  activeClubIds?: string[];
+  /** Map clubId → rôle dans le club (PRESIDENT, CLUB_ADMIN, TREASURER, COACH, PLAYER, MEMBER). */
+  clubRoles?: Record<string, string>;
 }
 
 export interface AuthSession {
   token: string;
   user: AuthenticatedUser;
+  message?: string;
+  clubMembershipStatus?: string;
+  clubId?: string;
 }
 
 export interface ThemeTokens {
   primary: string;
+  primaryLight?: string;
+  primaryDark?: string;
+  primaryTint?: string;
+  primaryShade?: string;
   secondary: string;
+  secondaryLight?: string;
+  secondaryDark?: string;
   accent: string;
   background: string;
   surface: string;
@@ -37,10 +52,39 @@ export interface ThemeTokens {
   shadow: string;
   glow: string;
   themeType: 'dark' | 'light' | string;
+  vibrationMode?: 'vibrant' | 'minimal';
   palette?: string[];
   contrastRatio?: number;
   visualStyle?: string;
   shapeCharacteristics?: string[];
+  neutrals?: {
+    black: string;
+    gray1: string;
+    gray2: string;
+    gray3: string;
+    gray4: string;
+    gray5: string;
+    white: string;
+    transparent: string;
+  };
+  spacing?: {
+    xs: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
+  };
+  typography?: {
+    bodyFont: string;
+    headingFont: string;
+    bodySize: string;
+    headingSize: string;
+  };
+  elevation?: {
+    sm: string;
+    md: string;
+    lg: string;
+  };
   homeKit?: {
     jerseyBase: string;
     jerseyTrims: string;

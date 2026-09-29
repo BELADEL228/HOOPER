@@ -7,14 +7,14 @@ import type { UserRole } from '../types';
 /** Tous les rôles sans exception (inclut les rôles système). */
 export const ALL_ROLES: UserRole[] = [
     'SUPER_ADMIN',
-    'ADMIN',
-    'CLUB_MANAGER',
+    'CLUB_ADMIN',
     'TREASURER',
     'COACH',
     'PLAYER',
-    'VISITOR',
     'SPONSOR',
     'ACADEMY_CANDIDATE',
+    'SUPPORTER',
+    'VISITOR',
 ];
 
 /**
@@ -25,21 +25,19 @@ export const ALL_ROLES: UserRole[] = [
  */
 export const AUTHENTICATED_ROLES: UserRole[] = [
     'SUPER_ADMIN',
-    'ADMIN',
-    'CLUB_MANAGER',
+    'CLUB_ADMIN',
     'TREASURER',
     'COACH',
     'PLAYER',
-    'VISITOR',
     'SPONSOR',
     'ACADEMY_CANDIDATE',
+    'SUPPORTER',
 ];
 
 /** Staff technique & direction d'un club (accès outils de gestion). */
 export const CLUB_STAFF: UserRole[] = [
     'SUPER_ADMIN',
-    'ADMIN',
-    'CLUB_MANAGER',
+    'CLUB_ADMIN',
     'TREASURER',
     'COACH',
 ];
@@ -47,8 +45,7 @@ export const CLUB_STAFF: UserRole[] = [
 /** Tous les membres d'un club (staff + joueurs). */
 export const CLUB_MEMBERS: UserRole[] = [
     'SUPER_ADMIN',
-    'ADMIN',
-    'CLUB_MANAGER',
+    'CLUB_ADMIN',
     'TREASURER',
     'COACH',
     'PLAYER',
@@ -57,13 +54,12 @@ export const CLUB_MEMBERS: UserRole[] = [
 /** Rôles ayant accès aux finances d'un club. */
 export const CLUB_FINANCE_ROLES: UserRole[] = [
     'SUPER_ADMIN',
-    'ADMIN',
-    'CLUB_MANAGER',
+    'CLUB_ADMIN',
     'TREASURER',
 ];
 
 /** Rôles ayant accès à l'administration système de la plateforme. */
-export const SYSTEM_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'ADMIN'];
+export const SYSTEM_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN'];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PERMISSIONS DU MODE SOCIAL (vitrine ligue, réseau communautaire)
@@ -88,6 +84,8 @@ export const socialPermissions: Record<string, UserRole[]> = {
     marketplace: ALL_ROLES,
     sponsors: ALL_ROLES,
     terrains: ALL_ROLES,
+    live: ALL_ROLES,
+    designer: ['SUPER_ADMIN'],
     badges: ALL_ROLES,
     scouting: ALL_ROLES,
     recrutement: ALL_ROLES,
@@ -107,6 +105,7 @@ export const socialPermissions: Record<string, UserRole[]> = {
 
     // ── Pages de détail ────────────────────────────────────────────────────
     'club-profile': ALL_ROLES,
+    billetterie: ALL_ROLES,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -122,45 +121,43 @@ export const socialPermissions: Record<string, UserRole[]> = {
 //
 export const workspacePermissions: Record<string, UserRole[]> = {
     // ── Accueil & outils club ──────────────────────────────────────────────
-    accueil: CLUB_MEMBERS,
-    matchs: CLUB_MEMBERS,
+    accueil: [...CLUB_MEMBERS, 'VISITOR', 'SUPPORTER'],
+    matchs: [...CLUB_MEMBERS, 'VISITOR', 'SUPPORTER'],
     stats: CLUB_MEMBERS,
     equipe: CLUB_MEMBERS,
-    evenements: CLUB_MEMBERS,
-    actu: CLUB_MEMBERS,
-    terrains: CLUB_MEMBERS,
+    evenements: [...CLUB_MEMBERS, 'VISITOR', 'SUPPORTER'],
+    actu: [...CLUB_MEMBERS, 'VISITOR', 'SUPPORTER'],
+    terrains: [...CLUB_MEMBERS, 'VISITOR', 'SUPPORTER'],
     marketplace: CLUB_MEMBERS,
     tournois: CLUB_MEMBERS,
+    billetterie: ALL_ROLES,
 
     // ── Recrutement / scouting / formation ─────────────────────────────────
     recrutement: [
         'SUPER_ADMIN',
-        'ADMIN',
-        'CLUB_MANAGER',
+        'CLUB_ADMIN',
         'COACH',
         'PLAYER',
-        'VISITOR',
+        'SUPPORTER',
         'ACADEMY_CANDIDATE',
     ],
-    scouting: ['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH', 'PLAYER', 'VISITOR'],
-    badges: ['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH', 'PLAYER', 'VISITOR'],
-    designer: ['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER', 'COACH', 'PLAYER'],
+    scouting: ['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH', 'PLAYER', 'SUPPORTER'],
+    badges: ['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH', 'PLAYER', 'SUPPORTER'],
+    designer: ['SUPER_ADMIN'],
     academie: [
         'SUPER_ADMIN',
-        'ADMIN',
-        'CLUB_MANAGER',
+        'CLUB_ADMIN',
         'COACH',
         'PLAYER',
         'ACADEMY_CANDIDATE',
-        'VISITOR',
+        'SUPPORTER',
     ],
     'journee-champions': [
         'SUPER_ADMIN',
-        'ADMIN',
-        'CLUB_MANAGER',
+        'CLUB_ADMIN',
         'COACH',
         'PLAYER',
-        'VISITOR',
+        'SUPPORTER',
     ],
 
     // ── Messagerie INTERNE du club : membres uniquement ────────────────────
@@ -171,18 +168,17 @@ export const workspacePermissions: Record<string, UserRole[]> = {
     finances: CLUB_FINANCE_ROLES,
     sponsors: [
         'SUPER_ADMIN',
-        'ADMIN',
-        'CLUB_MANAGER',
+        'CLUB_ADMIN',
         'TREASURER',
         'COACH',
         'PLAYER',
-        'VISITOR',
+        'SUPPORTER',
         'SPONSOR',
     ],
 
     // ── Administration ─────────────────────────────────────────────────────
     admin: ['SUPER_ADMIN'],
-    'club-admin': ['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER'],
+    'club-admin': ['SUPER_ADMIN', 'CLUB_ADMIN'],
 
     // ── Profil / paramètres ────────────────────────────────────────────────
     'mon-profil': AUTHENTICATED_ROLES,

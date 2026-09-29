@@ -1,36 +1,493 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'TREASURER' | 'COACH' | 'PLAYER' | 'SPONSOR' | 'ACADEMY_CANDIDATE' | 'VISITOR' | 'CLUB_MANAGER';
+// ═══════════════════════════════════════════════════════════════════════════
+// RÔLES UTILISATEUR
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type UserRole =
+  | 'SUPER_ADMIN'
+  | 'CLUB_ADMIN'
+  | 'TREASURER'
+  | 'COACH'
+  | 'PLAYER'
+  | 'SPONSOR'
+  | 'ACADEMY_CANDIDATE'
+  | 'SUPPORTER'
+  | 'VISITOR';
 
 export const userRoles: UserRole[] = [
   'SUPER_ADMIN',
-  'ADMIN',
+  'CLUB_ADMIN',
   'TREASURER',
   'COACH',
   'PLAYER',
   'SPONSOR',
   'ACADEMY_CANDIDATE',
+  'SUPPORTER',
   'VISITOR',
-  'CLUB_MANAGER',
 ];
 
-export const rolePermissionMap: Record<UserRole, string[]> = {
-  SUPER_ADMIN: ['club:read', 'club:write', 'players:read', 'players:write', 'finance:read', 'finance:write', 'academy:read', 'academy:write', 'admin:read', 'admin:write'],
-  ADMIN: ['club:read', 'club:write', 'players:read', 'players:write', 'finance:read', 'finance:write', 'academy:read', 'academy:write', 'admin:read'],
-  CLUB_MANAGER: ['club:read', 'club:write', 'players:read', 'players:write', 'finance:read', 'finance:write'],
-  TREASURER: ['club:read', 'finance:read', 'finance:write'],
-  COACH: ['club:read', 'players:read', 'players:write', 'academy:read', 'academy:write'],
-  PLAYER: ['club:read', 'players:read'],
-  SPONSOR: ['club:read'],
-  ACADEMY_CANDIDATE: ['club:read', 'academy:read'],
-  VISITOR: ['club:read'],
+// ─── Rôles SCOPÉS au club (assignables via ClubMember.role) ─────────────────
+export type ClubScopedRole =
+  | 'PRESIDENT'
+  | 'CLUB_ADMIN'
+  | 'TREASURER'
+  | 'COACH'
+  | 'PLAYER'
+  | 'MEMBER';
+
+export const clubScopedRoles: ClubScopedRole[] = [
+  'PRESIDENT',
+  'CLUB_ADMIN',
+  'TREASURER',
+  'COACH',
+  'PLAYER',
+  'MEMBER',
+];
+
+// ─── Status ClubMember ──────────────────────────────────────────────────────
+export type ClubMemberStatus =
+  | 'PENDING'
+  | 'ACTIVE'
+  | 'REJECTED'
+  | 'SUSPENDED';
+
+export const clubMemberStatuses: ClubMemberStatus[] = [
+  'PENDING',
+  'ACTIVE',
+  'REJECTED',
+  'SUSPENDED',
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PERMISSIONS RBAC (format resource:action)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Convention de nommage :
+ *   resource:action        → action générale
+ *   resource:action:self   → action limitée à ses propres ressources
+ *   resource:action:any    → action sur n'importe quelle ressource
+ *
+ * Le scope club est géré séparément (voir PermissionContext).
+ */
+export type Permission =
+  // ─── Admin plateforme ─────────────────────────────────────────────────
+  | 'admin:read'
+  | 'admin:write'
+
+  // ─── Club ─────────────────────────────────────────────────────────────
+  | 'club:read'
+  | 'club:write'
+  | 'club:delete'
+
+  // ─── Membres du club (workflow d'approbation) ─────────────────────────
+  | 'members:read'
+  | 'members:approve'
+  | 'members:reject'
+  | 'members:suspend'
+  | 'members:invite'
+  | 'members:remove'
+  | 'members:role:write'
+
+  // ─── Joueurs ──────────────────────────────────────────────────────────
+  | 'players:read'
+  | 'players:write'
+  | 'players:write:self'
+  | 'players:approve'
+
+  // ─── Matchs & tactiques ───────────────────────────────────────────────
+  | 'matches:read'
+  | 'matches:write'
+  | 'tactics:read'
+  | 'tactics:write'
+
+  // ─── Académie ─────────────────────────────────────────────────────────
+  | 'academy:read'
+  | 'academy:write'
+  | 'academy:apply'
+  | 'academy:approve'
+  | 'academy:reject'
+
+  // ─── Finances ─────────────────────────────────────────────────────────
+  | 'finance:read'
+  | 'finance:write'
+
+  // ─── Sponsors ─────────────────────────────────────────────────────────
+  | 'sponsors:read'
+  | 'sponsors:write'
+  | 'sponsors:write:self'
+  | 'sponsorships:read'
+  | 'sponsorships:follow'
+
+  // ─── Social ───────────────────────────────────────────────────────────
+  | 'posts:read'
+  | 'posts:write'
+  | 'posts:write:self'
+  | 'posts:comment'
+  | 'posts:like'
+  | 'statuses:read'
+  | 'statuses:write:self'
+
+  // ─── Messagerie ───────────────────────────────────────────────────────
+  | 'messaging:read'
+  | 'messaging:write'
+  | 'messaging:rw'
+
+  // ─── Billetterie ──────────────────────────────────────────────────────
+  | 'tickets:read'
+  | 'tickets:buy'
+  | 'tickets:scan'
+
+  // ─── Marketplace ──────────────────────────────────────────────────────
+  | 'products:read'
+  | 'products:write'
+  | 'orders:read'
+  | 'orders:write'
+  | 'cart:write:self';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAP RÔLE → PERMISSIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * ⚠️ IMPORTANT :
+ * Ce map définit les permissions GLOBALES par rôle.
+ * Les permissions "scoped club" sont vérifiées via `ClubMember`
+ * (voir `hasPermission` dans `permission.service.ts`).
+ *
+ * Règle de décision :
+ *   1. SUPER_ADMIN → accès total
+ *   2. CLUB_ADMIN, TREASURER, COACH, PLAYER → doivent avoir un ClubMember ACTIVE
+ *   3. SUPPORTER, VISITOR, SPONSOR, ACADEMY_CANDIDATE → pas de scope club
+ */
+export const rolePermissionMap: Record<UserRole, Permission[]> = {
+  // ─── SUPER_ADMIN : tout ──────────────────────────────────────────────
+  SUPER_ADMIN: [
+    'admin:read',
+    'admin:write',
+    'club:read',
+    'club:write',
+    'club:delete',
+    'members:read',
+    'members:approve',
+    'members:reject',
+    'members:suspend',
+    'members:invite',
+    'members:remove',
+    'members:role:write',
+    'players:read',
+    'players:write',
+    'players:approve',
+    'matches:read',
+    'matches:write',
+    'tactics:read',
+    'tactics:write',
+    'academy:read',
+    'academy:write',
+    'academy:apply',
+    'academy:approve',
+    'academy:reject',
+    'finance:read',
+    'finance:write',
+    'sponsors:read',
+    'sponsors:write',
+    'sponsorships:read',
+    'posts:read',
+    'posts:write',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'statuses:write:self',
+    'messaging:read',
+    'messaging:write',
+    'messaging:rw',
+    'tickets:read',
+    'tickets:buy',
+    'tickets:scan',
+    'products:read',
+    'products:write',
+    'orders:read',
+    'orders:write',
+    'cart:write:self',
+  ],
+
+  // ─── CLUB_ADMIN : tout pour SON club ─────────────────────────────────
+  CLUB_ADMIN: [
+    'club:read',
+    'club:write',
+    'members:read',
+    'members:approve',
+    'members:reject',
+    'members:suspend',
+    'members:invite',
+    'members:remove',
+    'members:role:write',
+    'players:read',
+    'players:write',
+    'players:approve',
+    'matches:read',
+    'matches:write',
+    'tactics:read',
+    'tactics:write',
+    'academy:read',
+    'academy:write',
+    'academy:approve',
+    'academy:reject',
+    'finance:read',
+    'finance:write',
+    'sponsors:read',
+    'sponsors:write',
+    'sponsorships:read',
+    'posts:read',
+    'posts:write',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'statuses:write:self',
+    'messaging:read',
+    'messaging:write',
+    'messaging:rw',
+    'tickets:read',
+    'tickets:buy',
+    'tickets:scan',
+    'products:read',
+    'products:write',
+    'orders:read',
+    'orders:write',
+    'cart:write:self',
+  ],
+
+  // ─── TREASURER : finances + lecture club ─────────────────────────────
+  TREASURER: [
+    'club:read',
+    'members:read',
+    'players:read',
+    'matches:read',
+    'finance:read',
+    'finance:write',
+    'sponsors:read',
+    'sponsorships:read',
+    'posts:read',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'messaging:read',
+    'messaging:write',
+    'messaging:rw',
+    'tickets:read',
+    'orders:read',
+  ],
+
+  // ─── COACH : joueurs, matchs, tactiques, académie ────────────────────
+  COACH: [
+    'club:read',
+    'members:read',
+    'players:read',
+    'players:write',
+    'matches:read',
+    'matches:write',
+    'tactics:read',
+    'tactics:write',
+    'academy:read',
+    'academy:write',
+    'sponsors:read',
+    'posts:read',
+    'posts:write:self',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'statuses:write:self',
+    'messaging:read',
+    'messaging:write',
+    'messaging:rw',
+    'tickets:read',
+    'tickets:buy',
+    'products:read',
+    'cart:write:self',
+  ],
+
+  // ─── PLAYER : son profil, lecture club, messagerie ───────────────────
+  PLAYER: [
+    'club:read',
+    'members:read',
+    'players:read',
+    'players:write:self',
+    'matches:read',
+    'tactics:read',
+    'posts:read',
+    'posts:write:self',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'statuses:write:self',
+    'messaging:read',
+    'messaging:write',
+    'messaging:rw',
+    'tickets:read',
+    'tickets:buy',
+    'products:read',
+    'cart:write:self',
+  ],
+
+  // ─── SPONSOR : son profil sponsor + lecture ──────────────────────────
+  SPONSOR: [
+    'club:read',
+    'players:read',
+    'matches:read',
+    'sponsors:read',
+    'sponsors:write:self',
+    'sponsorships:read',
+    'sponsorships:follow',
+    'posts:read',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'messaging:read',
+    'messaging:write',
+    'messaging:rw',
+    'tickets:read',
+    'tickets:buy',
+    'products:read',
+    'cart:write:self',
+  ],
+
+  // ─── ACADEMY_CANDIDATE : postuler à l'académie ───────────────────────
+  ACADEMY_CANDIDATE: [
+    'club:read',
+    'academy:read',
+    'academy:apply',
+    'posts:read',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'messaging:read',
+    'messaging:write',
+    'tickets:read',
+    'tickets:buy',
+    'products:read',
+    'cart:write:self',
+  ],
+
+  // ─── SUPPORTER : social + lecture + achats ───────────────────────────
+  SUPPORTER: [
+    'club:read',
+    'matches:read',
+    'posts:read',
+    'posts:comment',
+    'posts:like',
+    'statuses:read',
+    'messaging:read',
+    'messaging:write',
+    'tickets:read',
+    'tickets:buy',
+    'products:read',
+    'sponsorships:follow',
+    'cart:write:self',
+  ],
+
+  // ─── VISITOR : non connecté, lecture publique uniquement ─────────────
+  VISITOR: [
+    'club:read',
+    'posts:read',
+    'matches:read',
+    'products:read',
+  ],
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONTEXTE DE VÉRIFICATION (scope club)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface PermissionContext {
+  /** Club concerné par l'action. Si absent, la vérification est globale. */
+  clubId?: string;
+  /** ID de la ressource concernée (pour les `:self`). */
+  resourceOwnerId?: string;
+}
+
+export interface PermissionActor {
+  userId: string;
+  role: UserRole;
+  /** IDs des clubs où l'utilisateur est membre ACTIVE. */
+  activeClubIds?: string[];
+  /** Rôles dans chaque club (map clubId → role). */
+  clubRoles?: Record<string, ClubScopedRole>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPERS DE VÉRIFICATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Vérifie qu'un acteur possède une permission.
+ *
+ * Règles :
+ *   1. SUPER_ADMIN → toujours autorisé
+ *   2. Si la permission finit par `:self` → il faut que
+ *      `resourceOwnerId === actor.userId`
+ *   3. Si `context.clubId` est fourni → l'acteur doit être membre ACTIVE
+ *      de ce club (via `activeClubIds`)
+ *   4. Sinon → vérifie juste que le rôle a la permission
+ */
+export function hasPermission(
+  actor: PermissionActor,
+  permission: Permission,
+  context: PermissionContext = {}
+): boolean {
+  // 1. SUPER_ADMIN bypasse tout
+  if (actor.role === 'SUPER_ADMIN') return true;
+
+  // 2. Permission de type `:self`
+  const isSelfPermission = permission.endsWith(':self');
+  if (isSelfPermission) {
+    if (!context.resourceOwnerId) return false;
+    if (context.resourceOwnerId !== actor.userId) return false;
+    // Retire le suffixe pour retrouver la permission de base
+    const basePermission = permission.replace(':self', '') as Permission;
+    return rolePermissionMap[actor.role]?.includes(basePermission) ?? false;
+  }
+
+  // 3. Scope club : si un clubId est fourni, l'acteur doit y être membre
+  if (context.clubId) {
+    const isMember = actor.activeClubIds?.includes(context.clubId);
+    if (!isMember) return false;
+  }
+
+  // 4. Vérification du rôle
+  return rolePermissionMap[actor.role]?.includes(permission) ?? false;
+}
+
+/**
+ * Vérifie qu'un acteur a une permission sur un club donné.
+ * Raccourci pratique.
+ */
+export function hasClubPermission(
+  actor: PermissionActor,
+  permission: Permission,
+  clubId: string,
+  resourceOwnerId?: string
+): boolean {
+  return hasPermission(actor, permission, { clubId, resourceOwnerId });
+}
+
+/**
+ * Renvoie toutes les permissions d'un rôle (utile pour le frontend).
+ */
+export function getPermissionsForRole(role: UserRole): Permission[] {
+  return rolePermissionMap[role] ?? [];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SEED DATA (développement uniquement)
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const defaultSeedUsers = [
   { email: 'superadmin@firestone.com', password: 'FireStone2026!', name: 'Super Administrateur', role: 'SUPER_ADMIN' as UserRole },
-  { email: 'admin@firestone.com', password: 'FireStone2026!', name: 'Administrateur Club', role: 'ADMIN' as UserRole },
+  { email: 'clubadmin@firestone.com', password: 'FireStone2026!', name: 'Administrateur Club', role: 'CLUB_ADMIN' as UserRole },
   { email: 'coach@firestone.com', password: 'FireStone2026!', name: 'Coach Vance', role: 'COACH' as UserRole },
   { email: 'marcus.vance@firestone.com', password: 'FireStone2026!', name: 'Marcus Vance', role: 'PLAYER' as UserRole },
   { email: 'sophie.laurent@firestone.com', password: 'FireStone2026!', name: 'Sophie Laurent', role: 'TREASURER' as UserRole },
-  { email: 'supporter@firestone.com', password: 'FireStone2026!', name: 'Supporter Club', role: 'VISITOR' as UserRole },
+  { email: 'supporter@firestone.com', password: 'FireStone2026!', name: 'Supporter Club', role: 'SUPPORTER' as UserRole },
+  { email: 'visitor@firestone.com', password: 'FireStone2026!', name: 'Visiteur', role: 'VISITOR' as UserRole },
 ] as const;
 
 export const defaultBadges = [

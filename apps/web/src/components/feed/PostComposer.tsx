@@ -1,8 +1,9 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Image, Video, Globe, Users, Send, X, Link, Loader2, Upload } from 'lucide-react';
-import type { SocialPost } from '../../types';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Image, Video, Globe, Users, Send, X, Link, Loader2, Upload, Building2, ChevronDown } from 'lucide-react';
+import type { SocialPost, UserRole } from '../../types';
 import { socialApi } from '../../services/socialApi';
 import { uploadMedia } from '../../services/uploadService';
+import { clubApi } from '../../services/clubApi';
 
 interface PostComposerProps {
   currentUserAvatar?: string;
@@ -10,6 +11,8 @@ interface PostComposerProps {
   onPostCreated: (newPost: SocialPost) => void;
   onOpenAuth?: () => void;
   isAuthenticated?: boolean;
+  /** Utilisateur connecté (pour les rôles CLUB_ADMIN / COACH) */
+  authUser?: { id: string; name: string; role: UserRole; avatarUrl?: string | null } | null;
 }
 
 export const PostComposer: React.FC<PostComposerProps> = ({
@@ -18,6 +21,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   onPostCreated,
   onOpenAuth,
   isAuthenticated = true,
+  authUser,
 }) => {
   const [content, setContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -27,12 +31,29 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [visibility, setVisibility] = useState<'PUBLIC' | 'CLUB_ONLY'>('PUBLIC');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isProcessingFile] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Sélection du club (CLUB_ADMIN / COACH) ──────────────────────────────
+  const canPostAsClub = authUser?.role === 'CLUB_ADMIN' || authUser?.role === 'COACH';
+  const [postAsClub, setPostAsClub] = useState(false);
+  const [selectedClubId, setSelectedClubId] = useState<string | null>(null);
+  const [selectedClubName, setSelectedClubName] = useState<string | null>(null);
+  const [selectedClubLogo, setSelectedClubLogo] = useState<string | null>(null);
+  const [myClubs, setMyClubs] = useState<{ id: string; name: string; logoUrl?: string | null }[]>([]);
+  const [showClubDropdown, setShowClubDropdown] = useState(false);
+
+  useEffect(() => {
+    if (!canPostAsClub) return;
+    // Charge les clubs dont l'utilisateur est admin/coach
+    clubApi.getMyClubs?.().then((clubs) => {
+      setMyClubs(clubs ?? []);
+    }).catch(() => {
+      // Silencieux si l'API n'est pas disponible
+    });
+  }, [canPostAsClub]);
 
   const clearMedia = useCallback(() => {
     setSelectedFile(null);
@@ -76,16 +97,24 @@ export const PostComposer: React.FC<PostComposerProps> = ({
       let finalMediaUrl: string | undefined = mediaUrl.trim() || undefined;
 
       if (selectedFile) {
-        const uploadRes = await uploadMedia(selectedFile, 'firestone/posts', (p) => setUploadProgress(p));
+        const uploadRes = await uploadMedia(selectedFile, 'firestone/posts', () => {});
         finalMediaUrl = uploadRes.url;
       }
 
       const created = await socialApi.createPost({
         content: content.trim(),
         mediaUrl: finalMediaUrl,
+        // ── Si post au nom d'un club ───────────────────────────────
+        clubId: postAsClub && selectedClubId ? selectedClubId : undefined,
       });
       setContent('');
       clearMedia();
+      // Enrichir l'objet avec les infos club si post club
+      if (postAsClub && selectedClubId) {
+        created.clubId = selectedClubId;
+        created.clubName = selectedClubName;
+        created.clubLogo = selectedClubLogo;
+      }
       onPostCreated(created);
     } catch (err: any) {
       setErrorMsg(err.message || 'Impossible de publier');
@@ -114,16 +143,99 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
         <div className="flex gap-3 items-start">
-          <img
-            src={currentUserAvatar}
-            alt={currentUserName}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-white/10 shrink-0 bg-slate-800"
-          />
+          {/* Avatar : logo club si mode club, sinon avatar perso */}
+          <div className="relative shrink-0">
+            {postAsClub && selectedClubId ? (
+              <div className="relative">
+                <img
+                  src={selectedClubLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedClubName || 'Club')}&background=1a1f2e&color=FFB800&bold=true`}
+                  alt={selectedClubName || 'Club'}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover border-2 border-[#FFB800] bg-slate-800"
+                />
+                <img
+                  src={currentUserAvatar}
+                  alt={currentUserName}
+                  className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full object-cover border-2 border-[#0F121A] bg-slate-800"
+                />
+              </div>
+            ) : (
+              <img
+                src={currentUserAvatar}
+                alt={currentUserName}
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-white/10 bg-slate-800"
+              />
+            )}
+          </div>
+
           <div className="flex-1 min-w-0">
+            {/* Sélecteur "Poster au nom du club" (CLUB_ADMIN / COACH uniquement) */}
+            {canPostAsClub && (
+              <div className="mb-2 relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!postAsClub) {
+                      setPostAsClub(true);
+                      setShowClubDropdown(myClubs.length > 1);
+                      if (myClubs.length === 1) {
+                        setSelectedClubId(myClubs[0].id);
+                        setSelectedClubName(myClubs[0].name);
+                        setSelectedClubLogo(myClubs[0].logoUrl ?? null);
+                      }
+                    } else {
+                      setPostAsClub(false);
+                      setSelectedClubId(null);
+                      setSelectedClubName(null);
+                      setSelectedClubLogo(null);
+                      setShowClubDropdown(false);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                    postAsClub
+                      ? 'bg-[#FFB800]/15 text-[#FFB800] border-[#FFB800]/40'
+                      : 'bg-white/5 text-slate-400 border-white/10 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>{postAsClub && selectedClubName ? `Au nom de : ${selectedClubName}` : 'Poster au nom du club'}</span>
+                  {postAsClub && myClubs.length > 1 && (
+                    <ChevronDown className="w-3 h-3" onClick={(e) => { e.stopPropagation(); setShowClubDropdown(v => !v); }} />
+                  )}
+                  {postAsClub && <X className="w-3 h-3 ml-1 opacity-60" />}
+                </button>
+
+                {/* Dropdown de sélection du club */}
+                {showClubDropdown && myClubs.length > 0 && (
+                  <div className="absolute left-0 top-9 z-30 w-56 rounded-xl bg-[#0F121A] border border-white/15 p-1 shadow-2xl space-y-0.5">
+                    {myClubs.map((club) => (
+                      <button
+                        key={club.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedClubId(club.id);
+                          setSelectedClubName(club.name);
+                          setSelectedClubLogo(club.logoUrl ?? null);
+                          setShowClubDropdown(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 text-left text-xs text-white cursor-pointer"
+                      >
+                        <img
+                          src={club.logoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(club.name)}&background=1a1f2e&color=FFB800&bold=true`}
+                          alt={club.name}
+                          className="w-6 h-6 rounded-md object-cover bg-slate-800"
+                        />
+                        <span className="font-medium">{club.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Quoi de neuf sur le parquet ? Partagez vos scores, dunks ou analyses..."
+              placeholder={postAsClub && selectedClubName ? `Quoi de nouveau pour ${selectedClubName} ?` : "Quoi de neuf sur le parquet ? Partagez vos scores, dunks ou analyses..."}
               rows={2}
               className="w-full bg-transparent text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed"
             />

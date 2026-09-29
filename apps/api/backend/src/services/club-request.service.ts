@@ -82,7 +82,7 @@ export class ClubRequestService {
     const club = await ClubService.createClub(validation.data, request.requesterId);
     try {
       await prisma.$transaction([
-        prisma.user.update({ where: { id: request.requesterId }, data: { role: 'ADMIN' } }),
+        prisma.user.update({ where: { id: request.requesterId }, data: { role: 'CLUB_ADMIN' } }),
         prisma.clubCreationRequest.update({
           where: { id: requestId },
           data: { status: 'APPROVED', reviewedBy: superAdminId, reviewedAt: new Date() },

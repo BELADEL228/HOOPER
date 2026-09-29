@@ -1,23 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
-  Radio,
   Volume2,
   VolumeX,
-  Maximize2,
   Play,
   Pause,
   Send,
-  Flame,
-  Zap,
   Activity,
   Users,
   MessageSquare,
   Trophy,
-  Shield,
-  Clock,
-  Sparkles,
-  ChevronRight,
 } from 'lucide-react';
 import type { Match } from '../../types';
 
@@ -64,80 +56,27 @@ export const LiveMatchViewerModal: React.FC<LiveMatchViewerModalProps> = ({
   currentUserName = 'Moi',
 }) => {
   // ─── Score & Chrono en direct ───────────────────────────────────────
-  const [scoreHome, setScoreHome] = useState(match.scoreTeam ?? 78);
-  const [scoreAway, setScoreAway] = useState(match.scoreOpponent ?? 74);
-  const [quarter, setQuarter] = useState(3);
-  const [secondsRemaining, setSecondsRemaining] = useState(274); // 04:34
-  const [shotClock, setShotClock] = useState(14);
-  const [isClockRunning, setIsClockRunning] = useState(true);
+  const [scoreHome] = useState(match.scoreTeam ?? 0);
+  const [scoreAway] = useState(match.scoreOpponent ?? 0);
+  const [quarter, setQuarter] = useState(match.status === 'FINISHED' ? 4 : 1);
+  const [secondsRemaining, setSecondsRemaining] = useState(match.status === 'FINISHED' ? 0 : 600); // 10:00
+  const [shotClock, setShotClock] = useState(24);
+  const [isClockRunning, setIsClockRunning] = useState(match.status === 'LIVE');
 
   // ─── Vidéo & Player ────────────────────────────────────────────────
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [activeTab, setActiveTab] = useState<'CHAT' | 'PLAYBYPLAY' | 'BOXSCORE'>('CHAT');
   const [cameraAngle, setCameraAngle] = useState<'MAIN' | 'HOOP' | 'COURT2D'>('MAIN');
-  const [spectatorsCount, setSpectatorsCount] = useState(842);
+  const [spectatorsCount, setSpectatorsCount] = useState(1);
 
   // ─── Chat en direct ────────────────────────────────────────────────
-  const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([
-    {
-      id: 'm1',
-      sender: 'Koffi Basket',
-      text: 'Quelle défense de FIRE STONE ce soir ! 🔥',
-      time: '19:42',
-    },
-    {
-      id: 'm2',
-      sender: 'Coach Sylvain',
-      text: 'Attention au repli défensif sur les transitions rapides',
-      time: '19:43',
-    },
-    {
-      id: 'm3',
-      sender: 'Afiwa',
-      text: 'Le 3 points était incroyable 🏀👏',
-      time: '19:44',
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // ─── Événements Play-by-Play ───────────────────────────────────────
-  const [events, setEvents] = useState<PlayByPlayEvent[]>([
-    {
-      id: 'e1',
-      quarter: 3,
-      time: '05:12',
-      type: 'SCORE_3PT',
-      team: 'HOME',
-      player: 'Koffi Mensah',
-      description: 'Tir primé à 3 points au buzzer de possession !',
-      scoreHome: 78,
-      scoreAway: 74,
-    },
-    {
-      id: 'e2',
-      quarter: 3,
-      time: '05:38',
-      type: 'DUNK',
-      team: 'AWAY',
-      player: 'Emmanuel Amouzou',
-      description: 'Dunk surpuissant en contre-attaque',
-      scoreHome: 75,
-      scoreAway: 74,
-    },
-    {
-      id: 'e3',
-      quarter: 3,
-      time: '06:05',
-      type: 'STEAL',
-      team: 'HOME',
-      player: 'Jean-Luc Dossou',
-      description: 'Interception décisive dans la raquette',
-      scoreHome: 75,
-      scoreAway: 72,
-    },
-  ]);
+  const [events] = useState<PlayByPlayEvent[]>([]);
 
   // ─── Réactions Emojis Flottantes ───────────────────────────────────
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);

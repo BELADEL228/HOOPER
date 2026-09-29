@@ -1,0 +1,257 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  ONBOARDING — design uni, plat, sombre, sans halo
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-onboarding {
+    position: absolute;
+    inset: 0;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #0a0a0e;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    padding: 32px clamp(24px, 5vw, 64px);
+    box-sizing: border-box;
+    animation: hoopersOnboardingIn 0.35s ease-out;
+}
+
+@keyframes hoopersOnboardingIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  TOP BAR
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-onboarding__topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+}
+
+.hoopers-onboarding__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hoopers-onboarding__brand-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #14141a;
+    padding: 4px;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.hoopers-onboarding__brand-name {
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: #ffffff;
+}
+
+.hoopers-onboarding__back {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 100px;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.hoopers-onboarding__back:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  CONTENU CENTRAL
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-onboarding__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    padding: 24px 0;
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+    animation: hoopersStepIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes hoopersStepIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hoopers-onboarding__icon {
+    width: clamp(90px, 16vw, 130px);
+    height: clamp(90px, 16vw, 130px);
+    margin-bottom: 12px;
+}
+
+.hoopers-onboarding__eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.36em;
+    color: #ff2a3b;
+    text-transform: uppercase;
+}
+
+.hoopers-onboarding__title {
+    margin: 0;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+    color: #ffffff;
+}
+
+.hoopers-onboarding__description {
+    margin: 0;
+    font-size: clamp(0.88rem, 1.6vw, 1rem);
+    font-weight: 400;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.6);
+    max-width: 420px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  BAS : DOTS + CTA + COMPTEUR
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.hoopers-onboarding__bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.hoopers-onboarding__dots {
+    display: flex;
+    gap: 8px;
+}
+
+.hoopers-onboarding__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.25s ease, width 0.25s ease;
+}
+
+.hoopers-onboarding__dot:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.hoopers-onboarding__dot--active {
+    width: 24px;
+    border-radius: 100px;
+    background: #ff2a3b;
+}
+
+.hoopers-onboarding__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 36px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: #ff2a3b;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.hoopers-onboarding__cta:hover {
+    background: #ff4050;
+    transform: translateY(-1px);
+}
+
+.hoopers-onboarding__cta:active {
+    transform: translateY(0);
+}
+
+.hoopers-onboarding__cta:focus-visible {
+    outline: 2px solid #ffb800;
+    outline-offset: 4px;
+}
+
+.hoopers-onboarding__counter {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    color: rgba(255, 255, 255, 0.35);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  RESPONSIVE
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+    .hoopers-onboarding {
+        padding: 24px 20px;
+    }
+
+    .hoopers-onboarding__cta {
+        padding: 14px 28px;
+        font-size: 0.7rem;
+        letter-spacing: 0.16em;
+    }
+
+    .hoopers-onboarding__back {
+        padding: 6px 12px;
+        font-size: 0.6rem;
+    }
+
+    .hoopers-onboarding__description {
+        max-width: 320px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .hoopers-onboarding,
+    .hoopers-onboarding__content {
+        animation: none;
+    }
+}

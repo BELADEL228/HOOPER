@@ -11,43 +11,7 @@ interface AcademyRecruitmentProps {
 export const AcademyRecruitment: React.FC<AcademyRecruitmentProps> = ({ currentRole }) => {
   const isAuthorized = ['SUPER_ADMIN', 'ADMIN', 'COACH'].includes(currentRole);
 
-  const [applications, setApplications] = useState<AcademyApplication[]>([
-    {
-      id: 'app_1',
-      candidateName: 'Thomas "Kid" Morel',
-      email: 'thomas.morel@gmail.com',
-      age: 18,
-      height: '1m91',
-      preferredPosition: 'Arrière',
-      videoHighlightsUrl: 'https://youtube.com',
-      status: 'EN_ATTENTE',
-      submittedDate: '2026-07-30',
-      notes: 'Formé au club local. Bon tir à 3-pts et vitesse d\'exécution.',
-    },
-    {
-      id: 'app_2',
-      candidateName: 'Kévin Bangoura',
-      email: 'kevin.bangoura@yahoo.fr',
-      age: 19,
-      height: '2m02',
-      preferredPosition: 'Ailier Fort',
-      videoHighlightsUrl: 'https://youtube.com',
-      status: 'EN_ATTENTE',
-      submittedDate: '2026-07-28',
-      notes: 'Grand gabarit athlétique, potentiel au rebond défensif.',
-    },
-    {
-      id: 'app_3',
-      candidateName: 'Léo Martin',
-      email: 'leo.martin@outlook.fr',
-      age: 17,
-      height: '1m84',
-      preferredPosition: 'Meneur',
-      status: 'ACCEPTÉ',
-      submittedDate: '2026-07-20',
-      notes: 'Admis aux détections de septembre.',
-    },
-  ]);
+  const [applications, setApplications] = useState<AcademyApplication[]>([]);
 
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [candidateName, setCandidateName] = useState('');
@@ -67,7 +31,7 @@ export const AcademyRecruitment: React.FC<AcademyRecruitmentProps> = ({ currentR
         .then(async (res) => {
           if (res.ok) {
             const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
+            if (Array.isArray(data)) {
               setApplications(data);
             }
           }

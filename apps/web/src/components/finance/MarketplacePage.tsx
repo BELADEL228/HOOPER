@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   ShoppingBag,
   Ticket,
@@ -38,10 +38,18 @@ export function MarketplacePage() {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const authUser = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('firestone-auth');
+      return raw ? JSON.parse(raw).user : null;
+    } catch {
+      return null;
+    }
+  }, []);
 
   // Formulaire de commande
-  const [customerName, setCustomerName] = useState<string>('');
-  const [customerEmail, setCustomerEmail] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>(() => authUser?.name || '');
+  const [customerEmail, setCustomerEmail] = useState<string>(() => authUser?.email || '');
   const [customerPhone, setCustomerPhone] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('TMONEY');
   const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
@@ -59,8 +67,12 @@ export function MarketplacePage() {
 
   // Flocage personnalisé pour maillot sélectionné
   const [customizingProduct, setCustomizingProduct] = useState<MarketplaceProduct | null>(null);
-  const [customName, setCustomName] = useState<string>('KOFFI');
-  const [customNumber, setCustomNumber] = useState<number>(23);
+  const [customName, setCustomName] = useState<string>(() => {
+    if (!authUser?.name) return '';
+    const firstName = authUser.name.trim().split(' ')[0];
+    return firstName.toUpperCase();
+  });
+  const [customNumber, setCustomNumber] = useState<number>(7);
   const [selectedSize, setSelectedSize] = useState<string>('L');
 
   // Scanner Stadiers
@@ -86,20 +98,18 @@ export function MarketplacePage() {
           const prodData = await prodRes.json();
           setProducts(prodData);
         } else {
-          // Fallback hors-ligne
-          setProducts(FALLBACK_PRODUCTS);
+          setProducts([]);
         }
 
         if (matchRes && matchRes.ok) {
           const matchData = await matchRes.json();
           setMatches(matchData);
         } else {
-          // Fallback hors-ligne
-          setMatches(FALLBACK_MATCHES);
+          setMatches([]);
         }
       } catch {
-        setProducts(FALLBACK_PRODUCTS);
-        setMatches(FALLBACK_MATCHES);
+        setProducts([]);
+        setMatches([]);
       } finally {
         setLoading(false);
       }
@@ -436,7 +446,7 @@ export function MarketplacePage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
         <div>
           <h2 className="mt-2 text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
-            Marketplace & Billetterie QR
+            Boutique Officielle & Billetterie QR
           </h2>
           <p className="mt-1 text-sm text-slate-400">
             Achetez les équipements officiels du club et réservez vos places de match avec QR code scannable au guichet.
@@ -1310,72 +1320,3 @@ export function MarketplacePage() {
     </div>
   );
 }
-
-// Données de secours en mode hors-ligne
-const FALLBACK_PRODUCTS: MarketplaceProduct[] = [
-  {
-    id: 'prod-001',
-    name: 'Maillot Officiel Domicile FIRE STONE 2026',
-    slug: 'maillot-domicile-fire-stone-2026',
-    category: 'JERSEYS',
-    priceXOF: 18000,
-    description: 'Le maillot officiel de match porté au Terrain du Lycée d’Adétikopé. Flocage nom & numéro personnalisé inclus.',
-    imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
-    isOfficial: true,
-    customizable: true,
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    inStock: true,
-    rating: 4.9,
-    reviewsCount: 38,
-    badge: 'BEST-SELLER',
-  },
-  {
-    id: 'prod-003',
-    name: 'Ballon Officiel FIBA FIRE STONE All-Court',
-    slug: 'ballon-fiba-fire-stone',
-    category: 'GEAR',
-    priceXOF: 22500,
-    description: 'Ballon officiel taille 7 en cuir composite haute adhérence.',
-    imageUrl: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=800&q=80',
-    isOfficial: true,
-    customizable: false,
-    inStock: true,
-    rating: 5.0,
-    reviewsCount: 44,
-    badge: 'HOMOLOGUÉ FIBA',
-  },
-];
-
-const FALLBACK_MATCHES: TicketingMatch[] = [
-  {
-    id: 'match-tkt-001',
-    homeTeamName: 'FIRE STONE Elite',
-    awayTeamName: 'Éperviers BBC',
-    competition: 'Championnat National D1 Togo — J1',
-    date: '2026-09-12',
-    time: '16:00',
-    arenaName: 'Terrain du Lycée d’Adétikopé',
-    arenaCity: 'Lomé',
-    isHotMatch: true,
-    tiers: [
-      {
-        id: 'tier-pop-1',
-        tierName: 'Tribune Populaire',
-        priceXOF: 1000,
-        description: 'Accès gradins extérieurs et buvette.',
-        availableSeats: 280,
-        totalSeats: 300,
-        perks: ['Entrée générale', 'Placement libre gradins'],
-      },
-      {
-        id: 'tier-vip-1',
-        tierName: 'Tribune Couverte Courtside VIP',
-        priceXOF: 3500,
-        description: 'Siège réservé au bord du terrain + boisson offerte.',
-        availableSeats: 42,
-        totalSeats: 50,
-        perks: ['Siège premier rang', 'Boisson fraîche', 'Badge collector'],
-      },
-    ],
-  },
-];

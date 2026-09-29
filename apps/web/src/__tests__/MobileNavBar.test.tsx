@@ -1,5 +1,6 @@
 /**
  * Tests unitaires du composant MobileNavBar (navigation smartphone).
+ * Le menu "AI Team Designer" est réservé au SUPER_ADMIN uniquement.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -39,7 +40,7 @@ describe('MobileNavBar — Rendu et interactions', () => {
     expect(handleSelect).toHaveBeenCalledWith('explorer');
   });
 
-  it('cliquer sur Plus ouvre le tiroir avec les options supplémentaires', () => {
+  it('cliquer sur Plus ouvre le tiroir avec les options supplémentaires (PLAYER ne voit pas le designer)', () => {
     const handleSelect = vi.fn();
     render(
       <MobileNavBar
@@ -55,29 +56,32 @@ describe('MobileNavBar — Rendu et interactions', () => {
     // Cliquer sur le bouton Plus
     fireEvent.click(screen.getByText('Plus'));
 
-    // Le tiroir s'ouvre
+    // Le tiroir s'ouvre — Terrains visible pour PLAYER, AI Team Designer NON
     expect(screen.getByText(/Menu Rapide Mobile/i)).toBeInTheDocument();
     expect(screen.getByText('Terrains de Lomé')).toBeInTheDocument();
-    expect(screen.getByText('AI Team Designer')).toBeInTheDocument();
+    expect(screen.queryByText('AI Team Designer')).not.toBeInTheDocument();
   });
 
-  it('sélectionner un module dans le tiroir appelle onSelectTab et ferme le menu', () => {
+  it('SUPER_ADMIN voit "AI Team Designer" dans le tiroir et peut y naviguer', () => {
     const handleSelect = vi.fn();
     render(
       <MobileNavBar
         activeTab="accueil"
         onSelectTab={handleSelect}
-        userRole="PLAYER"
+        userRole="SUPER_ADMIN"
       />
     );
 
     // Ouvrir le menu
     fireEvent.click(screen.getByText('Plus'));
 
+    // AI Team Designer visible pour SUPER_ADMIN
+    expect(screen.getByText('AI Team Designer')).toBeInTheDocument();
+
     // Cliquer sur "AI Team Designer"
     fireEvent.click(screen.getByText('AI Team Designer'));
-
     expect(handleSelect).toHaveBeenCalledWith('designer');
+
     // Le tiroir doit être fermé
     expect(screen.queryByText(/Menu Rapide Mobile/i)).not.toBeInTheDocument();
   });

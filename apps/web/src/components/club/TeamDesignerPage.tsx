@@ -57,10 +57,10 @@ const DEFAULT_THEME_TOKENS: ThemeTokens = {
   },
 };
 
-// ─── Nuanciers de démarrage (nommés par leur palette, pas par une équipe) ─────
+// ─── Nuanciers de démarrage ──────────────────────────────────────────────────
 const COLOR_PRESETS: { name: string; subtitle: string; emoji: string; tokens: ThemeTokens }[] = [
   {
-    name: 'Flamme & Or',
+    name: 'FIRE STONE Elite',
     subtitle: 'Rouge ardent et or solaire',
     emoji: '🔥',
     tokens: DEFAULT_THEME_TOKENS,
@@ -175,7 +175,19 @@ export function TeamDesignerPage() {
         }
       })
       .catch(() => {
-        // Mode hors ligne : on garde la liste vide, pas de fallback hardcodé
+        // Mode hors ligne : fallback vers l'équipe par défaut FIRE STONE Elite
+        const fallbackTeam: Team = {
+          id: 'team-fire-stone',
+          name: 'FIRE STONE Elite',
+          slug: 'fire-stone-elite',
+          city: 'Lomé',
+          category: 'SENIOR',
+          primaryColor: '#FF2A3B',
+          secondaryColor: '#FFB800',
+          accentColor: '#38BDF8',
+        };
+        setTeams([fallbackTeam]);
+        setSelectedTeamId(fallbackTeam.id);
       })
       .finally(() => setTeamsLoading(false));
   }, []);

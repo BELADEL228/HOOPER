@@ -6,13 +6,13 @@ import { requireMatchManager, requireTeamManager } from '../middlewares/club-acc
 export const matchRouter = Router();
 
 matchRouter.get('/', MatchController.listMatches);
-matchRouter.post('/', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireMatchManager, MatchController.createMatch);
-matchRouter.put('/:id', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireMatchManager, MatchController.updateMatch);
-matchRouter.delete('/:id', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireMatchManager, MatchController.deleteMatch);
+matchRouter.post('/', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireMatchManager, MatchController.createMatch);
+matchRouter.put('/:id', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireMatchManager, MatchController.updateMatch);
+matchRouter.delete('/:id', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireMatchManager, MatchController.deleteMatch);
 matchRouter.get('/:id/events', MatchController.listEvents);
-matchRouter.post('/:id/events', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireMatchManager, MatchController.addEvent);
+matchRouter.post('/:id/events', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireMatchManager, MatchController.addEvent);
 
 export const matchRequestRouter = Router();
-matchRequestRouter.get('/', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), MatchController.listMatchRequests);
-matchRequestRouter.post('/', requireAuth, requireRole(['SUPER_ADMIN', 'ADMIN', 'CLUB_MANAGER']), requireTeamManager, MatchController.createMatchRequest);
+matchRequestRouter.get('/', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), MatchController.listMatchRequests);
+matchRequestRouter.post('/', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireTeamManager, MatchController.createMatchRequest);
 matchRequestRouter.patch('/:id', requireAuth, requireRole(['SUPER_ADMIN']), MatchController.updateMatchRequestStatus);

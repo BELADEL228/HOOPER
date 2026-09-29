@@ -4,9 +4,10 @@ export interface UploadResult {
   url: string;
   secure_url?: string;
   publicId?: string;
-  resourceType: 'IMAGE' | 'VIDEO';
+  resourceType: 'IMAGE' | 'VIDEO' | 'RAW';
   format?: string;
   bytes?: number;
+  provider?: 'cloudinary' | 'local';
 }
 
 const getAuthToken = (): string => {
@@ -42,7 +43,11 @@ export const uploadMedia = async (
   onProgress?.(45);
 
   const token = getAuthToken();
-  const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
+  const resourceType = file.type.startsWith('video/')
+    ? 'video'
+    : file.type === 'application/pdf' || file.type.startsWith('text/')
+    ? 'raw'
+    : 'image';
 
   const response = await fetch(apiUrl('/upload'), {
     method: 'POST',
@@ -79,8 +84,9 @@ export const uploadMedia = async (
     url: finalUrl,
     secure_url: finalUrl,
     publicId: data.publicId,
-    resourceType: resourceType === 'video' ? 'VIDEO' : 'IMAGE',
+    resourceType: resourceType === 'video' ? 'VIDEO' : resourceType === 'raw' ? 'RAW' : 'IMAGE',
     format: data.format,
     bytes: data.bytes,
+    provider: data.provider,
   };
 };

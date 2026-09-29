@@ -1,12 +1,25 @@
 /**
- * Tests du composant LandingHero (Page d'accueil club, Annonces, Vidéos & Aperçu d'équipe)
+ * Tests du composant LandingHero (Espace Club Workspace) et TeamOverviewModal
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { LandingHero } from '../components/LandingHero';
 import { TeamOverviewModal } from '../components/TeamOverviewModal';
+import { ClubProvider } from '../context/ClubContext';
+import type { Team } from '../types';
 
-describe('LandingHero & Page d\'accueil', () => {
+const mockClub: Team = {
+  id: 'team-fire-stone',
+  name: 'FIRE STONE Elite',
+  slug: 'fire-stone-elite',
+  city: 'Lomé',
+  category: 'SENIOR',
+  primaryColor: '#FF2A3B',
+  secondaryColor: '#FFB800',
+  accentColor: '#38BDF8',
+};
+
+describe('LandingHero & TeamOverviewModal', () => {
   const mockNavigate = vi.fn();
   const mockOpenAuth = vi.fn();
 
@@ -14,147 +27,164 @@ describe('LandingHero & Page d\'accueil', () => {
     vi.clearAllMocks();
   });
 
-  it('rend directement TeamOverviewModal sans erreur', () => {
-    render(
-      <TeamOverviewModal
-        team={{
-          id: 'team-001',
-          name: 'FIRE STONE Elite',
-          category: 'SENIOR PRO',
-          city: 'Lomé',
-        }}
-        isOpen={true}
-        onClose={vi.fn()}
-        onNavigate={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId('team-overview-modal')).toBeInTheDocument();
-  });
+  describe('TeamOverviewModal', () => {
+    it('rend TeamOverviewModal et permet de naviguer entre les onglets', async () => {
+      render(
+        <TeamOverviewModal
+          team={{
+            id: 'team-001',
+            name: 'FIRE STONE Elite',
+            category: 'SENIOR PRO',
+            city: 'Lomé',
+          }}
+          isOpen={true}
+          onClose={vi.fn()}
+          onNavigate={mockNavigate}
+          players={[
+            {
+              id: 'p-1',
+              name: 'Koffi Mensah',
+              number: 7,
+              position: 'Meneur',
+              category: 'SENIOR',
+              photo: 'https://example.com/p1.jpg',
+              pointsPerGame: 18.5,
+              reboundsPerGame: 4.2,
+              assistsPerGame: 7.1,
+              isInjured: false,
+              isSuspended: false,
+              stats: {
+                played: 12,
+                points: 220,
+                rebounds: 50,
+                assists: 85,
+                steals: 20,
+                blocks: 3,
+                turnovers: 18,
+                minutes: 360,
+                fouls: 15,
+                threePointersMade: 25,
+                threePointersAttempted: 60,
+                fieldGoalsMade: 80,
+                fieldGoalsAttempted: 160,
+                freeThrowsMade: 35,
+                freeThrowsAttempted: 42,
+              },
+            },
+          ]}
+        />
+      );
 
-  it('affiche le bandeau des annonces officielles, les stories et le titre principal', () => {
-    render(
-      <LandingHero
-        currentRole="VISITOR"
-        onNavigate={mockNavigate}
-        onOpenAuth={mockOpenAuth}
-      />
-    );
-
-    // Annonce officielle ticker
-    expect(screen.getByText(/Annonce Officielle/i)).toBeInTheDocument();
-
-    // Stories bar
-    expect(screen.getByText(/Stories & Événements Flash/i)).toBeInTheDocument();
-    expect(screen.getByText(/Live Entraînement/i)).toBeInTheDocument();
-
-    // Titre principal (H1)
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1).toHaveTextContent(/L'énergie du FEU/i);
-    expect(h1).toHaveTextContent(/La solidité de la PIERRE/i);
-  });
-
-  it('affiche la section des équipes officielles du club', () => {
-    render(
-      <LandingHero
-        currentRole="VISITOR"
-        onNavigate={mockNavigate}
-        onOpenAuth={mockOpenAuth}
-      />
-    );
-
-    expect(screen.getByText(/Découvrez Nos Équipes Officielles/i)).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /FIRE STONE Elite \(Pro D1\)/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /FIRE STONE U20 Espoirs/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /FIRE STONE Féminin/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /Académie FIRE STONE Adétikopé/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /Éperviers BBC/i })).toBeInTheDocument();
-  });
-
-  it('ouvre le modal d\'aperçu complet lorsqu\'on clique sur une équipe', async () => {
-    render(
-      <LandingHero
-        currentRole="VISITOR"
-        onNavigate={mockNavigate}
-        onOpenAuth={mockOpenAuth}
-      />
-    );
-
-    // Cliquer sur la carte de FIRE STONE Elite
-    const eliteCard = screen.getByTestId('team-card-team-001');
-    fireEvent.click(eliteCard);
-
-    // Le modal d'aperçu s'ouvre
-    await waitFor(() => {
       const modal = screen.getByTestId('team-overview-modal');
       expect(modal).toBeInTheDocument();
       expect(within(modal).getByText(/Présentation du Pôle/i)).toBeInTheDocument();
-      expect(within(modal).getByRole('button', { name: /Effectif Joueurs/i })).toBeInTheDocument();
-      expect(within(modal).getByRole('button', { name: /Matchs & Calendrier/i })).toBeInTheDocument();
-      expect(within(modal).getByRole('button', { name: /Boutique Maillots/i })).toBeInTheDocument();
-    });
 
-    const modal = screen.getByTestId('team-overview-modal');
-    // Basculer vers l'onglet Effectif
-    const rosterTab = within(modal).getByRole('button', { name: /Effectif Joueurs/i });
-    fireEvent.click(rosterTab);
+      // Basculer vers l'onglet Effectif
+      const rosterTab = within(modal).getByRole('button', { name: /Effectif Joueurs/i });
+      fireEvent.click(rosterTab);
 
-    await waitFor(() => {
-      expect(within(modal).getByText(/Joueurs enregistrés dans l'effectif/i)).toBeInTheDocument();
-    });
-  });
+      await waitFor(() => {
+        expect(within(modal).getByText(/Koffi Mensah/i)).toBeInTheDocument();
+      });
 
-  it('affiche le fil d\'actualité social avec badge vidéo et filtres', () => {
-    render(
-      <LandingHero
-        currentRole="VISITOR"
-        onNavigate={mockNavigate}
-        onOpenAuth={mockOpenAuth}
-      />
-    );
+      // Basculer vers l'onglet Boutique
+      const shopTab = within(modal).getByRole('button', { name: /Boutique Maillots/i });
+      fireEvent.click(shopTab);
 
-    expect(screen.getByText(/Publications Récentes & Vidéos/i)).toBeInTheDocument();
-    expect(screen.getByText(/Vidéos uniquement 🎬/i)).toBeInTheDocument();
-    expect(screen.getByText(/Vidéo Officielle/i)).toBeInTheDocument();
-  });
-
-  it('permet de filtrer les publications pour n\'afficher que les vidéos', async () => {
-    render(
-      <LandingHero
-        currentRole="VISITOR"
-        onNavigate={mockNavigate}
-        onOpenAuth={mockOpenAuth}
-      />
-    );
-
-    const videoFilterBtn = screen.getByRole('button', { name: /Vidéos uniquement 🎬/i });
-    fireEvent.click(videoFilterBtn);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Vidéo Officielle/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(within(modal).getByText(/Boutique Officielle/i)).toBeInTheDocument();
+      });
     });
   });
 
-  it('permet d\'interagir avec les réactions emojis et d\'ajouter un commentaire', async () => {
-    render(
-      <LandingHero
-        currentRole="VISITOR"
-        onNavigate={mockNavigate}
-        onOpenAuth={mockOpenAuth}
-      />
-    );
+  describe('LandingHero — Espace Club', () => {
+    it('affiche l\'identité du club, le badge Espace club et les boutons d\'action', () => {
+      render(
+        <ClubProvider initialClub={mockClub}>
+          <LandingHero
+            currentRole="VISITOR"
+            onNavigate={mockNavigate}
+            onOpenAuth={mockOpenAuth}
+          />
+        </ClubProvider>
+      );
 
-    // Emoji reaction
-    const fireEmojiButtons = screen.getAllByRole('button', { name: /🔥/i });
-    expect(fireEmojiButtons.length).toBeGreaterThan(0);
-    fireEvent.click(fireEmojiButtons[0]);
+      // Titre principal avec le nom du club
+      const h1 = screen.getByRole('heading', { level: 1 });
+      expect(h1).toHaveTextContent(/FIRE STONE Elite/i);
 
-    // Ouvrir l'espace commentaires
-    const commentToggleBtns = screen.getAllByRole('button', { name: /Commentaires/i });
-    fireEvent.click(commentToggleBtns[0]);
+      // Badge Espace club
+      expect(screen.getByText(/Espace club/i)).toBeInTheDocument();
 
-    await waitFor(() => {
-      const inputs = screen.getAllByPlaceholderText(/Ajouter un commentaire officiel en tant que visiteur/i);
-      expect(inputs.length).toBeGreaterThan(0);
+      // Bouton Gérer l'effectif
+      const rosterBtn = screen.getByRole('button', { name: /Gérer l’effectif/i });
+      expect(rosterBtn).toBeInTheDocument();
+      fireEvent.click(rosterBtn);
+      expect(mockNavigate).toHaveBeenCalledWith('equipe');
+
+      // Bouton Voir les matchs
+      const matchesBtn = screen.getByRole('button', { name: /Voir les matchs/i });
+      expect(matchesBtn).toBeInTheDocument();
+      fireEvent.click(matchesBtn);
+      expect(mockNavigate).toHaveBeenCalledWith('matchs');
+    });
+
+    it('affiche la section Prochain match avec lien calendrier', () => {
+      render(
+        <ClubProvider initialClub={mockClub}>
+          <LandingHero
+            currentRole="VISITOR"
+            onNavigate={mockNavigate}
+            onOpenAuth={mockOpenAuth}
+          />
+        </ClubProvider>
+      );
+
+      expect(screen.getByText(/Prochain match/i)).toBeInTheDocument();
+      const calBtn = screen.getByRole('button', { name: /Calendrier/i });
+      expect(calBtn).toBeInTheDocument();
+      fireEvent.click(calBtn);
+      expect(mockNavigate).toHaveBeenCalledWith('matchs');
+    });
+
+    it('affiche la section Actualités avec lien voir tout', () => {
+      render(
+        <ClubProvider initialClub={mockClub}>
+          <LandingHero
+            currentRole="VISITOR"
+            onNavigate={mockNavigate}
+            onOpenAuth={mockOpenAuth}
+          />
+        </ClubProvider>
+      );
+
+      expect(screen.getByText(/Actualités/i)).toBeInTheDocument();
+      const newsBtn = screen.getByRole('button', { name: /Voir tout/i });
+      expect(newsBtn).toBeInTheDocument();
+      fireEvent.click(newsBtn);
+      expect(mockNavigate).toHaveBeenCalledWith('actualites');
+    });
+
+    it('affiche les statistiques clés et le lien vers la page de statistiques', () => {
+      render(
+        <ClubProvider initialClub={mockClub}>
+          <LandingHero
+            currentRole="VISITOR"
+            onNavigate={mockNavigate}
+            onOpenAuth={mockOpenAuth}
+          />
+        </ClubProvider>
+      );
+
+      expect(screen.getByText(/Matchs joués/i)).toBeInTheDocument();
+      expect(screen.getByText(/Victoires/i)).toBeInTheDocument();
+      expect(screen.getByText(/Défaites/i)).toBeInTheDocument();
+      expect(screen.getByText(/Joueurs inscrits/i)).toBeInTheDocument();
+
+      const statsBtn = screen.getByRole('button', { name: /Statistiques/i });
+      expect(statsBtn).toBeInTheDocument();
+      fireEvent.click(statsBtn);
+      expect(mockNavigate).toHaveBeenCalledWith('stats');
     });
   });
 });

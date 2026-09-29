@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { clubApi, type ApiClub, type ClubRequestInput } from '../../services/clubApi';
 import { analyzeLogoFile } from '../../services/logoPalette';
+import { uploadMedia } from '../../services/uploadService';
 
 interface ClubCreateModalProps {
   isOpen: boolean;
@@ -22,14 +23,6 @@ interface ClubCreateModalProps {
   isAuthenticated: boolean;
   onOpenAuth: () => void;
 }
-
-const readAsDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Lecture du fichier impossible.'));
-    reader.onload = () => resolve(String(reader.result));
-    reader.readAsDataURL(file);
-  });
 
 export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
   isOpen,
@@ -74,6 +67,8 @@ export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
     }
   };
 
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
   const handleLogoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -82,22 +77,29 @@ export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
       setError('Formats acceptés : PNG, JPEG ou WEBP.');
       return;
     }
-    if (file.size > 3_500_000) {
-      setError('La taille du logo doit être inférieure à 3,5 Mo.');
+    if (file.size > 10_000_000) {
+      setError('La taille du logo doit être inférieure à 10 Mo.');
       return;
     }
 
     try {
       setError('');
-      const [dataUrl, tokens] = await Promise.all([readAsDataUrl(file), analyzeLogoFile(file)]);
+      setIsUploadingLogo(true);
+      const [uploadRes, tokens] = await Promise.all([
+        uploadMedia(file, 'firestone/clubs/logos'),
+        analyzeLogoFile(file),
+      ]);
+      const finalLogoUrl = uploadRes.secure_url || uploadRes.url;
       setForm((prev) => ({
         ...prev,
-        logoUrl: dataUrl,
+        logoUrl: finalLogoUrl,
         primaryColor: tokens.primary || prev.primaryColor,
         secondaryColor: tokens.secondary || prev.secondaryColor,
       }));
-    } catch {
-      setError('Erreur lors de l’analyse du logo.');
+    } catch (err: any) {
+      setError(err?.message || 'Erreur lors du téléversement du logo sur Cloudinary.');
+    } finally {
+      setIsUploadingLogo(false);
     }
   };
 
@@ -332,8 +334,10 @@ export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
                     Logo Officiel (PNG, JPEG, WEBP)
                   </label>
                   <div className="flex items-center gap-4">
-                    <label className="w-20 h-20 rounded-2xl border-2 border-dashed border-white/20 hover:border-[#FF2A3B] bg-white/5 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 transition-colors">
-                      {form.logoUrl ? (
+                    <label className="w-20 h-20 rounded-2xl border-2 border-dashed border-white/20 hover:border-[#FF2A3B] bg-white/5 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 transition-colors relative">
+                      {isUploadingLogo ? (
+                        <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
+                      ) : form.logoUrl ? (
                         <img
                           src={form.logoUrl}
                           alt="Logo"
@@ -346,16 +350,21 @@ export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
                         className="hidden"
+                        disabled={isUploadingLogo}
                         onChange={handleLogoUpload}
                       />
                     </label>
 
                     <div className="space-y-1">
                       <p className="text-xs text-white font-semibold">
-                        {form.logoUrl ? 'Logo prêt à être enregistré' : 'Cliquez pour importer'}
+                        {isUploadingLogo
+                          ? 'Téléversement Cloudinary...'
+                          : form.logoUrl
+                          ? 'Logo Cloudinary enregistré'
+                          : 'Cliquez pour importer'}
                       </p>
                       <p className="text-[11px] text-slate-400">
-                        L’intelligence artificielle extraira automatiquement les couleurs de votre maillot.
+                        Hébergé sur Cloudinary CDN et extraction automatique de la palette maillot.
                       </p>
                     </div>
                   </div>

@@ -5,34 +5,49 @@ import { CreateClubInput } from '../validators/club.validator';
 export class ClubService {
   static async getClubMembers(clubId: string) {
     return prisma.clubMember.findMany({
-      where: { clubId }, orderBy: { joinedAt: 'asc' },
-      include: { user: { select: { id: true, name: true, email: true, avatarUrl: true, role: true, isSuspended: true } } },
+      where: { clubId },
+      orderBy: { requestedAt: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            role: true,
+            isSuspended: true,
+          },
+        },
+      },
     });
   }
 
   static async updateClubMemberRole(clubId: string, userId: string, role: string) {
     const allowed = ['PRESIDENT', 'CLUB_ADMIN', 'COACH', 'TREASURER', 'PLAYER', 'MEMBER'];
     if (!allowed.includes(role)) throw new Error('Rôle de club invalide.');
-    return prisma.clubMember.update({ where: { clubId_userId: { clubId, userId } }, data: { role } });
+    return prisma.clubMember.update({
+      where: { clubId_userId: { clubId, userId } },
+      data: { role },
+    });
   }
 
+  // ✅ Vérifie que le membre est CLUB_ADMIN ACTIVE ou PRESIDENT
   static async isClubManager(clubId: string, userId: string, platformRole: string) {
     if (platformRole === 'SUPER_ADMIN') return true;
-    const member = await prisma.clubMember.findUnique({ where: { clubId_userId: { clubId, userId } } });
-    return Boolean(member && ['PRESIDENT', 'CLUB_ADMIN'].includes(member.role));
+    const member = await prisma.clubMember.findUnique({
+      where: { clubId_userId: { clubId, userId } },
+    });
+    return Boolean(
+      member &&
+      (member.role === 'PRESIDENT' || (member.status === 'ACTIVE' && member.role === 'CLUB_ADMIN'))
+    );
   }
 
   static async listClubs(query: { search?: string; city?: string; country?: string }) {
     const where: any = {};
 
-    if (query.city) {
-      where.city = { contains: query.city };
-    }
-
-    if (query.country) {
-      where.country = { contains: query.country };
-    }
-
+    if (query.city) where.city = { contains: query.city };
+    if (query.country) where.country = { contains: query.country };
     if (query.search) {
       where.OR = [
         { name: { contains: query.search } },
@@ -44,13 +59,7 @@ export class ClubService {
     const clubs = await prisma.club.findMany({
       where,
       include: {
-        _count: {
-          select: {
-            teams: true,
-            posts: true,
-            members: true,
-          },
-        },
+        _count: { select: { teams: true, posts: true, members: true } },
         teams: {
           select: {
             id: true,
@@ -68,7 +77,7 @@ export class ClubService {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 100, // Limite pour éviter les problèmes de performance
+      take: 100,
     });
 
     return clubs.map((club) => ({
@@ -103,22 +112,14 @@ export class ClubService {
 
   static async getClubByIdOrSlug(identifier: string) {
     const club = await prisma.club.findFirst({
-      where: {
-        OR: [{ id: identifier }, { slug: identifier }],
-      },
+      where: { OR: [{ id: identifier }, { slug: identifier }] },
       include: {
         teams: {
           include: {
             members: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    avatarUrl: true,
-                    role: true,
-                    player: true,
-                  },
+                  select: { id: true, name: true, avatarUrl: true, role: true, player: true },
                 },
               },
             },
@@ -128,43 +129,23 @@ export class ClubService {
           take: 20,
           orderBy: { createdAt: 'desc' },
           include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-                role: true,
-              },
-            },
+            author: { select: { id: true, name: true, avatarUrl: true, role: true } },
             likes: true,
             comments: {
-              include: {
-                author: {
-                  select: { id: true, name: true, avatarUrl: true },
-                },
-              },
+              include: { author: { select: { id: true, name: true, avatarUrl: true } } },
             },
           },
         },
         members: {
-          take: 50, // Limite pour éviter les problèmes de performance
+          take: 50,
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-                role: true,
-              },
-            },
+            user: { select: { id: true, name: true, avatarUrl: true, role: true } },
           },
         },
       },
     });
 
-    if (!club) {
-      return null;
-    }
+    if (!club) return null;
 
     return {
       id: club.id,
@@ -196,7 +177,6 @@ export class ClubService {
   }
 
   static async createClub(input: CreateClubInput, creatorUserId?: string) {
-    // Si un logo est renseigné, analyser les couleurs pour créer l'identité visuelle
     let themeTokens = null;
     if (input.logoUrl || input.name) {
       themeTokens = await BrandingService.extractThemeFromLogo(input.logoUrl || '', input.name);
@@ -231,13 +211,17 @@ export class ClubService {
       },
     });
 
-    // Assigner le créateur comme président du club
+    // ✅ FIX : le créateur devient PRESIDENT ACTIVE immédiatement
     if (creatorUserId) {
       await prisma.clubMember.create({
         data: {
           clubId: club.id,
           userId: creatorUserId,
           role: 'PRESIDENT',
+          status: 'ACTIVE',
+          joinedAt: new Date(),
+          approvedAt: new Date(),
+          approvedById: creatorUserId, // auto-approuvé
         },
       });
     }
@@ -251,7 +235,7 @@ export class ClubService {
     const accent = tokens.accent || '#38BDF8';
     const themeType = tokens.themeType || 'dark';
 
-    const updated = await prisma.club.update({
+    return prisma.club.update({
       where: { id: clubId },
       data: {
         primaryColor: primary,
@@ -262,8 +246,6 @@ export class ClubService {
         ...(typeof tokens?.logoUrl === 'string' ? { logoUrl: tokens.logoUrl } : {}),
       },
     });
-
-    return updated;
   }
 
   static async getClubRoster(identifier: string, teamId?: string) {
@@ -274,20 +256,11 @@ export class ClubService {
     if (!club) return [];
 
     let targetTeamIds: string[] = club.teams.map((t) => t.id);
-    if (teamId) {
-      targetTeamIds = targetTeamIds.filter((id) => id === teamId);
-    }
+    if (teamId) targetTeamIds = targetTeamIds.filter((id) => id === teamId);
 
     const members = await prisma.teamMember.findMany({
       where: { teamId: { in: targetTeamIds } },
-      include: {
-        team: true,
-        user: {
-          include: {
-            player: true,
-          },
-        },
-      },
+      include: { team: true, user: { include: { player: true } } },
     });
 
     return members
@@ -307,7 +280,10 @@ export class ClubService {
           height: `${(p.heightCm / 100).toFixed(2)}m`,
           weight: `${p.weightKg}kg`,
           age: p.age,
-          photo: p.photoUrl || m.user.avatarUrl || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600',
+          photo:
+            p.photoUrl ||
+            m.user.avatarUrl ||
+            'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600',
           bio: p.bio || '',
           experienceYears: p.experienceYears,
           seasonStats: {
@@ -337,15 +313,10 @@ export class ClubService {
 
     const matches = await prisma.match.findMany({
       where: {
-        OR: [
-          { clubId: club.id },
-          { teamId: { in: targetTeamIds } },
-        ],
+        OR: [{ clubId: club.id }, { teamId: { in: targetTeamIds } }],
       },
       orderBy: { matchDate: 'desc' },
-      include: {
-        team: true,
-      },
+      include: { team: true },
     });
 
     return matches.map((m) => ({
@@ -377,9 +348,7 @@ export class ClubService {
       where: { clubId: club.id },
       orderBy: { createdAt: 'desc' },
       include: {
-        author: {
-          select: { id: true, name: true, avatarUrl: true, role: true },
-        },
+        author: { select: { id: true, name: true, avatarUrl: true, role: true } },
       },
     });
 
@@ -397,14 +366,24 @@ export class ClubService {
   static async getClubStats(identifier: string) {
     const matches = await ClubService.getClubMatches(identifier);
     const finished = matches.filter((m: any) => m.status === 'FINISHED');
-    const wins = finished.filter((m: any) => (m.scoreTeam ?? 0) > (m.scoreOpponent ?? 0)).length;
+    const wins = finished.filter(
+      (m: any) => (m.scoreTeam ?? 0) > (m.scoreOpponent ?? 0)
+    ).length;
     const losses = finished.length - wins;
-    const avgPtsScored = finished.length > 0
-      ? (finished.reduce((acc: number, m: any) => acc + (m.scoreTeam ?? 0), 0) / finished.length).toFixed(1)
-      : '0';
-    const avgPtsAllowed = finished.length > 0
-      ? (finished.reduce((acc: number, m: any) => acc + (m.scoreOpponent ?? 0), 0) / finished.length).toFixed(1)
-      : '0';
+    const avgPtsScored =
+      finished.length > 0
+        ? (
+          finished.reduce((acc: number, m: any) => acc + (m.scoreTeam ?? 0), 0) /
+          finished.length
+        ).toFixed(1)
+        : '0';
+    const avgPtsAllowed =
+      finished.length > 0
+        ? (
+          finished.reduce((acc: number, m: any) => acc + (m.scoreOpponent ?? 0), 0) /
+          finished.length
+        ).toFixed(1)
+        : '0';
 
     return {
       wins,
@@ -412,7 +391,10 @@ export class ClubService {
       played: finished.length,
       avgPointsScored: Number(avgPtsScored),
       avgPointsAllowed: Number(avgPtsAllowed),
-      winRate: finished.length > 0 ? `${Math.round((wins / finished.length) * 100)}%` : '0%',
+      winRate:
+        finished.length > 0
+          ? `${Math.round((wins / finished.length) * 100)}%`
+          : '0%',
     };
   }
 }
