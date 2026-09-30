@@ -12,6 +12,8 @@ export interface IntroSharedState {
     ballZ: number;
     ballScale: number;
     ballOpacity: number;
+    /** espace entre le bas du ballon et le parquet */
+    ballGap: number;
 }
 
 interface IntroContextValue {
@@ -27,6 +29,7 @@ export const IntroProvider = ({ children }: { children: ReactNode }) => {
         ballZ: 0,
         ballScale: 1,
         ballOpacity: 1,
+        ballGap: 0,
     });
 
     return (

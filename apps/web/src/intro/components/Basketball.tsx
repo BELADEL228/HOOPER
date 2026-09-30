@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useIntroState } from '../timeline/IntroContext';
-import { clamp01, easeOutCubic, easeInOutCubic } from '../timeline/timeline';
+import { computeBallPose, createBallPose } from '../timeline/ballMotion';
 import { BasketballSeams } from './BasketballSeams';
 
-const releaseCanvas = (canvas: HTMLCanvasElement) => {
-    canvas.width = 1;
-    canvas.height = 1;
-};
+/* ⚠️ CORRECTIF : l'ancienne version réduisait le canvas à 1×1 juste après
+ *    `new CanvasTexture(canvas)`. Or three.js n'envoie la texture au GPU qu'au
+ *    premier rendu → il lisait un canvas vide et le ballon apparaissait NOIR.
+ *    On garde le canvas intact (4 Mo max) ; la texture est libérée au démontage. */
+const releaseCanvas = (_canvas: HTMLCanvasElement) => { /* volontairement vide */ };
 
 interface BasketTextures {
     diffuse: THREE.CanvasTexture;
@@ -128,14 +129,15 @@ const createBasketballTextures = (quality: number): BasketTextures => {
 };
 
 interface BasketballProps {
-    time: number;
+    timeRef: MutableRefObject<number>;
     quality?: number;
 }
 
-export const Basketball = ({ time, quality = 1 }: BasketballProps) => {
+export const Basketball = ({ timeRef, quality = 1 }: BasketballProps) => {
     const groupRef = useRef<THREE.Group>(null);
     const matRef = useRef<THREE.MeshPhysicalMaterial>(null);
     const shared = useIntroState();
+    const pose = useMemo(() => createBallPose(), []);
 
     const textures = useMemo(() => createBasketballTextures(quality), [quality]);
     const segments = quality >= 0.85 ? 96 : quality >= 0.55 ? 64 : 48;
@@ -151,56 +153,25 @@ export const Basketball = ({ time, quality = 1 }: BasketballProps) => {
         geo.dispose();
     }, [textures, geo]);
 
-    useFrame((_, delta) => {
-        if (!groupRef.current || !matRef.current) return;
+    useFrame(() => {
+        const g = groupRef.current;
+        const m = matRef.current;
+        if (!g || !m) return;
 
-        let x = 0, y = 1.1, z = 0, scale = 1, opacity = 1;
+        computeBallPose(timeRef.current, pose);
 
-        if (time < 1.6) {
-            const p = easeOutCubic(time / 1.6);
-            z = -3 + 3 * p;
-            scale = 0.35 + 0.2 * p;
-            y = 1.1;
-        } else if (time < 3.2) {
-            const p = easeOutCubic((time - 1.6) / 1.6);
-            scale = 0.55 + 0.4 * p;
-            y = 1.1 + Math.sin((time - 1.6) * 1.6) * 0.05;
-        } else if (time < 5.0) {
-            const p = easeInOutCubic((time - 3.2) / 1.8);
-            scale = 0.95 + 0.1 * p;
-            y = 1.4 - 0.4 * p;
-        } else if (time < 8.6) {
-            scale = 1.05; y = 1.0;
-        } else if (time < 11.0) {
-            const p = easeInOutCubic((time - 8.6) / 2.4);
-            scale = 1.05 - 0.15 * p; y = 1.0;
-        } else if (time < 18.0) {
-            scale = 0.9; y = 1.0;
-        } else if (time < 19.0) {
-            const p = easeInOutCubic((time - 18.0) / 1.0);
-            scale = 0.9 - 0.5 * p;
-            opacity = 1 - 0.8 * p;
-            y = 1.0;
-        } else {
-            const p = clamp01((time - 19.0) / 2.0);
-            scale = 0.4 * (1 - p);
-            opacity = 0.2 * (1 - p);
-            y = 1.0;
-        }
+        g.position.set(pose.x, pose.y, pose.z);
+        g.scale.set(pose.scale * pose.sx, pose.scale * pose.sy, pose.scale * pose.sz);
+        g.quaternion.copy(pose.quaternion);
+        m.opacity = pose.opacity;
 
-        groupRef.current.position.set(x, y, z);
-        groupRef.current.scale.setScalar(scale);
-        groupRef.current.rotation.x += delta * 0.7;
-        groupRef.current.rotation.y += delta * 0.5;
-
-        matRef.current.opacity = opacity;
-        matRef.current.transparent = opacity < 1;
-
-        shared.current.ballX = x;
-        shared.current.ballY = y;
-        shared.current.ballZ = z;
-        shared.current.ballScale = scale;
-        shared.current.ballOpacity = opacity;
+        const st = shared.current;
+        st.ballX = pose.x;
+        st.ballY = pose.y;
+        st.ballZ = pose.z;
+        st.ballScale = pose.scale;
+        st.ballOpacity = pose.opacity;
+        st.ballGap = pose.gap;
     });
 
     return (
@@ -210,17 +181,16 @@ export const Basketball = ({ time, quality = 1 }: BasketballProps) => {
                 <meshPhysicalMaterial
                     ref={matRef}
                     map={textures.diffuse}
-                    color={0xffffff}          // ← force la couleur neutre (multiplie la map)
+                    color={0xffffff}
                     bumpMap={textures.bump}
-                    bumpScale={0.03}
+                    bumpScale={0.012}
                     roughnessMap={textures.roughness}
-                    roughness={0.72}          // ← réduit (moins mat = plus de lumière visible)
-                    metalness={0.05}          // ← légèrement augmenté pour capter les reflets
-                    clearcoat={0.35}          // ← plus de vernis = plus de reflets
-                    clearcoatRoughness={0.45}
-                    envMapIntensity={1.35}    // ← ↑ : capte plus de lumière de l'env map
-                    reflectivity={0.5}
-                    transparent={true}        // ← figé à true dès le départ
+                    roughness={0.86}
+                    metalness={0.0}
+                    clearcoat={0.06}
+                    clearcoatRoughness={0.55}
+                    envMapIntensity={0.95}
+                    transparent
                     opacity={1}
                     depthWrite
                     side={THREE.FrontSide}

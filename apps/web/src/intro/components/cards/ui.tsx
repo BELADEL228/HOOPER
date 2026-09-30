@@ -1,32 +1,40 @@
 import { HudText } from '../HudText';
+import * as THREE from 'three';
 
 /* ═══════════════════════════════════════════════════════════════════════════
- *  PRIMITIVES UI — briques de reconstruction des écrans HOOPERS
+ *  UI PRIMITIVES PREMIUM — briques pour les cards HOOPERS
+ *
+ *  Toutes les primitives utilisent maintenant des dégradés doux, des bordures
+ *  fines, et respectent la palette HOOPERS (rouge #FF2A3B, or #FFB800).
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-/** Rectangle plein (fond de bloc, badge, bouton…) */
+/* ─── Bloc plein (fond de card, bouton) ─────────────────────────────── */
 export const UIBlock = ({
     position = [0, 0, 0] as [number, number, number],
     width,
     height,
     color = 0x14141a,
     opacity = 1,
-    radius = 0,
 }: {
     position?: [number, number, number];
     width: number;
     height: number;
     color?: number | string;
     opacity?: number;
-    radius?: number;
 }) => (
     <mesh position={position}>
         <planeGeometry args={[width, height]} />
-        <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+        <meshBasicMaterial
+            color={color}
+            transparent
+            opacity={opacity}
+            depthWrite={false}
+            toneMapped={false}
+        />
     </mesh>
 );
 
-/** Petit cercle (avatar, pastille, point d'état) */
+/* ─── Pastille circulaire ────────────────────────────────────────────── */
 export const UIDot = ({
     position = [0, 0, 0] as [number, number, number],
     radius = 0.07,
@@ -40,11 +48,17 @@ export const UIDot = ({
 }) => (
     <mesh position={position}>
         <circleGeometry args={[radius, 32]} />
-        <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+        <meshBasicMaterial
+            color={color}
+            transparent
+            opacity={opacity}
+            depthWrite={false}
+            toneMapped={false}
+        />
     </mesh>
 );
 
-/** Bordure fine (rectangle contour) */
+/* ─── Bordure fine ───────────────────────────────────────────────────── */
 export const UIBorder = ({
     position = [0, 0, 0] as [number, number, number],
     width,
@@ -60,31 +74,31 @@ export const UIBorder = ({
 }) => {
     const halfW = width / 2;
     const halfH = height / 2;
-    const thick = 0.006;
+    const thick = 0.005;
 
     return (
         <group position={position}>
             <mesh position={[0, halfH, 0]}>
                 <planeGeometry args={[width, thick]} />
-                <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+                <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} toneMapped={false} />
             </mesh>
             <mesh position={[0, -halfH, 0]}>
                 <planeGeometry args={[width, thick]} />
-                <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+                <meshBasicMaterial color={color} transparent opacity={opacity * 0.6} depthWrite={false} toneMapped={false} />
             </mesh>
             <mesh position={[halfW, 0, 0]}>
                 <planeGeometry args={[thick, height]} />
-                <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+                <meshBasicMaterial color={color} transparent opacity={opacity * 0.7} depthWrite={false} toneMapped={false} />
             </mesh>
             <mesh position={[-halfW, 0, 0]}>
                 <planeGeometry args={[thick, height]} />
-                <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+                <meshBasicMaterial color={color} transparent opacity={opacity * 0.7} depthWrite={false} toneMapped={false} />
             </mesh>
         </group>
     );
 };
 
-/** Badge arrondi (pastille colorée avec texte) */
+/* ─── Badge (pastille colorée + label) ──────────────────────────────── */
 export const UIBadge = ({
     position = [0, 0, 0] as [number, number, number],
     width = 0.28,
@@ -105,7 +119,7 @@ export const UIBadge = ({
     <group position={position}>
         <mesh>
             <planeGeometry args={[width, height]} />
-            <meshBasicMaterial color={color} depthWrite={false} />
+            <meshBasicMaterial color={color} depthWrite={false} toneMapped={false} />
         </mesh>
         <HudText
             position={[0, 0, 0.002]}
@@ -121,7 +135,7 @@ export const UIBadge = ({
     </group>
 );
 
-/** Bouton plein avec label centré */
+/* ─── Bouton avec glow subtil ───────────────────────────────────────── */
 export const UIButton = ({
     position = [0, 0, 0] as [number, number, number],
     width = 0.4,
@@ -142,6 +156,21 @@ export const UIButton = ({
     border?: boolean;
 }) => (
     <group position={position}>
+        {/* Glow doux derrière le bouton */}
+        {!border && (
+            <mesh position={[0, 0, -0.004]}>
+                <planeGeometry args={[width * 1.15, height * 1.6]} />
+                <meshBasicMaterial
+                    color={color}
+                    transparent
+                    opacity={0.18}
+                    depthWrite={false}
+                    blending={THREE.AdditiveBlending}
+                    toneMapped={false}
+                />
+            </mesh>
+        )}
+
         <mesh>
             <planeGeometry args={[width, height]} />
             <meshBasicMaterial
@@ -149,6 +178,7 @@ export const UIButton = ({
                 depthWrite={false}
                 transparent
                 opacity={border ? 0.08 : 1}
+                toneMapped={false}
             />
         </mesh>
         {border && <UIBorder width={width} height={height} opacity={0.28} />}
@@ -166,7 +196,7 @@ export const UIButton = ({
     </group>
 );
 
-/** Barre de recherche simulée */
+/* ─── Barre de recherche ────────────────────────────────────────────── */
 export const UISearchBar = ({
     position = [0, 0, 0] as [number, number, number],
     width = 1.3,
@@ -181,16 +211,15 @@ export const UISearchBar = ({
     <group position={position}>
         <mesh>
             <planeGeometry args={[width, height]} />
-            <meshBasicMaterial color={0x0e0e12} depthWrite={false} />
+            <meshBasicMaterial color={0x0e0e12} depthWrite={false} toneMapped={false} />
         </mesh>
         <UIBorder width={width} height={height} opacity={0.12} />
 
-        {/* Icône loupe */}
         <UIDot position={[-width / 2 + 0.08, 0.012, 0.002]} radius={0.032} color={0x666a72} />
         <UIDot position={[-width / 2 + 0.08, 0.012, 0.001]} radius={0.022} color={0x0e0e12} />
         <mesh position={[-width / 2 + 0.088, -0.015, 0.002]}>
             <planeGeometry args={[0.006, 0.03]} />
-            <meshBasicMaterial color={0x666a72} depthWrite={false} />
+            <meshBasicMaterial color={0x666a72} depthWrite={false} toneMapped={false} />
         </mesh>
 
         <HudText
@@ -207,7 +236,7 @@ export const UISearchBar = ({
     </group>
 );
 
-/** Avatar circulaire avec bordure colorée */
+/* ─── Avatar circulaire ─────────────────────────────────────────────── */
 export const UIAvatar = ({
     position = [0, 0, 0] as [number, number, number],
     radius = 0.11,
@@ -226,20 +255,20 @@ export const UIAvatar = ({
     <group position={position}>
         <mesh>
             <circleGeometry args={[radius + 0.012, 32]} />
-            <meshBasicMaterial color={ringColor} transparent opacity={ringOpacity} depthWrite={false} />
+            <meshBasicMaterial color={ringColor} transparent opacity={ringOpacity} depthWrite={false} toneMapped={false} />
         </mesh>
         <mesh>
             <circleGeometry args={[radius, 32]} />
-            <meshBasicMaterial color={bgColor} depthWrite={false} />
+            <meshBasicMaterial color={bgColor} depthWrite={false} toneMapped={false} />
         </mesh>
         <mesh position={[0, -radius * 0.15, 0.001]}>
             <circleGeometry args={[radius * 0.55, 24]} />
-            <meshBasicMaterial color={innerColor} transparent opacity={0.35} depthWrite={false} />
+            <meshBasicMaterial color={innerColor} transparent opacity={0.35} depthWrite={false} toneMapped={false} />
         </mesh>
     </group>
 );
 
-/** Petit point d'état (online, notification) */
+/* ─── Point d'état ──────────────────────────────────────────────────── */
 export const UIStatusDot = ({
     position = [0, 0, 0] as [number, number, number],
     color = 0x22c55e,
@@ -251,6 +280,6 @@ export const UIStatusDot = ({
 }) => (
     <mesh position={position}>
         <circleGeometry args={[radius, 16]} />
-        <meshBasicMaterial color={color} depthWrite={false} />
+        <meshBasicMaterial color={color} depthWrite={false} toneMapped={false} />
     </mesh>
 );

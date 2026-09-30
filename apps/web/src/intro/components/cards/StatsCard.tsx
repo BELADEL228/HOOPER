@@ -1,6 +1,6 @@
 import { GlassCard } from '../GlassCard';
 import { HudText } from '../HudText';
-import { UIBorder } from './ui';
+import { Icon } from '../icons';
 
 interface StatsCardProps {
     position?: [number, number, number];
@@ -9,7 +9,9 @@ interface StatsCardProps {
     opacity?: number;
 }
 
-/* Reconstruit l'écran Shop : "Maillot Officiel Domicile FIRE STONE 2026" */
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  STATS CARD — Shop / produit (Maillot FIRE STONE 2026)
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 export const StatsCard = ({
     position = [0, 0, 0],
@@ -27,131 +29,184 @@ export const StatsCard = ({
             opacity={opacity}
             width={1.5}
             height={0.95}
-            borderColor="#FFB800"
+            accentColor="#FFB800"
         >
-            {/* ─── Zone image produit (simulée) ─────────────────────────── */}
-            <mesh position={[0, 0.22, 0.004]}>
-                <planeGeometry args={[1.36, 0.48]} />
-                <meshBasicMaterial color={0x2a1a12} depthWrite={false} transparent opacity={0.95 * o} />
+            {/* ═══ ZONE IMAGE PRODUIT ═══════════════════════════════════ */}
+            <mesh position={[0, 0.2, 0.003]}>
+                <planeGeometry args={[1.36, 0.46]} />
+                <meshBasicMaterial color={0x1a1010} depthWrite={false} toneMapped={false} />
             </mesh>
 
-            {/* Dégradé sombre côté droit pour textes */}
-            <mesh position={[0.3, 0.22, 0.005]}>
-                <planeGeometry args={[0.8, 0.48]} />
-                <meshBasicMaterial color={0x0a0503} depthWrite={false} transparent opacity={0.55 * o} />
+            {/* Dégradé sombre côté droit */}
+            <mesh position={[0.3, 0.2, 0.004]}>
+                <planeGeometry args={[0.8, 0.46]} />
+                <meshBasicMaterial
+                    color={0x0a0503}
+                    transparent
+                    opacity={0.55 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* Panier stylisé (2 cercles concentriques orange) */}
-            <mesh position={[-0.4, 0.3, 0.006]}>
+            {/* Panier stylisé */}
+            <mesh position={[-0.4, 0.28, 0.006]}>
                 <ringGeometry args={[0.09, 0.11, 32]} />
-                <meshBasicMaterial color={0xFF6B14} depthWrite={false} transparent opacity={0.95 * o} />
+                <meshBasicMaterial
+                    color={0xFF6B14}
+                    transparent
+                    opacity={0.95 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
-            <mesh position={[-0.4, 0.3, 0.006]}>
+            <mesh position={[-0.4, 0.28, 0.006]}>
                 <ringGeometry args={[0.05, 0.06, 32]} />
-                <meshBasicMaterial color={0xFF6B14} depthWrite={false} transparent opacity={0.75 * o} />
+                <meshBasicMaterial
+                    color={0xFF6B14}
+                    transparent
+                    opacity={0.75 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* Filet stylisé (lignes fines partant du ring) */}
+            {/* Filet stylisé */}
             {[-0.06, -0.03, 0, 0.03, 0.06].map((dx, i) => (
-                <mesh key={i} position={[-0.4 + dx, 0.24, 0.006]} rotation={[0, 0, dx * 5]}>
+                <mesh
+                    key={i}
+                    position={[-0.4 + dx, 0.22, 0.006]}
+                    rotation={[0, 0, dx * 5]}
+                >
                     <planeGeometry args={[0.004, 0.1]} />
-                    <meshBasicMaterial color={0xF5F0E8} depthWrite={false} transparent opacity={0.65 * o} />
+                    <meshBasicMaterial
+                        color={0xF5F0E8}
+                        transparent
+                        opacity={0.65 * o}
+                        depthWrite={false}
+                        toneMapped={false}
+                    />
                 </mesh>
             ))}
 
-            {/* Ballon orange flou en bas à gauche */}
-            <mesh position={[-0.5, 0.05, 0.006]}>
-                <circleGeometry args={[0.09, 32]} />
-                <meshBasicMaterial color={0xC54A18} depthWrite={false} transparent opacity={0.9 * o} />
-            </mesh>
-            {/* Couture noire */}
-            <mesh position={[-0.5, 0.05, 0.007]}>
-                <planeGeometry args={[0.18, 0.005]} />
-                <meshBasicMaterial color={0x1a0a04} depthWrite={false} transparent opacity={0.9 * o} />
-            </mesh>
-
-            {/* Badge "BEST-SELLER" orange */}
-            <mesh position={[-0.5, 0.4, 0.007]}>
-                <planeGeometry args={[0.32, 0.09]} />
-                <meshBasicMaterial color={0xFF6B14} depthWrite={false} />
+            {/* Badge BEST-SELLER */}
+            <mesh position={[-0.52, 0.36, 0.007]}>
+                <planeGeometry args={[0.28, 0.075]} />
+                <meshBasicMaterial color={0xFF6B14} depthWrite={false} toneMapped={false} />
             </mesh>
             <HudText
-                position={[-0.5, 0.4, 0.009]}
-                fontSize={0.048}
+                position={[-0.52, 0.36, 0.009]}
+                fontSize={0.042}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.1}
+                letterSpacing={0.14}
                 fontWeight={800}
             >
                 BEST-SELLER
             </HudText>
 
-            {/* ─── Info produit ─────────────────────────────────────────── */}
+            {/* Badge FLOCAGE */}
+            <mesh position={[0.5, 0.16, 0.005]}>
+                <planeGeometry args={[0.28, 0.06]} />
+                <meshBasicMaterial
+                    color={0x0e1a1f}
+                    transparent
+                    opacity={0.9 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
+            </mesh>
             <HudText
-                position={[-0.62, -0.06, 0.004]}
-                fontSize={0.052}
+                position={[0.5, 0.16, 0.007]}
+                fontSize={0.04}
+                color="#7dd3fc"
+                opacity={o}
+                anchorX="center"
+                anchorY="middle"
+                letterSpacing={0.1}
+                fontWeight={700}
+            >
+                FLOCAGE DISPO
+            </HudText>
+
+            {/* ═══ EYEBROW + NOTE ═══════════════════════════════════════ */}
+            <HudText
+                position={[-0.62, 0.0, 0.004]}
+                fontSize={0.048}
                 color="#FFB800"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.24}
+                letterSpacing={0.26}
                 fontWeight={700}
             >
                 JERSEYS
             </HudText>
 
-            {/* Étoile + note */}
-            <HudText
-                position={[0.4, -0.06, 0.004]}
-                fontSize={0.075}
+            <Icon
+                name="star"
+                position={[0.42, 0.0, 0.004]}
+                size={0.055}
                 color="#FFB800"
+                opacity={o}
+            />
+            <HudText
+                position={[0.6, 0.0, 0.004]}
+                fontSize={0.055}
+                color="rgba(255,255,255,0.7)"
                 opacity={o}
                 anchorX="right"
                 anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
+                letterSpacing={0.04}
+                fontWeight={600}
             >
-                ★ 4.9 (38)
+                4.9 · 38
             </HudText>
 
-            {/* Titre produit */}
+            {/* ═══ TITRE PRODUIT ════════════════════════════════════════ */}
             <HudText
-                position={[-0.62, -0.16, 0.004]}
+                position={[-0.62, -0.09, 0.004]}
                 fontSize={0.075}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.01}
+                letterSpacing={0.02}
                 fontWeight={700}
             >
                 Maillot FIRE STONE 2026
             </HudText>
 
-            {/* Séparateur */}
-            <mesh position={[0, -0.24, 0.003]}>
-                <planeGeometry args={[1.32, 0.003]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.08 * o} depthWrite={false} />
+            {/* ═══ DIVIDER ══════════════════════════════════════════════ */}
+            <mesh position={[0, -0.17, 0.004]}>
+                <planeGeometry args={[1.3, 0.0012]} />
+                <meshBasicMaterial
+                    color={0xffffff}
+                    transparent
+                    opacity={0.08 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* Prix */}
+            {/* ═══ PRIX ═════════════════════════════════════════════════ */}
             <HudText
-                position={[-0.62, -0.32, 0.004]}
+                position={[-0.62, -0.25, 0.004]}
                 fontSize={0.055}
-                color="#A0A0A0"
-                opacity={0.9 * o}
+                color="rgba(255,255,255,0.5)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.04}
+                letterSpacing={0.08}
                 fontWeight={500}
             >
                 Prix Club
             </HudText>
 
             <HudText
-                position={[0.62, -0.32, 0.004]}
+                position={[0.62, -0.25, 0.004]}
                 fontSize={0.085}
                 color="#FFB800"
                 opacity={o}
@@ -163,45 +218,54 @@ export const StatsCard = ({
                 18 000 FCFA
             </HudText>
 
-            {/* ─── Boutons Floquer / Ajouter ────────────────────────────── */}
-            {/* Bouton Floquer (sombre avec bordure) */}
-            <mesh position={[-0.36, -0.42, 0.004]}>
+            {/* ═══ BOUTONS ══════════════════════════════════════════════ */}
+            {/* Bouton Floquer */}
+            <mesh position={[-0.36, -0.4, 0.004]}>
                 <planeGeometry args={[0.6, 0.1]} />
-                <meshBasicMaterial color={0x1c1c22} depthWrite={false} transparent opacity={0.9 * o} />
+                <meshBasicMaterial
+                    color={0x1c1c22}
+                    transparent
+                    opacity={0.9 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
             <HudText
-                position={[-0.36, -0.42, 0.006]}
-                fontSize={0.058}
+                position={[-0.36, -0.4, 0.006]}
+                fontSize={0.055}
                 color="#7dd3fc"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.08}
+                letterSpacing={0.1}
                 fontWeight={700}
             >
-                ✦ Floquer
+                Floquer
             </HudText>
 
-            {/* Bouton Ajouter (rouge-orange) */}
-            <mesh position={[0.36, -0.42, 0.004]}>
+            {/* Bouton Ajouter */}
+            <mesh position={[0.36, -0.4, 0.004]}>
                 <planeGeometry args={[0.6, 0.1]} />
-                <meshBasicMaterial color={0xFF6B14} depthWrite={false} transparent opacity={0.95 * o} />
+                <meshBasicMaterial
+                    color={0xFF6B14}
+                    transparent
+                    opacity={0.95 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
             <HudText
-                position={[0.36, -0.42, 0.006]}
-                fontSize={0.058}
+                position={[0.36, -0.4, 0.006]}
+                fontSize={0.055}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.08}
+                letterSpacing={0.1}
                 fontWeight={700}
             >
-                ⌂ Ajouter
+                Ajouter
             </HudText>
-
-            {/* Bordure subtile sur toute la zone image */}
-            <UIBorder position={[0, 0.22, 0.008]} width={1.36} height={0.48} opacity={0.12 * o} />
         </GlassCard>
     );
 };

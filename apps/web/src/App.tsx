@@ -71,8 +71,7 @@ type AuthSession = {
 };
 
 export function App() {
-  const [introCompleted, setIntroCompleted] = useState(false);
-  const [showIntro, setShowIntro] = useState(!introCompleted);
+  const [showIntro, setShowIntro] = useState(true);
 
   const [viewMode, setViewMode] = useState<ViewMode>('social');
   const [selectedClub, setSelectedClub] = useState<Team>({
@@ -474,11 +473,17 @@ export function App() {
           subtitle="Dribbler avec intention."
           musicSrc="/audio/intro-rap.m4a"
           musicVolume={0.45}
-          musicStopAt={19.5}
+          musicStopAt={24.5}
           showOnboarding={true}
           onComplete={() => {
             setShowIntro(false);
           }}
+
+          // ── Nouveautés (toutes optionnelles) ──
+          ballModelUrl="/models/basketball.glb"   // à retirer tant que tu n'as pas le fichier
+          ballModelRotation={[0, Math.PI / 2, 0]}
+          bounceSrc="/audio/bounce.wav"
+          sfxVolume={0.5}
         />
       </ErrorBoundary>
     );
@@ -934,6 +939,7 @@ export function App() {
               userRole={currentRole}
               isAuthenticated={isAuthenticated}
               unreadCount={unreadNotifications}
+              mode="club_workspace"
             />
           </div>
         </ErrorBoundary>

@@ -1,22 +1,22 @@
 /* ═══════════════════════════════════════════════════════════════════════════
- *  TIMELINE — 21 s @ 30 FPS
+ *  TIMELINE — 28 s @ 30 FPS
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-export const TOTAL_DURATION = 21;
 export const FPS = 30;
+export const TOTAL_DURATION = 28;
 
 export const SCENES = {
-    S01: { start: 0, end: 1.6 },
-    S02: { start: 1.6, end: 3.2 },
-    S03: { start: 3.2, end: 5.0 },
-    S04: { start: 5.0, end: 6.8 },
-    S05: { start: 6.8, end: 8.6 },
-    S06: { start: 8.6, end: 11.0 },
-    S07: { start: 11.0, end: 13.0 },
-    S08: { start: 13.0, end: 15.5 },
-    S09: { start: 15.5, end: 18.0 },
-    S10: { start: 18.0, end: 19.0 },
-    S11: { start: 19.0, end: 21.0 },
+    S01: { start: 0, end: 1.0 },
+    S02: { start: 1.0, end: 2.4 },
+    S03: { start: 2.4, end: 3.8 },
+    S04: { start: 3.8, end: 5.2 },
+    S05: { start: 5.2, end: 6.8 },
+    S06: { start: 6.8, end: 9.5 },
+    S07: { start: 9.5, end: 12.5 },
+    S08: { start: 12.5, end: 15.5 },
+    S09: { start: 15.5, end: 24.0 },   // carrousel 8.5 s
+    S10: { start: 24.0, end: 25.0 },   // balle s'efface (1 s)
+    S11: { start: 25.0, end: 28.0 },   // logo (3 s)
 } as const;
 
 export const COLORS_HEX = {
@@ -27,7 +27,6 @@ export const COLORS_HEX = {
     GREY: 0xa0a0a0,
 } as const;
 
-/* ─── Helpers ────────────────────────────────────────────────────────── */
 export const localProgress = (time: number, start: number, end: number): number => {
     if (time <= start) return 0;
     if (time >= end) return 1;
@@ -47,3 +46,17 @@ export const interp = (a: number, b: number, t: number, easing = easeInOutCubic)
     a + (b - a) * easing(clamp01(t));
 
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+export const easeOutQuad = (x: number) => 1 - (1 - x) * (1 - x);
+export const easeOutBack = (x: number, s = 1.70158) => {
+    const c3 = s + 1;
+    return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+};
+export const smootherstep = (x: number) => {
+    const t = clamp01(x);
+    return t * t * t * (t * (t * 6 - 15) + 10);
+};
+export const noise1 = (t: number, seed = 0): number =>
+    Math.sin(t * 1.31 + seed * 12.9898) * 0.5 +
+    Math.sin(t * 2.73 + seed * 78.233) * 0.3 +
+    Math.sin(t * 5.17 + seed * 37.719) * 0.2;

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 const STORAGE_KEY = 'hoopers-intro-seen';
-const INTRO_VERSION = 'v1';
+const INTRO_VERSION = 'v3';
 
 interface IntroSeenResult {
     hasSeenIntro: boolean;

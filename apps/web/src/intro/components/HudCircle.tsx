@@ -10,6 +10,10 @@ interface HudCircleProps {
     segments?: number;
 }
 
+/* ⚠️ CORRECTIF PERF : l'opacité changeait à chaque frame et faisait
+ *    reconstruire géométrie + matériau + LineLoop à chaque fois.
+ *    Géométrie et matériau sont maintenant créés une seule fois ;
+ *    seule l'opacité est mise à jour. */
 export const HudCircle = ({
     radius,
     color = 0xFFB800,
@@ -18,41 +22,36 @@ export const HudCircle = ({
     rotation = [0, 0, 0],
     segments = 96,
 }: HudCircleProps) => {
-    /* ─── Objet Three.js complet via useMemo ────────────────────────── */
-    const line = useMemo(() => {
-        // Cercle fermé → LineLoop
+    const geometry = useMemo(() => {
         const pts: number[] = [];
         for (let i = 0; i < segments; i++) {
             const a = (i / segments) * Math.PI * 2;
             pts.push(Math.cos(a) * radius, Math.sin(a) * radius, 0);
         }
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+        return g;
+    }, [radius, segments]);
 
-        const material = new THREE.LineBasicMaterial({
-            color,
-            transparent: true,
-            opacity,
-            depthWrite: false,
-        });
-
-        return new THREE.LineLoop(geometry, material);
-    }, [radius, segments, color, opacity]);
-
-    /* ─── Dispose au démontage ──────────────────────────────────────── */
-    useEffect(() => {
-        return () => {
-            line.geometry.dispose();
-            (line.material as THREE.Material).dispose();
-        };
-    }, [line]);
-
-    /* ─── Rendu via <primitive> (contourne le conflit de typage JSX) ── */
-    return (
-        <primitive
-            object={line}
-            position={position}
-            rotation={rotation}
-        />
+    const material = useMemo(
+        () =>
+            new THREE.LineBasicMaterial({
+                color,
+                transparent: true,
+                opacity: 1,
+                depthWrite: false,
+            }),
+        [color],
     );
+
+    const line = useMemo(() => new THREE.LineLoop(geometry, material), [geometry, material]);
+
+    material.opacity = opacity;
+
+    useEffect(() => () => {
+        geometry.dispose();
+        material.dispose();
+    }, [geometry, material]);
+
+    return <primitive object={line} position={position} rotation={rotation} />;
 };

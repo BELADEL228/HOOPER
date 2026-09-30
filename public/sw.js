@@ -3,9 +3,9 @@
  * Cache offline résilient, gestion des scores en direct et notifications push.
  */
 
-const CACHE_VERSION = 'firestone-pwa-v1';
-const API_CACHE_VERSION = 'firestone-api-v1';
-const ASSETS_CACHE_VERSION = 'firestone-assets-v1';
+const CACHE_VERSION = 'firestone-pwa-v2';
+const API_CACHE_VERSION = 'firestone-api-v2';
+const ASSETS_CACHE_VERSION = 'firestone-assets-v2';
 
 // Ressources critiques de l'App Shell mises en cache dès l'installation
 const PRECACHE_ASSETS = [
@@ -20,7 +20,12 @@ const PRECACHE_ASSETS = [
 
 // Endpoints API éligibles à la lecture hors-ligne (Stale-While-Revalidate)
 const OFFLINE_API_ENDPOINTS = [
+  '/api/clubs',
   '/api/teams',
+  '/api/venues',
+  '/api/posts',
+  '/api/players',
+  '/api/recruitment',
   '/api/tournaments',
   '/api/matches',
   '/api/health',

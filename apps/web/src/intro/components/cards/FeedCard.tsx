@@ -1,6 +1,7 @@
 import { GlassCard } from '../GlassCard';
 import { HudText } from '../HudText';
-import { UIAvatar, UIBlock, UIBorder } from './ui';
+import { Icon } from '../icons';
+import { UIAvatar } from './ui';
 
 interface FeedCardProps {
     position?: [number, number, number];
@@ -9,7 +10,9 @@ interface FeedCardProps {
     opacity?: number;
 }
 
-/* Reconstruit le post "AIGLE · Club officiel" visible sur le feed */
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  FEED CARD — Post du feed (AIGLE · Club officiel)
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 export const FeedCard = ({
     position = [0, 0, 0],
@@ -27,86 +30,92 @@ export const FeedCard = ({
             opacity={opacity}
             width={1.5}
             height={0.95}
-            borderColor="#FF2A3B"
+            accentColor="#FF2A3B"
         >
-            {/* ─── Header : avatar + AIGLE + badge + ⋯ ──────────────────── */}
+            {/* ═══ HEADER ═══════════════════════════════════════════════ */}
             <UIAvatar
-                position={[-0.62, 0.32, 0.004]}
+                position={[-0.6, 0.32, 0.004]}
                 radius={0.085}
                 bgColor={0xFFFFFF}
                 innerColor={0xFF2A3B}
-                ringOpacity={0.1}
+                ringOpacity={0.12}
             />
 
             <HudText
-                position={[-0.5, 0.35, 0.004]}
-                fontSize={0.085}
+                position={[-0.48, 0.36, 0.004]}
+                fontSize={0.082}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.03}
+                letterSpacing={0.05}
                 fontWeight={800}
             >
                 AIGLE
             </HudText>
 
             {/* Badge CLUB OFFICIEL */}
-            <mesh position={[-0.13, 0.35, 0.004]}>
-                <planeGeometry args={[0.36, 0.085]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} transparent opacity={0.12 * o} />
+            <mesh position={[-0.14, 0.36, 0.004]}>
+                <planeGeometry args={[0.32, 0.075]} />
+                <meshBasicMaterial
+                    color={0xFF2A3B}
+                    transparent
+                    opacity={0.14 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
-            <UIBorder position={[-0.13, 0.35, 0.005]} width={0.36} height={0.085} color={0xFF2A3B} opacity={0.5 * o} />
             <HudText
-                position={[-0.13, 0.35, 0.006]}
-                fontSize={0.045}
+                position={[-0.14, 0.36, 0.006]}
+                fontSize={0.042}
                 color="#FF2A3B"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.12}
+                letterSpacing={0.14}
                 fontWeight={700}
             >
                 CLUB OFFICIEL
             </HudText>
 
+            {/* Méta sous le nom */}
             <HudText
-                position={[-0.5, 0.22, 0.004]}
-                fontSize={0.052}
-                color="#A0A0A0"
-                opacity={0.85 * o}
+                position={[-0.48, 0.25, 0.004]}
+                fontSize={0.05}
+                color="rgba(255,255,255,0.5)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
+                letterSpacing={0.04}
                 fontWeight={500}
             >
-                Par Belei Abel · 23 sept., 20:57
+                Belei Abel · 23 sept. · 20:57
             </HudText>
 
-            {/* Menu ⋯ à droite */}
-            <HudText
-                position={[0.62, 0.34, 0.004]}
-                fontSize={0.14}
-                color="#A0A0A0"
-                opacity={0.7 * o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={700}
-            >
-                ⋯
-            </HudText>
+            <Icon
+                name="dots-v"
+                position={[0.6, 0.34, 0.004]}
+                size={0.08}
+                color="rgba(255,255,255,0.55)"
+                opacity={o}
+            />
 
-            {/* Séparateur sous le header */}
-            <mesh position={[0, 0.14, 0.003]}>
-                <planeGeometry args={[1.32, 0.003]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.07 * o} depthWrite={false} />
+            {/* ═══ DIVIDER ══════════════════════════════════════════════ */}
+            <mesh position={[0, 0.17, 0.004]}>
+                <planeGeometry args={[1.3, 0.0012]} />
+                <meshBasicMaterial
+                    color={0xffffff}
+                    transparent
+                    opacity={0.08 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* ─── Corps du post : "HI" ─────────────────────────────────── */}
+            {/* ═══ BODY ═════════════════════════════════════════════════ */}
             <HudText
-                position={[-0.62, -0.04, 0.004]}
-                fontSize={0.15}
+                position={[-0.6, 0.03, 0.004]}
+                fontSize={0.13}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="left"
@@ -117,95 +126,78 @@ export const FeedCard = ({
                 HI
             </HudText>
 
-            {/* Séparateur au-dessus des actions */}
-            <mesh position={[0, -0.22, 0.003]}>
-                <planeGeometry args={[1.32, 0.003]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.07 * o} depthWrite={false} />
+            {/* ═══ DIVIDER ══════════════════════════════════════════════ */}
+            <mesh position={[0, -0.13, 0.004]}>
+                <planeGeometry args={[1.3, 0.0012]} />
+                <meshBasicMaterial
+                    color={0xffffff}
+                    transparent
+                    opacity={0.08 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* ─── Actions : ♡ 0 · ◯ 0 · ↗ · 🔖 ─────────────────────────── */}
-            {/* Coeur */}
-            <HudText
-                position={[-0.62, -0.36, 0.004]}
-                fontSize={0.11}
+            {/* ═══ ACTIONS ══════════════════════════════════════════════ */}
+            {/* Like */}
+            <Icon
+                name="heart"
+                position={[-0.6, -0.3, 0.004]}
+                size={0.07}
                 color="#FFFFFF"
-                opacity={0.9 * o}
-                anchorX="left"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ♡
-            </HudText>
+                opacity={o * 0.85}
+            />
             <HudText
-                position={[-0.52, -0.36, 0.004]}
-                fontSize={0.062}
-                color="#A0A0A0"
-                opacity={0.85 * o}
+                position={[-0.52, -0.3, 0.004]}
+                fontSize={0.06}
+                color="rgba(255,255,255,0.6)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0}
+                letterSpacing={0.02}
                 fontWeight={600}
             >
                 0
             </HudText>
 
-            {/* Commentaire */}
-            <HudText
-                position={[-0.36, -0.36, 0.004]}
-                fontSize={0.11}
+            {/* Comment */}
+            <Icon
+                name="comment"
+                position={[-0.36, -0.3, 0.004]}
+                size={0.07}
                 color="#FFFFFF"
-                opacity={0.9 * o}
-                anchorX="left"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ◯
-            </HudText>
+                opacity={o * 0.85}
+            />
             <HudText
-                position={[-0.25, -0.36, 0.004]}
-                fontSize={0.062}
-                color="#A0A0A0"
-                opacity={0.85 * o}
+                position={[-0.28, -0.3, 0.004]}
+                fontSize={0.06}
+                color="rgba(255,255,255,0.6)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0}
+                letterSpacing={0.02}
                 fontWeight={600}
             >
                 0
             </HudText>
 
-            {/* Partage */}
-            <HudText
-                position={[-0.08, -0.36, 0.004]}
-                fontSize={0.11}
+            {/* Share */}
+            <Icon
+                name="share"
+                position={[-0.12, -0.3, 0.004]}
+                size={0.07}
                 color="#FFFFFF"
-                opacity={0.9 * o}
-                anchorX="left"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ↗
-            </HudText>
+                opacity={o * 0.85}
+            />
 
-            {/* Bookmark à droite */}
-            <HudText
-                position={[0.62, -0.36, 0.004]}
-                fontSize={0.11}
+            {/* Bookmark */}
+            <Icon
+                name="bookmark"
+                position={[0.6, -0.3, 0.004]}
+                size={0.07}
                 color="#FFFFFF"
-                opacity={0.9 * o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ⬦
-            </HudText>
-
-            {/* (petit espace vide pour utiliser UIBlock — non rendu, garde le fichier cohérent) */}
-            <UIBlock position={[0, 100, 0]} width={0.01} height={0.01} color={0x000000} opacity={0} />
+                opacity={o * 0.85}
+            />
         </GlassCard>
     );
 };

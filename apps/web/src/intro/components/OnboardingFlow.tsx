@@ -1,9 +1,14 @@
 import { useState } from 'react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
- *  ONBOARDING — 4 étapes avant l'intro
- *  Design plat, sombre, sans halo, sans dégradé.
- *  Le dernier "Continuer" déclenche l'intro + l'audio.
+ *  ONBOARDING — 4 étapes
+ *
+ *  Direction : le sujet du produit (basket) devient le visuel principal.
+ *  Un plan de terrain se dessine progressivement, ligne par ligne. À la
+ *  dernière étape, un ballon tombe dans le cercle central — l'unique
+ *  moment orchestré de tout l'onboarding.
+ *
+ *  Pas d'eyebrow en CAPS, pas de dots génériques, pas de flèche sur le CTA.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 interface OnboardingFlowProps {
@@ -11,100 +16,112 @@ interface OnboardingFlowProps {
     logoSrc?: string;
 }
 
-/* ─── Icônes vectorielles simples ─────────────────────────────────────── */
+/* ─── Plan de terrain qui se révèle ──────────────────────────────────── */
 
-const IconBall = () => (
-    <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none">
-        <circle cx="60" cy="60" r="42" stroke="#FFFFFF" strokeWidth="2.5" />
-        <path d="M18 60 H102" stroke="#FFFFFF" strokeWidth="2.5" />
-        <path d="M60 18 V102" stroke="#FFFFFF" strokeWidth="2.5" />
-        <path d="M28 30 Q60 60 92 30" stroke="#FF2A3B" strokeWidth="2.5" />
-        <path d="M28 90 Q60 60 92 90" stroke="#FF2A3B" strokeWidth="2.5" />
+const CourtVisual = ({ step }: { step: number }) => (
+    <svg
+        viewBox="0 0 400 220"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+    >
+        {/* Périmètre + ligne médiane — toujours visibles */}
+        <g stroke="rgba(255,255,255,0.3)" strokeWidth="1.4">
+            <rect x="10" y="10" width="380" height="200" rx="2" />
+            <line x1="200" y1="10" x2="200" y2="210" />
+        </g>
+
+        {/* Cercle central — étape 1 */}
+        <circle
+            cx="200" cy="110" r="34"
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth="1.4"
+            style={{
+                opacity: step >= 1 ? 1 : 0,
+                transition: 'opacity 700ms ease-out',
+            }}
+        />
+
+        {/* Raquettes + cercles de lancer franc — étape 2 */}
+        <g
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth="1.4"
+            style={{
+                opacity: step >= 2 ? 1 : 0,
+                transition: 'opacity 700ms ease-out',
+            }}
+        >
+            <rect x="10" y="58" width="82" height="104" />
+            <rect x="308" y="58" width="82" height="104" />
+            <circle cx="92" cy="110" r="34" />
+            <circle cx="308" cy="110" r="34" />
+        </g>
+
+        {/* Arcs à 3 points — étape 3 */}
+        <g
+            stroke="rgba(255,255,255,0.72)"
+            strokeWidth="1.4"
+            style={{
+                opacity: step >= 3 ? 1 : 0,
+                transition: 'opacity 700ms ease-out',
+            }}
+        >
+            <path d="M 10 28 L 68 28 A 155 155 0 0 1 68 192 L 10 192" />
+            <path d="M 390 28 L 332 28 A 155 155 0 0 0 332 192 L 390 192" />
+        </g>
+
+        {/* Ballon — chute au centre à l'étape 3 */}
+        <g
+            style={{
+                opacity: step >= 3 ? 1 : 0,
+                transform: `translateY(${step >= 3 ? 0 : -12}px)`,
+                transformOrigin: '200px 110px',
+                transition:
+                    'opacity 400ms ease-out, transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+        >
+            <circle cx="200" cy="110" r="9" fill="#FF6B14" />
+            <path
+                d="M 191 110 H 209 M 200 101 V 119"
+                stroke="#1a0a04"
+                strokeWidth="1"
+            />
+        </g>
     </svg>
 );
 
-const IconStats = () => (
-    <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none">
-        <rect x="20" y="70" width="16" height="30" rx="2" fill="#FFFFFF" />
-        <rect x="48" y="50" width="16" height="50" rx="2" fill="#FFFFFF" />
-        <rect x="76" y="30" width="16" height="70" rx="2" fill="#FF2A3B" />
-        <path d="M16 108 H104" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-        <path d="M24 60 L56 38 L96 18" stroke="#FFB800" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="96" cy="18" r="4" fill="#FFB800" />
-    </svg>
-);
-
-const IconClub = () => (
-    <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none">
-        <path
-            d="M60 14 L96 28 V60 C96 82 80 98 60 106 C40 98 24 82 24 60 V28 Z"
-            stroke="#FFFFFF"
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-        />
-        <path
-            d="M60 34 L70 48 H86 L74 58 L78 74 L60 64 L42 74 L46 58 L34 48 H50 Z"
-            fill="#FF2A3B"
-        />
-    </svg>
-);
-
-const IconCommunity = () => (
-    <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none">
-        <path
-            d="M20 40 Q20 30 30 30 H62 Q72 30 72 40 V60 Q72 70 62 70 H38 L24 82 V70 H30 Q20 70 20 60 Z"
-            stroke="#FFFFFF"
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-        />
-        <path
-            d="M52 68 Q52 58 62 58 H90 Q100 58 100 68 V86 Q100 96 90 96 H96 L82 108 V96 H62 Q52 96 52 86 Z"
-            stroke="#FF2A3B"
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-        />
-    </svg>
-);
-
-/* ─── Données des étapes ──────────────────────────────────────────────── */
+/* ─── Contenu des 4 étapes ───────────────────────────────────────────── */
 
 interface OnboardingStep {
     id: string;
-    Icon: React.ComponentType;
-    eyebrow: string;
     title: string;
     description: string;
-    accent?: 'gold' | 'red';
 }
 
 const STEPS: OnboardingStep[] = [
     {
         id: 'welcome',
-        Icon: IconBall,
-        eyebrow: 'BIENVENUE',
-        title: 'HOOPERS',
-        description: 'Le réseau social du basketball togolais. Une seule app pour jouer, suivre et partager.',
+        title: 'Bienvenue sur HOOPERS',
+        description:
+            "L'app du basketball togolais. Joueurs, clubs, matchs et communauté, réunis au même endroit.",
     },
     {
         id: 'stats',
-        Icon: IconStats,
-        eyebrow: 'ANALYSE',
-        title: 'TES PERFORMANCES',
-        description: 'Points, passes, rebonds. Suis ta progression match après match.',
+        title: 'Suis chaque match',
+        description:
+            'Points, passes, rebonds. Tes statistiques se mettent à jour après chaque rencontre.',
     },
     {
         id: 'clubs',
-        Icon: IconClub,
-        eyebrow: 'CLUBS',
-        title: 'TA LIGUE',
-        description: 'Rejoins ton club, consulte les matchs et connecte-toi à la communauté locale.',
+        title: 'Rejoins ta ligue',
+        description:
+            'Trouve ton club, consulte le calendrier et suis les résultats de la communauté locale.',
     },
     {
         id: 'community',
-        Icon: IconCommunity,
-        eyebrow: 'COMMUNAUTÉ',
-        title: 'TON TERRAIN',
-        description: 'Posts, stories, messages. Partage tes moments de basket avec tes coéquipiers.',
+        title: 'Prends le terrain',
+        description:
+            'Publie tes moments, échange avec tes coéquipiers et fais vivre le basket près de chez toi.',
     },
 ];
 
@@ -114,7 +131,6 @@ const STEPS: OnboardingStep[] = [
 
 export const OnboardingFlow = ({ onComplete, logoSrc }: OnboardingFlowProps) => {
     const [step, setStep] = useState(0);
-    const [animKey, setAnimKey] = useState(0);
 
     const isLast = step === STEPS.length - 1;
     const current = STEPS[step];
@@ -125,21 +141,17 @@ export const OnboardingFlow = ({ onComplete, logoSrc }: OnboardingFlowProps) => 
             return;
         }
         setStep((s) => s + 1);
-        setAnimKey((k) => k + 1);
     };
 
     const handleBack = () => {
         if (step === 0) return;
         setStep((s) => s - 1);
-        setAnimKey((k) => k + 1);
     };
-
-    const { Icon } = current;
 
     return (
         <div className="hoopers-onboarding">
-            {/* ─── Barre supérieure : logo + bouton retour ─────────────── */}
-            <div className="hoopers-onboarding__topbar">
+            {/* ─── Barre supérieure ────────────────────────────────────── */}
+            <header className="hoopers-onboarding__topbar">
                 <div className="hoopers-onboarding__brand">
                     {logoSrc && (
                         <img
@@ -156,27 +168,36 @@ export const OnboardingFlow = ({ onComplete, logoSrc }: OnboardingFlowProps) => 
                         type="button"
                         className="hoopers-onboarding__back"
                         onClick={handleBack}
-                        aria-label="Retour"
+                        aria-label="Étape précédente"
                     >
-                        ← RETOUR
+                        Retour
                     </button>
                 )}
-            </div>
+            </header>
 
-            {/* ─── Contenu central ─────────────────────────────────────── */}
-            <div className="hoopers-onboarding__content" key={animKey}>
-                <div className="hoopers-onboarding__icon">
-                    <Icon />
+            {/* ─── Corps : terrain + texte ─────────────────────────────── */}
+            <main className="hoopers-onboarding__main">
+                <div className="hoopers-onboarding__court">
+                    <CourtVisual step={step} />
                 </div>
 
-                <div className="hoopers-onboarding__eyebrow">{current.eyebrow}</div>
-                <h1 className="hoopers-onboarding__title">{current.title}</h1>
-                <p className="hoopers-onboarding__description">{current.description}</p>
-            </div>
+                <div className="hoopers-onboarding__copy" key={current.id}>
+                    <h1 className="hoopers-onboarding__title">
+                        {current.title}
+                    </h1>
+                    <p className="hoopers-onboarding__description">
+                        {current.description}
+                    </p>
+                </div>
+            </main>
 
-            {/* ─── Bas : progression + bouton ──────────────────────────── */}
-            <div className="hoopers-onboarding__bottom">
-                <div className="hoopers-onboarding__dots" role="tablist" aria-label="Étapes">
+            {/* ─── Bas : progression + CTA ─────────────────────────────── */}
+            <footer className="hoopers-onboarding__bottom">
+                <div
+                    className="hoopers-onboarding__progress"
+                    role="tablist"
+                    aria-label="Progression"
+                >
                     {STEPS.map((s, i) => (
                         <button
                             key={s.id}
@@ -184,12 +205,11 @@ export const OnboardingFlow = ({ onComplete, logoSrc }: OnboardingFlowProps) => 
                             role="tab"
                             aria-selected={i === step}
                             aria-label={`Étape ${i + 1} sur ${STEPS.length}`}
-                            className={`hoopers-onboarding__dot ${i === step ? 'hoopers-onboarding__dot--active' : ''
-                                }`}
-                            onClick={() => {
-                                setStep(i);
-                                setAnimKey((k) => k + 1);
-                            }}
+                            className={
+                                'hoopers-onboarding__segment' +
+                                (i <= step ? ' hoopers-onboarding__segment--filled' : '')
+                            }
+                            onClick={() => setStep(i)}
                         />
                     ))}
                 </div>
@@ -199,14 +219,9 @@ export const OnboardingFlow = ({ onComplete, logoSrc }: OnboardingFlowProps) => 
                     className="hoopers-onboarding__cta"
                     onClick={handleNext}
                 >
-                    {isLast ? "DÉMARRER L'EXPÉRIENCE" : 'CONTINUER'}
-                    <span aria-hidden="true">›</span>
+                    {isLast ? "Démarrer l'expérience" : 'Continuer'}
                 </button>
-
-                <div className="hoopers-onboarding__counter">
-                    {String(step + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}
-                </div>
-            </div>
+            </footer>
         </div>
     );
 };

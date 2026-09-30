@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -128,7 +128,7 @@ export const EnvSetup = () => {
 
         scene.environment = pmremTexture;
         // Multiplie l'intensité (compense si l'env reste un peu sombre)
-        (scene as any).environmentIntensity = 1.2;
+        (scene as any).environmentIntensity = 0.55;
 
         return () => {
             if (scene.environment === pmremTexture) {

@@ -93,6 +93,13 @@ export interface Player {
   photo: string;
   bio: string;
   experienceYears: number;
+  teamId?: string;
+  team?: {
+    id?: string;
+    name: string;
+    city?: string;
+    logoUrl?: string;
+  };
   seasonStats: {
     ppg: number;
     rpg: number;
@@ -351,6 +358,11 @@ export interface Team {
   coachName?: string;
   record?: string;
   foundedYear?: number | null;
+  shortName?: string | null;
+  arena?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  website?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
   accentColor?: string | null;

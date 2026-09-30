@@ -84,12 +84,13 @@ export class MiscController {
 
   static async applyRecruitment(req: Request, res: Response) {
     const { id } = req.params;
+    const user = (req as any).user as AuthenticatedUser;
     const { playerProfileId, message } = req.body ?? {};
     try {
-      const app = await MiscService.applyToRecruitment(id, playerProfileId, message);
+      const app = await MiscService.applyToRecruitment(id, playerProfileId, message, user?.id);
       return res.status(201).json(app);
-    } catch {
-      return res.status(500).json({ error: 'Erreur lors de la candidature.' });
+    } catch (err: any) {
+      return res.status(500).json({ error: err?.message || 'Erreur lors de la candidature.' });
     }
   }
 

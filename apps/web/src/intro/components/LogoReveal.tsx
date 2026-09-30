@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 import { localProgress, SCENES, easeOutCubic, easeOutQuart } from '../timeline/timeline';

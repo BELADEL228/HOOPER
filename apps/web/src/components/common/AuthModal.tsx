@@ -8,6 +8,7 @@ import {
   Heart,
   Star,
   Eye,
+  EyeOff,
   X,
   Lock,
   Mail,
@@ -23,11 +24,19 @@ import {
   FileText,
   Video,
   Loader2,
+  AlertCircle,
+  ClipboardCheck,
 } from 'lucide-react';
 import { basketball } from '@lucide/lab';
 import { apiUrl } from '../../services/api';
 import { uploadMedia } from '../../services/uploadService';
 import logo from '../../assets/logo.jpeg';
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function isValidEmail(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
 
 interface AuthUserPayload {
   id: string;
@@ -120,7 +129,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialTab = 'LOGIN',
 }) => {
   const [tab, setTab] = useState<'LOGIN' | 'REGISTER' | 'FORGOT'>(initialTab);
-  // Étape 1 : Rôle | Étape 2 : Identité & Compte | Étape 3 : Contexte Métier
+  // Étape 1 : Rôle | Étape 2 : Identité & Compte | Étape 3 : Contexte Métier | Étape 4 : Récapitulatif
   const [registerStep, setRegisterStep] = useState<number>(1);
 
   // Étape 1 : Rôle
@@ -129,6 +138,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Étape 2 : Informations de compte
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('Lomé');
@@ -171,6 +183,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [uploadingClubLogo, setUploadingClubLogo] = useState(false);
   const [uploadingCandidateCv, setUploadingCandidateCv] = useState(false);
   const [uploadingCandidateVideo, setUploadingCandidateVideo] = useState(false);
+
+  // Derived: selected club object for preview
+  const selectedClub = clubs.find(c => c.id === selectedClubId);
 
   const handleUploadClubLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -236,6 +251,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setSubmittedMessage('');
       setRegisteredSession(null);
 
+      setLoading(true);
       fetch(apiUrl('/clubs'))
         .then((r) => r.json())
         .then((data) => {
@@ -255,13 +271,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             { id: 'kara-hawks', name: 'Kara Hawks BBC', city: 'Kara' },
           ]);
           setSelectedClubId('fire-stone-club');
-        });
+        })
+        .finally(() => setLoading(false));
     }
   }, [isOpen, initialTab]);
 
   const resetAll = () => {
     setEmail('');
     setPassword('');
+    setConfirmPassword('');
     setName('');
     setPhone('');
     setCity('Lomé');
@@ -271,6 +289,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError('');
     setSubmittedMessage('');
     setRegisteredSession(null);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const passwordStrength = (pwd: string): { level: number; label: string; color: string } => {
@@ -437,26 +457,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  // Total steps depends on role
+  const totalSteps = (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR') ? 3 : 4;
+
   const nextStep = () => {
     setError('');
     if (registerStep === 1) {
-      // Choix du rôle validé
       setRegisterStep(2);
       return;
     }
 
     if (registerStep === 2) {
-      if (!name.trim() || !email.trim() || !password.trim()) {
-        setError('Le nom complet, l\'email et le mot de passe sont obligatoires.');
-        return;
-      }
-      if (password.length < 8) {
-        setError('Le mot de passe doit comporter au moins 8 caractères.');
-        return;
-      }
-      // Pour Supporter ou Visiteur, pas d'étape 3 complexe nécessaire
+      if (!name.trim()) { setError('Le nom complet est obligatoire.'); return; }
+      if (!email.trim() || !isValidEmail(email)) { setError('Veuillez saisir une adresse email valide.'); return; }
+      if (!password.trim() || password.length < 8) { setError('Le mot de passe doit comporter au moins 8 caractères.'); return; }
+      if (confirmPassword && confirmPassword !== password) { setError('Les mots de passe ne correspondent pas.'); return; }
+      if (confirmPassword && confirmPassword === password) { /* ok */ }
+      // Pour Supporter ou Visiteur : passe directement au récapitulatif
       if (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR') {
-        handleRegisterFinal();
+        setRegisterStep(3); // récapitulatif
         return;
       }
       setRegisterStep(3);
@@ -468,6 +487,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setError('Le nom du club est obligatoire pour la création.');
         return;
       }
+      // Supporter/Visitor: step 3 is recap → submit directly
+      if (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR') {
+        handleRegisterFinal();
+        return;
+      }
+      // Others: show recap step 4
+      setRegisterStep(4);
+      return;
+    }
+
+    if (registerStep === 4) {
       handleRegisterFinal();
     }
   };
@@ -510,9 +540,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setRegisteredSession(null);
                 setRegisterStep(1);
               }}
-              className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${
-                tab === t ? 'bg-[#FF2A3B] text-white shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
+              className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${tab === t ? 'bg-[#FF2A3B] text-white shadow-md' : 'text-slate-300 hover:text-white'
+                }`}
             >
               {t === 'LOGIN' ? 'Connexion' : t === 'REGISTER' ? 'Inscription' : 'Mot de passe oublié'}
             </button>
@@ -556,35 +585,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         ) : tab === 'REGISTER' ? (
           /* WORKFLOW D'INSCRIPTION DÉTAILLÉ SELON HOOPER_SPECIFICATIONS.MD */
           <div className="space-y-4 text-xs">
-            {/* Barre de progression des 3 étapes */}
-            <div className="space-y-1">
-              <div className="flex justify-between text-slate-400 text-[10px] font-medium">
+            {/* Barre de progression */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-medium text-slate-400">
                 <span>
-                  Étape {registerStep} / {selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR' ? 2 : 3} :{' '}
-                  {registerStep === 1
-                    ? 'Quel type d\'utilisateur êtes-vous ?'
-                    : registerStep === 2
-                    ? 'Informations de compte'
-                    : 'Profil & Affiliation Club'}
+                  {registerStep === 1 && '① Profil utilisateur'}
+                  {registerStep === 2 && '② Identifiants & Compte'}
+                  {registerStep === 3 && (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR' ? '③ Confirmation' : '③ Profil métier')}
+                  {registerStep === 4 && '④ Récapitulatif'}
                 </span>
-                <span>
-                  {Math.round(
-                    (registerStep / (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR' ? 2 : 3)) * 100
-                  )}
-                  %
-                </span>
+                <span className="font-bold text-white">{Math.round((registerStep / totalSteps) * 100)}%</span>
               </div>
-              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] rounded-full transition-all duration-300"
-                  style={{
-                    width: `${
-                      (registerStep /
-                        (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR' ? 2 : 3)) *
-                      100
-                    }%`,
-                  }}
-                />
+              <div className="flex gap-1">
+                {Array.from({ length: totalSteps }, (_, i) => (
+                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i < registerStep ? 'bg-gradient-to-r from-[#FF2A3B] to-[#FFB800]' : 'bg-white/10'
+                    }`} />
+                ))}
               </div>
             </div>
 
@@ -611,20 +627,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         key={r.value}
                         type="button"
                         onClick={() => setSelectedRole(r.value)}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 relative ${
-                          isSelected
-                            ? 'border-[#FF2A3B] bg-[#FF2A3B]/15 shadow-lg shadow-red-500/10'
-                            : 'border-white/10 bg-white/5 hover:bg-white/10'
-                        }`}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 relative ${isSelected
+                          ? 'border-[#FF2A3B] bg-[#FF2A3B]/15 shadow-lg shadow-red-500/10'
+                          : 'border-white/10 bg-white/5 hover:bg-white/10'
+                          }`}
                       >
                         <div className="flex items-start justify-between">
                           <div className={isSelected ? 'text-[#FF2A3B]' : 'text-slate-300'}>{r.icon}</div>
                           <span
-                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                              isSelected
-                                ? 'bg-[#FF2A3B] text-white'
-                                : 'bg-white/10 text-slate-400'
-                            }`}
+                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isSelected
+                              ? 'bg-[#FF2A3B] text-white'
+                              : 'bg-white/10 text-slate-400'
+                              }`}
                           >
                             {r.badge}
                           </span>
@@ -690,29 +704,60 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
                       placeholder="8 caractères minimum"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl glass-input"
                     />
+                    <button type="button" tabIndex={-1}
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                   {pwdStrength.level > 0 && (
                     <div className="mt-1.5 space-y-1">
-                      <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${(pwdStrength.level / 4) * 100}%`,
-                            backgroundColor: pwdStrength.color,
-                          }}
-                        />
+                      <div className="flex gap-1 h-1">
+                        {[1, 2, 3, 4].map(lvl => (
+                          <div key={lvl} className="flex-1 rounded-full transition-all" style={{
+                            backgroundColor: lvl <= pwdStrength.level ? pwdStrength.color : 'rgba(255,255,255,0.1)'
+                          }} />
+                        ))}
                       </div>
-                      <p className="text-[10px]" style={{ color: pwdStrength.color }}>
-                        Sécurité : {pwdStrength.label}
-                      </p>
+                      <p className="text-[10px]" style={{ color: pwdStrength.color }}>Sécurité : {pwdStrength.label}</p>
                     </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-medium mb-1">Confirmer le mot de passe</label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Répétez le mot de passe"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={`w-full pl-10 pr-10 py-2.5 rounded-xl glass-input ${confirmPassword && confirmPassword !== password ? 'border-red-500/50' : ''
+                        }`}
+                    />
+                    <button type="button" tabIndex={-1}
+                      onClick={() => setShowConfirmPassword(v => !v)}
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Les mots de passe ne correspondent pas
+                    </p>
+                  )}
+                  {confirmPassword && confirmPassword === password && (
+                    <p className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Mots de passe identiques
+                    </p>
                   )}
                 </div>
 
@@ -769,22 +814,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         <button
                           type="button"
                           onClick={() => setCreateClubMode(true)}
-                          className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs transition-all ${
-                            createClubMode
-                              ? 'bg-[#FF2A3B] text-white shadow-md'
-                              : 'bg-white/5 text-slate-400 hover:text-white'
-                          }`}
+                          className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs transition-all ${createClubMode
+                            ? 'bg-[#FF2A3B] text-white shadow-md'
+                            : 'bg-white/5 text-slate-400 hover:text-white'
+                            }`}
                         >
                           Oui, créer mon club
                         </button>
                         <button
                           type="button"
                           onClick={() => setCreateClubMode(false)}
-                          className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs transition-all ${
-                            !createClubMode
-                              ? 'bg-[#FF2A3B] text-white shadow-md'
-                              : 'bg-white/5 text-slate-400 hover:text-white'
-                          }`}
+                          className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs transition-all ${!createClubMode
+                            ? 'bg-[#FF2A3B] text-white shadow-md'
+                            : 'bg-white/5 text-slate-400 hover:text-white'
+                            }`}
                         >
                           Non, rejoindre un club
                         </button>
@@ -1198,6 +1241,64 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             )}
 
+            {/* ══════════════════════════════════════════════════════════════════
+                ÉCRAN 4 : RÉCAPITULATIF AVANT SOUMISSION
+                ══════════════════════════════════════════════════════════════════ */}
+            {registerStep === 4 && (
+              <div className="space-y-4">
+                <div className="text-center space-y-1">
+                  <h4 className="text-sm font-black text-white flex items-center justify-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-emerald-400" />
+                    Récapitulatif de votre inscription
+                  </h4>
+                  <p className="text-[11px] text-slate-400">Vérifiez vos informations avant de valider.</p>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  {[
+                    { label: 'Rôle', value: ROLES.find(r => r.value === selectedRole)?.label },
+                    { label: 'Nom', value: name },
+                    { label: 'Email', value: email },
+                    { label: 'Ville', value: city },
+                    phone && { label: 'Téléphone', value: phone },
+                    selectedRole === 'COACH' && { label: 'Expérience', value: `${experienceYears} ans` },
+                    selectedRole === 'COACH' && certificates && { label: 'Certifications', value: certificates },
+                    selectedRole === 'PLAYER' && { label: 'Poste', value: `${position} — #${jerseyNumber}` },
+                    selectedRole === 'PLAYER' && { label: 'Gabarit', value: `${heightCm} cm · ${weightKg} kg · ${age} ans` },
+                    selectedRole === 'SPONSOR' && { label: 'Type sponsor', value: `${sponsorType} — ${sponsorDomain}` },
+                    selectedRole === 'SPONSOR' && { label: 'Budget', value: `${Number(sponsorBudget).toLocaleString('fr-FR')} XOF` },
+                    (selectedRole !== 'CLUB_ADMIN' || !createClubMode) && selectedClub && { label: 'Club', value: `${selectedClub.name} (${selectedClub.city || 'Togo'})` },
+                    selectedRole === 'CLUB_ADMIN' && createClubMode && { label: 'Nouveau club', value: newClubName },
+                  ].filter(Boolean).map((row: any, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-white/5">
+                      <span className="text-slate-400 font-medium">{row.label}</span>
+                      <span className="text-white font-bold text-right max-w-[60%] truncate">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Club preview card */}
+                {selectedClub && (selectedRole === 'PLAYER' || selectedRole === 'COACH' || selectedRole === 'ACADEMY_CANDIDATE' || (selectedRole === 'SPONSOR' && sponsorTeamImmediate)) && (
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                    {selectedClub.logoUrl ? (
+                      <img src={selectedClub.logoUrl} alt={selectedClub.name} className="w-10 h-10 rounded-xl object-contain bg-white/10 border border-white/10 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0 text-lg">🏀</div>
+                    )}
+                    <div>
+                      <p className="text-sm font-bold text-white">{selectedClub.name}</p>
+                      <p className="text-[10px] text-slate-400 flex items-center gap-1"><MapPin className="w-2.5 h-2.5" />{selectedClub.city || 'Togo'}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 text-[11px] text-amber-300 flex items-start gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  En cliquant sur « Valider mon Inscription », vous acceptez les conditions d'utilisation de la plateforme HOOPER.
+                </div>
+              </div>
+            )}
+
             {/* Navigation entre étapes */}
             <div className="flex gap-2.5 pt-2">
               {registerStep > 1 && (
@@ -1217,13 +1318,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               >
                 {loading
                   ? 'Traitement en cours...'
-                  : registerStep < (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR' ? 2 : 3)
-                  ? (
-                    <>
-                      Continuer <ChevronRight className="w-4 h-4" />
-                    </>
-                  )
-                  : 'Valider mon Inscription 🎉'}
+                  : registerStep < totalSteps
+                    ? (
+                      <>
+                        Continuer <ChevronRight className="w-4 h-4" />
+                      </>
+                    )
+                    : 'Valider mon Inscription 🎉'}
               </button>
             </div>
           </div>
@@ -1301,10 +1402,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {loading
                 ? 'Chargement...'
                 : tab === 'LOGIN'
-                ? 'Se Connecter'
-                : resetToken
-                ? 'Valider le nouveau mot de passe'
-                : 'Envoyer le lien de réinitialisation'}
+                  ? 'Se Connecter'
+                  : resetToken
+                    ? 'Valider le nouveau mot de passe'
+                    : 'Envoyer le lien de réinitialisation'}
             </button>
           </form>
         )}

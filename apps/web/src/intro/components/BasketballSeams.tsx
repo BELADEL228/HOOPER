@@ -1,5 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
+import { useIntroState } from '../timeline/IntroContext';
 
 const SPHERE_RADIUS = 1;
 const SEAM_TUBE_RADIUS = 0.0155;
@@ -68,10 +70,16 @@ export const BasketballSeams = () => {
             color: 0x0a0503,
             roughness: 0.82,
             metalness: 0.02,
+            transparent: true,
         });
 
         return { geometries: geos, material: mat };
     }, []);
+
+    const shared = useIntroState();
+    useFrame(() => {
+        material.opacity = shared.current.ballOpacity;
+    });
 
     useEffect(() => {
         return () => {

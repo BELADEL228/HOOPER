@@ -1,20 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { PerspectiveCamera } from '@react-three/drei';
+import { PerspectiveCamera, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { IntroProvider, useIntroState } from './timeline/IntroContext';
-import { TOTAL_DURATION, COLORS_HEX } from './timeline/timeline';
+import { TOTAL_DURATION, COLORS_HEX, SCENES } from './timeline/timeline';
 import { useResponsive } from './timeline/useResponsive';
 import { useIntroSeen } from './timeline/useIntroSeen';
 import { CameraRig } from './camera/CameraRig';
 import { EnvSetup } from './components/EnvSetup';
-import { Basketball } from './components/Basketball';
 import { BasketballCourt } from './components/BasketballCourt';
+import { CourtLines } from './components/CourtLines';
+import { ContactShadow } from './components/ContactShadow';
+import { PostFX } from './components/PostFX';
+import { BasketballAuto } from './components/BasketballModel';
+import { AdaptiveQuality } from './components/AdaptativeQuality';
+import { TIERS, readInitialTier, saveTier } from './timeline/qualityTiers';
+import { useBallSounds } from './audio/useBallSounds';
 import { LogoRevealOverlay } from './components/LogoRevealOverlay';
 import { IntroLoader } from './components/IntroLoader';
 import { AudioPlayer } from './components/AudioPlayer';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { QuickLogoIntro } from './components/QuickLogoIntro';
+import { SkipButton } from './components/SkipButton';
 import { Scene02 } from './scenes/Scene02';
 import { Scene04 } from './scenes/Scene04';
 import { Scene05 } from './scenes/Scene05';
@@ -38,30 +45,44 @@ interface IntroProps {
     musicSrc?: string;
     musicVolume?: number;
     musicStopAt?: number;
+    musicStartAt?: number;
+    /** URL d'un ballon .glb/.gltf (ex. '/models/basketball_nologo.glb') */
+    ballModelUrl?: string;
+    /** Correction d'orientation du modèle, en radians [x, y, z]. */
+    ballModelRotation?: [number, number, number];
+    /** Sample de rebond (.wav/.mp3). Sans → son de rebond synthétisé. */
+    bounceSrc?: string;
+    /** Volume des effets sonores 0..1 */
+    sfxVolume?: number;
+    /** Désactive tous les effets sonores */
+    sfxEnabled?: boolean;
     showOnboarding?: boolean;
     forceFullIntro?: boolean;
     forceQuickIntro?: boolean;
+    /** Fige l'intro à cet instant (en secondes) — utile pour régler une scène. */
+    debugTime?: number;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- *  WRAPPER COURT
+ *  WRAPPER COURT — synchronise la vignette avec la position du ballon
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-const BasketballCourtSynced = ({ time }: { time: number }) => {
+const BasketballCourtSynced = ({
+    time,
+    reflective,
+}: {
+    time: number;
+    reflective: boolean;
+}) => {
     const shared = useIntroState();
-    const [ballPos, setBallPos] = useState({ x: 0, z: 0 });
-
-    useEffect(() => {
-        const id = window.setInterval(() => {
-            setBallPos({
-                x: shared.current.ballX,
-                z: shared.current.ballZ,
-            });
-        }, 33);
-        return () => window.clearInterval(id);
-    }, [shared]);
-
-    return <BasketballCourt time={time} ballX={ballPos.x} ballZ={ballPos.z} />;
+    return (
+        <BasketballCourt
+            time={time}
+            ballX={shared.current.ballX}
+            ballZ={shared.current.ballZ}
+            reflective={reflective}
+        />
+    );
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -75,10 +96,17 @@ export const Intro: React.FC<IntroProps> = ({
     subtitle = 'Dribbler avec intention.',
     musicSrc,
     musicVolume = 0.45,
-    musicStopAt = 19.5,
+    musicStopAt = 26.0,
+    musicStartAt = 2.6,
+    ballModelUrl,
+    ballModelRotation,
+    bounceSrc,
+    sfxVolume = 0.8,
+    sfxEnabled = true,
     showOnboarding = true,
     forceFullIntro = false,
     forceQuickIntro = false,
+    debugTime,
 }) => {
     /* ─── Détection visite ──────────────────────────────────────────── */
     const { hasSeenIntro, markIntroAsSeen } = useIntroSeen();
@@ -90,7 +118,13 @@ export const Intro: React.FC<IntroProps> = ({
     /* ─── États ──────────────────────────────────────────────────────── */
     const [onboardingDone, setOnboardingDone] = useState(!showOnboarding);
     const [ready, setReady] = useState(false);
-    const [time, setTime] = useState(0);
+
+    /* `timeRef` : horloge exacte, mise à jour à chaque frame (ballon, caméra,
+     *  post-fx → mouvement parfaitement fluide).
+     *  `time`    : état React, rafraîchi ~30×/s seulement (scènes HUD / cartes),
+     *  ce qui évite de re-rendre tout l'arbre 60 fois par seconde. */
+    const timeRef = useRef(debugTime ?? 0);
+    const [time, setTime] = useState(debugTime ?? 0);
     const [stopMusic, setStopMusic] = useState(false);
 
     /* ─── Refs ───────────────────────────────────────────────────────── */
@@ -111,27 +145,48 @@ export const Intro: React.FC<IntroProps> = ({
 
     const { isMobile, aspect, quality } = useResponsive();
 
-    /* ─── Timeline principale ────────────────────────────────────────
-     *  ⚠️ Dépendances volontairement minimales :
-     *     - shouldPlayFullIntro (booléen stable)
-     *     - onboardingDone (booléen stable)
-     *     - ready (booléen stable)
-     *     - musicStopAt (nombre stable)
-     *
-     *  ❌ PAS de markIntroAsSeen (via ref)
-     *  ❌ PAS de onComplete (via ref)
-     * ═══════════════════════════════════════════════════════════════════ */
+    /* ─── Qualité adaptative ─────────────────────────────────────────── */
+    const [tierIdx, setTierIdx] = useState(() => readInitialTier(window.innerWidth < 768));
+    const tier = TIERS[tierIdx];
+    const handleDecline = () =>
+        setTierIdx((i) => {
+            const next = Math.min(i + 1, TIERS.length - 1);
+            if (next !== i) saveTier(next);
+            return next;
+        });
+
+    /* ─── Ballon prêt (modèle GLB chargé, ou ballon procédural) ──────── */
+    const [ballReady, setBallReady] = useState(false);
+    const allReady = ready && ballReady;
+
+    /* ─── Timeline principale ──────────────────────────────────────── */
     useEffect(() => {
         if (!shouldPlayFullIntro) return;
-        if (!onboardingDone || !ready) return;
+        if (!onboardingDone || !allReady) return;
+
+        // Mode debug : temps figé, pas de boucle
+        if (debugTime !== undefined) {
+            timeRef.current = debugTime;
+            setTime(debugTime);
+            return;
+        }
 
         startTimeRef.current = performance.now();
         completedRef.current = false;
+        let lastPush = 0;
 
         const tick = () => {
-            const elapsed = (performance.now() - startTimeRef.current) / 1000;
+            const now = performance.now();
+            const elapsed = (now - startTimeRef.current) / 1000;
             const t = Math.min(elapsed, TOTAL_DURATION);
-            setTime(t);
+            timeRef.current = t;
+
+            // Rendu React limité à ~30 Hz (sauf pendant le logo final)
+            const minGap = t >= SCENES.S11.start ? 0 : 33;
+            if (now - lastPush >= minGap || t >= TOTAL_DURATION) {
+                lastPush = now;
+                setTime(t);
+            }
 
             if (t >= musicStopAt) {
                 setStopMusic((prev) => (prev ? prev : true));
@@ -140,7 +195,7 @@ export const Intro: React.FC<IntroProps> = ({
             if (t >= TOTAL_DURATION) {
                 if (!completedRef.current) {
                     completedRef.current = true;
-                    markIntroAsSeenRef.current(); // ✅ via ref
+                    markIntroAsSeenRef.current();
                     onCompleteRef.current?.();
                 }
                 return;
@@ -152,7 +207,7 @@ export const Intro: React.FC<IntroProps> = ({
         return () => {
             if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
         };
-    }, [shouldPlayFullIntro, onboardingDone, ready, musicStopAt]);
+    }, [shouldPlayFullIntro, onboardingDone, allReady, musicStopAt, debugTime]);
 
     /* ─── Intro courte : marque comme vue après 3.2 s ────────────────── */
     const handleQuickComplete = () => {
@@ -160,7 +215,26 @@ export const Intro: React.FC<IntroProps> = ({
         onCompleteRef.current?.();
     };
 
-    const dpr: [number, number] = isMobile ? [1, 1.5] : [1, 2];
+    /* ─── Skip : saute directement à la fin de l'intro ──────────────── */
+    const handleSkip = () => {
+        setStopMusic(true);
+        timeRef.current = TOTAL_DURATION;
+        setTime(TOTAL_DURATION);
+        if (!completedRef.current) {
+            completedRef.current = true;
+            markIntroAsSeenRef.current();
+            onCompleteRef.current?.();
+        }
+    };
+
+    /* ─── Sons synchronisés (doit rester AVANT les return conditionnels) ─ */
+    useBallSounds({
+        timeRef,
+        enabled: sfxEnabled && shouldPlayFullIntro && onboardingDone && allReady && debugTime === undefined,
+        volume: sfxVolume,
+        bounceSrc,
+        logoHitAt: 25.0,
+    });
 
     const handleCanvasCreated = () => {
         requestAnimationFrame(() => {
@@ -199,7 +273,7 @@ export const Intro: React.FC<IntroProps> = ({
 
             {onboardingDone && (
                 <>
-                    {musicSrc && (
+                    {musicSrc && time >= musicStartAt && (
                         <AudioPlayer
                             src={musicSrc}
                             volume={musicVolume}
@@ -213,17 +287,16 @@ export const Intro: React.FC<IntroProps> = ({
                     <Canvas
                         className="hoopers-canvas"
                         gl={{
-                            antialias: !isMobile,
+                            antialias: false,
                             alpha: false,
                             powerPreference: 'high-performance',
                             stencil: false,
                         }}
-                        dpr={dpr}
+                        dpr={tier.dpr}
                         shadows={!isMobile}
                         onCreated={({ scene, gl }) => {
                             scene.background = new THREE.Color(COLORS_HEX.BLACK);
-                            gl.toneMapping = THREE.ACESFilmicToneMapping;
-                            gl.toneMappingExposure = 1.05;
+                            gl.toneMapping = THREE.NoToneMapping;
                             gl.outputColorSpace = THREE.SRGBColorSpace;
                             handleCanvasCreated();
                         }}
@@ -233,6 +306,8 @@ export const Intro: React.FC<IntroProps> = ({
                         <IntroProvider>
                             <PerspectiveCamera makeDefault position={[0, 1, 15]} fov={50} />
 
+                            <fog attach="fog" args={[COLORS_HEX.BLACK, 9, 26]} />
+
                             <ambientLight intensity={0.55} color={0x99aabb} />
                             <hemisphereLight args={[0xaabbdd, 0x1a2530, 0.65]} />
 
@@ -240,13 +315,16 @@ export const Intro: React.FC<IntroProps> = ({
                                 position={[5, 9, 7]}
                                 intensity={2.2}
                                 color={0xfff0dd}
-                                castShadow={!isMobile}
+                                castShadow={!isMobile && tier.shadows}
                                 shadow-mapSize-width={isMobile ? 512 : 2048}
                                 shadow-mapSize-height={isMobile ? 512 : 2048}
+                                shadow-bias={-0.0004}
+                                shadow-normalBias={0.03}
+                                shadow-radius={4}
                             />
 
-                            <directionalLight position={[-6, 5, -5]} intensity={0.75} color={0x8aaadd} />
-                            <directionalLight position={[-3, 4, -8]} intensity={1.0} color={0xffaa66} />
+                            <directionalLight position={[-6, 5, -5]} intensity={0.3} color={0x8aaadd} />
+                            <directionalLight position={[-3, 4, -8]} intensity={0.45} color={0xffaa66} />
 
                             <spotLight
                                 position={[0, 6, 3]}
@@ -266,8 +344,27 @@ export const Intro: React.FC<IntroProps> = ({
                                 decay={2}
                             />
 
-                            <BasketballCourtSynced time={time} />
-                            <Basketball time={time} quality={quality} />
+                            <BasketballCourtSynced time={time} reflective={!isMobile && tier.reflective} />
+                            <CourtLines visible={true} />
+
+                            <ContactShadow />
+                            <BasketballAuto
+                                timeRef={timeRef}
+                                quality={quality}
+                                modelUrl={ballModelUrl}
+                                modelRotation={ballModelRotation}
+                                onLoaded={() => setBallReady(true)}
+                            />
+
+                            <Sparkles
+                                count={Math.min(tier.sparkles, isMobile ? 20 : 999)}
+                                scale={[8, 3.5, 3]}
+                                position={[0, 2.2, -2]}
+                                size={isMobile ? 1.6 : 0.9}
+                                speed={0.2}
+                                opacity={0.3}
+                                color="#ffd9a0"
+                            />
 
                             <Scene02 time={time} />
                             <Scene04 time={time} />
@@ -275,14 +372,45 @@ export const Intro: React.FC<IntroProps> = ({
                             <Scene06 time={time} />
                             <Scene07 time={time} />
                             <Scene08 time={time} />
-                            <Scene09 time={time} />
+                            <Scene09 time={time} timeRef={timeRef} />
                             <Scene10 time={time} />
 
-                            <CameraRig time={time} isMobile={isMobile} aspect={aspect} />
+                            <CameraRig timeRef={timeRef} isMobile={isMobile} aspect={aspect} />
+
+                            <PostFX timeRef={timeRef} tier={tier} />
+                            <AdaptiveQuality
+                                key={tierIdx}
+                                timeRef={timeRef}
+                                onDecline={handleDecline}
+                            />
                         </IntroProvider>
                     </Canvas>
 
-                    <IntroLoader visible={!ready} label="PRÉPARATION DU TERRAIN" />
+                    <IntroLoader visible={!allReady} label="PRÉPARATION DU TERRAIN" />
+
+                    {/* ⚡ Bouton "Passer l'intro" — apparaît à 1.5 s, disparaît à la fin */}
+                    {allReady && (
+                        <SkipButton
+                            time={time}
+                            onSkip={handleSkip}
+                            appearAt={1.5}
+                            label="Passer l'intro"
+                        />
+                    )}
+
+                    {/* Fondu vers le noir : le logo final reste lisible sur fond sombre */}
+                    <div
+                        aria-hidden
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: '#030303',
+                            pointerEvents: 'none',
+                            opacity:
+                                0.96 *
+                                Math.min(1, Math.max(0, (time - 24.5) / 0.5)) ** 2,
+                        }}
+                    />
 
                     <LogoRevealOverlay
                         time={time}

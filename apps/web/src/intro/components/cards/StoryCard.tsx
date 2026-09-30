@@ -1,6 +1,7 @@
 import { GlassCard } from '../GlassCard';
 import { HudText } from '../HudText';
-import { UIAvatar, UIBorder } from './ui';
+import { Icon } from '../icons';
+import { UIAvatar } from './ui';
 
 interface StoryCardProps {
     position?: [number, number, number];
@@ -9,7 +10,9 @@ interface StoryCardProps {
     opacity?: number;
 }
 
-/* Reconstruit le bloc "Ma story + Quoi de neuf sur le parquet ?" */
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  STORY CARD — Ma story + composer
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 export const StoryCard = ({
     position = [0, 0, 0],
@@ -27,99 +30,103 @@ export const StoryCard = ({
             opacity={opacity}
             width={1.5}
             height={0.95}
-            borderColor="#FF2A3B"
+            accentColor="#FF2A3B"
         >
-            {/* ─── Bloc "Ma story" ──────────────────────────────────────── */}
-            {/* Icône refresh en haut à droite */}
-            <HudText
-                position={[0.62, 0.4, 0.004]}
-                fontSize={0.09}
-                color="#A0A0A0"
-                opacity={0.75 * o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ⟳
-            </HudText>
+            {/* ═══ MA STORY ═════════════════════════════════════════════ */}
+            <Icon
+                name="plus"
+                position={[0.6, 0.4, 0.004]}
+                size={0.075}
+                color="rgba(255,255,255,0.5)"
+                opacity={o}
+            />
 
-            {/* Cercle pointillé rouge */}
-            <mesh position={[-0.5, 0.22, 0.004]}>
-                <ringGeometry args={[0.115, 0.13, 48]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} transparent opacity={0.85 * o} />
+            {/* Cercle extérieur rouge */}
+            <mesh position={[-0.5, 0.24, 0.004]}>
+                <ringGeometry args={[0.115, 0.128, 48]} />
+                <meshBasicMaterial
+                    color={0xFF2A3B}
+                    transparent
+                    opacity={0.85 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* Avatar VI au centre */}
             <UIAvatar
-                position={[-0.5, 0.22, 0.005]}
+                position={[-0.5, 0.24, 0.005]}
                 radius={0.1}
                 bgColor={0xFF2A3B}
                 innerColor={0x8a1520}
                 ringOpacity={0}
             />
+
             <HudText
-                position={[-0.5, 0.22, 0.006]}
-                fontSize={0.11}
+                position={[-0.5, 0.24, 0.006]}
+                fontSize={0.105}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.02}
+                letterSpacing={0.04}
                 fontWeight={800}
             >
                 VI
             </HudText>
 
-            {/* Petit + rouge */}
-            <mesh position={[-0.4, 0.12, 0.007]}>
-                <circleGeometry args={[0.035, 20]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} />
+            {/* Bouton + rouge */}
+            <mesh position={[-0.42, 0.14, 0.007]}>
+                <circleGeometry args={[0.032, 20]} />
+                <meshBasicMaterial
+                    color={0xFF2A3B}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
-            <HudText
-                position={[-0.4, 0.12, 0.009]}
-                fontSize={0.055}
+            <Icon
+                name="plus"
+                position={[-0.42, 0.14, 0.009]}
+                size={0.038}
                 color="#FFFFFF"
                 opacity={o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={800}
-            >
-                +
-            </HudText>
+            />
 
-            {/* Label "Ma story" */}
             <HudText
-                position={[-0.5, 0.04, 0.004]}
+                position={[-0.5, 0.06, 0.004]}
                 fontSize={0.062}
                 color="#FFFFFF"
-                opacity={0.9 * o}
+                opacity={o * 0.9}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
-                fontWeight={500}
+                letterSpacing={0.04}
+                fontWeight={600}
             >
                 Ma story
             </HudText>
 
-            {/* ─── Séparateur ───────────────────────────────────────────── */}
-            <mesh position={[0, -0.05, 0.003]}>
-                <planeGeometry args={[1.32, 0.003]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.06 * o} depthWrite={false} />
+            {/* ═══ DIVIDER ══════════════════════════════════════════════ */}
+            <mesh position={[0, -0.03, 0.004]}>
+                <planeGeometry args={[1.3, 0.0012]} />
+                <meshBasicMaterial
+                    color={0xffffff}
+                    transparent
+                    opacity={0.08 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* ─── Bloc composer "Quoi de neuf ?" ───────────────────────── */}
+            {/* ═══ COMPOSER ═════════════════════════════════════════════ */}
             <UIAvatar
-                position={[-0.6, -0.17, 0.005]}
-                radius={0.07}
+                position={[-0.6, -0.15, 0.005]}
+                radius={0.068}
                 bgColor={0xFF2A3B}
                 innerColor={0x8a1520}
                 ringOpacity={0}
             />
             <HudText
-                position={[-0.6, -0.17, 0.006]}
-                fontSize={0.075}
+                position={[-0.6, -0.15, 0.006]}
+                fontSize={0.07}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="center"
@@ -131,115 +138,103 @@ export const StoryCard = ({
             </HudText>
 
             <HudText
-                position={[-0.46, -0.13, 0.004]}
-                fontSize={0.062}
-                color="#D0D0D0"
-                opacity={0.85 * o}
+                position={[-0.47, -0.11, 0.004]}
+                fontSize={0.06}
+                color="rgba(255,255,255,0.75)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.01}
+                letterSpacing={0.02}
                 fontWeight={500}
             >
                 Quoi de neuf sur le parquet ?
             </HudText>
 
             <HudText
-                position={[-0.46, -0.22, 0.004]}
-                fontSize={0.062}
-                color="#A0A0A0"
-                opacity={0.75 * o}
+                position={[-0.47, -0.21, 0.004]}
+                fontSize={0.052}
+                color="rgba(255,255,255,0.4)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.01}
-                fontWeight={500}
+                letterSpacing={0.02}
+                fontWeight={400}
             >
                 Partagez vos scores, dunks…
             </HudText>
 
-            {/* Séparateur medium */}
-            <mesh position={[0, -0.28, 0.003]}>
-                <planeGeometry args={[1.32, 0.003]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.06 * o} depthWrite={false} />
+            {/* ═══ DIVIDER ══════════════════════════════════════════════ */}
+            <mesh position={[0, -0.28, 0.004]}>
+                <planeGeometry args={[1.3, 0.0012]} />
+                <meshBasicMaterial
+                    color={0xffffff}
+                    transparent
+                    opacity={0.08 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
-            {/* ─── Rangée d'icônes media + bouton Publier ───────────────── */}
-            {/* Image */}
-            <mesh position={[-0.6, -0.38, 0.004]}>
-                <planeGeometry args={[0.075, 0.075]} />
-                <meshBasicMaterial color={0x10b981} depthWrite={false} transparent opacity={0.9 * o} />
-            </mesh>
-            <mesh position={[-0.6, -0.38, 0.005]}>
-                <planeGeometry args={[0.045, 0.045]} />
-                <meshBasicMaterial color={0x0a0a0e} depthWrite={false} />
-            </mesh>
-
-            {/* Vidéo */}
-            <mesh position={[-0.4, -0.38, 0.004]}>
-                <planeGeometry args={[0.075, 0.075]} />
-                <meshBasicMaterial color={0xFFB800} depthWrite={false} transparent opacity={0.9 * o} />
-            </mesh>
-            <mesh position={[-0.4, -0.38, 0.005]}>
-                <circleGeometry args={[0.022, 20]} />
-                <meshBasicMaterial color={0x0a0a0e} depthWrite={false} />
-            </mesh>
-
-            {/* Upload */}
-            <HudText
+            {/* ═══ ACTIONS MÉDIA + PUBLIER ══════════════════════════════ */}
+            <Icon
+                name="image"
+                position={[-0.6, -0.38, 0.004]}
+                size={0.075}
+                color="#10b981"
+                opacity={o * 0.9}
+            />
+            <Icon
+                name="video"
+                position={[-0.4, -0.38, 0.004]}
+                size={0.075}
+                color="#FFB800"
+                opacity={o * 0.9}
+            />
+            <Icon
+                name="upload"
                 position={[-0.2, -0.38, 0.004]}
-                fontSize={0.1}
-                color="#FFFFFF"
-                opacity={0.75 * o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ⇧
-            </HudText>
-
-            {/* Globe */}
-            <HudText
+                size={0.075}
+                color="rgba(255,255,255,0.6)"
+                opacity={o}
+            />
+            <Icon
+                name="globe"
                 position={[0.0, -0.38, 0.004]}
-                fontSize={0.11}
+                size={0.075}
                 color="#3b82f6"
-                opacity={0.9 * o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ⊕
-            </HudText>
+                opacity={o * 0.9}
+            />
 
             {/* Bouton Publier */}
             <mesh position={[0.42, -0.38, 0.004]}>
-                <planeGeometry args={[0.4, 0.11]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} transparent opacity={0.95 * o} />
+                <planeGeometry args={[0.4, 0.1]} />
+                <meshBasicMaterial
+                    color={0xFF2A3B}
+                    transparent
+                    opacity={0.95 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
             <HudText
-                position={[0.38, -0.38, 0.006]}
-                fontSize={0.06}
+                position={[0.36, -0.38, 0.006]}
+                fontSize={0.055}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.1}
+                letterSpacing={0.12}
                 fontWeight={700}
             >
                 Publier
             </HudText>
-            <HudText
-                position={[0.58, -0.38, 0.006]}
-                fontSize={0.085}
+            <Icon
+                name="send"
+                position={[0.57, -0.38, 0.006]}
+                size={0.06}
                 color="#FFFFFF"
-                opacity={0.9 * o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ➤
-            </HudText>
+                opacity={o}
+            />
         </GlassCard>
     );
 };

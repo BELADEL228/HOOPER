@@ -19,7 +19,7 @@ miscRouter.post('/tournaments', requireAuth, requireRole(['SUPER_ADMIN']), MiscC
 
 // Recrutement & Détection
 miscRouter.get('/recruitment', MiscController.listRecruitment);
-miscRouter.post('/recruitment', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN']), requireTeamManager, MiscController.createRecruitment);
+miscRouter.post('/recruitment', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH']), requireTeamManager, MiscController.createRecruitment);
 miscRouter.post('/recruitment/:id/apply', requireAuth, MiscController.applyRecruitment);
 miscRouter.patch('/recruitment/applications/:id', requireAuth, requireRole(['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH']), MiscController.updateApplicationStatus);
 

@@ -1,6 +1,7 @@
 import { GlassCard } from '../GlassCard';
 import { HudText } from '../HudText';
-import { UIAvatar, UIBorder, UIStatusDot, UISearchBar } from './ui';
+import { Icon } from '../icons';
+import { UIAvatar } from './ui';
 
 interface MessageCardProps {
     position?: [number, number, number];
@@ -9,7 +10,9 @@ interface MessageCardProps {
     opacity?: number;
 }
 
-/* Reconstruit l'écran "DISCUSSIONS — Belei · salut" */
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  MESSAGE CARD — Discussions (Belei · salut)
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 export const MessageCard = ({
     position = [0, 0, 0],
@@ -27,116 +30,143 @@ export const MessageCard = ({
             opacity={opacity}
             width={1.5}
             height={0.95}
-            borderColor="#FFB800"
+            accentColor="#FFB800"
         >
-            {/* ─── Header : icône + DISCUSSIONS + EN DIRECT + ➕ ───────── */}
-            {/* Icône bulle */}
-            <mesh position={[-0.66, 0.35, 0.004]}>
-                <planeGeometry args={[0.11, 0.08]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} transparent opacity={0.95 * o} />
-            </mesh>
-            <mesh position={[-0.71, 0.32, 0.005]}>
-                <planeGeometry args={[0.04, 0.05]} />
-                <meshBasicMaterial color={0x0a0a0e} depthWrite={false} />
-            </mesh>
+            {/* ═══ HEADER ═══════════════════════════════════════════════ */}
+            <Icon
+                name="message"
+                position={[-0.6, 0.35, 0.004]}
+                size={0.085}
+                color="#FF2A3B"
+                opacity={o}
+            />
 
             <HudText
-                position={[-0.56, 0.35, 0.004]}
-                fontSize={0.09}
+                position={[-0.48, 0.35, 0.004]}
+                fontSize={0.085}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.08}
+                letterSpacing={0.1}
                 fontWeight={800}
             >
                 DISCUSSIONS
             </HudText>
 
-            {/* Badge "EN DIRECT" vert */}
+            {/* Badge EN DIRECT */}
             <mesh position={[-0.12, 0.35, 0.004]}>
-                <planeGeometry args={[0.42, 0.085]} />
-                <meshBasicMaterial color={0x22c55e} depthWrite={false} transparent opacity={0.15 * o} />
+                <planeGeometry args={[0.34, 0.075]} />
+                <meshBasicMaterial
+                    color={0x22c55e}
+                    transparent
+                    opacity={0.14 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
-            <UIBorder position={[-0.12, 0.35, 0.005]} width={0.42} height={0.085} color={0x22c55e} opacity={0.5 * o} />
-            <UIStatusDot position={[-0.28, 0.35, 0.006]} color={0x22c55e} radius={0.02} />
+            <mesh position={[-0.24, 0.35, 0.005]}>
+                <circleGeometry args={[0.018, 16]} />
+                <meshBasicMaterial
+                    color={0x22c55e}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
+            </mesh>
             <HudText
-                position={[-0.08, 0.35, 0.006]}
-                fontSize={0.05}
+                position={[-0.1, 0.35, 0.006]}
+                fontSize={0.042}
                 color="#22c55e"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.14}
+                letterSpacing={0.12}
                 fontWeight={700}
             >
                 EN DIRECT
             </HudText>
 
             {/* Bouton + rouge carré */}
-            <mesh position={[0.62, 0.35, 0.004]}>
-                <planeGeometry args={[0.12, 0.12]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} transparent opacity={0.95 * o} />
+            <mesh position={[0.6, 0.35, 0.004]}>
+                <planeGeometry args={[0.09, 0.09]} />
+                <meshBasicMaterial
+                    color={0xFF2A3B}
+                    transparent
+                    opacity={0.95 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
-            <HudText
-                position={[0.62, 0.35, 0.006]}
-                fontSize={0.1}
+            <Icon
+                name="plus"
+                position={[0.6, 0.35, 0.005]}
+                size={0.06}
                 color="#FFFFFF"
                 opacity={o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={700}
-            >
-                +
-            </HudText>
-
-            {/* ─── Barre de recherche ───────────────────────────────────── */}
-            <UISearchBar
-                position={[0, 0.18, 0.004]}
-                width={1.32}
-                height={0.13}
-                placeholder="Rechercher une discussion…"
             />
 
-            {/* Séparateur */}
-            <mesh position={[0, 0.08, 0.003]}>
-                <planeGeometry args={[1.32, 0.003]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.06 * o} depthWrite={false} />
+            {/* ═══ BARRE DE RECHERCHE ═══════════════════════════════════ */}
+            <mesh position={[0, 0.19, 0.003]}>
+                <planeGeometry args={[1.32, 0.11]} />
+                <meshBasicMaterial color={0x0e0e12} depthWrite={false} toneMapped={false} />
             </mesh>
+            <Icon
+                name="search"
+                position={[-0.55, 0.19, 0.005]}
+                size={0.06}
+                color="rgba(255,255,255,0.45)"
+                opacity={o}
+            />
+            <HudText
+                position={[-0.47, 0.19, 0.005]}
+                fontSize={0.052}
+                color="rgba(255,255,255,0.4)"
+                opacity={o}
+                anchorX="left"
+                anchorY="middle"
+                letterSpacing={0.02}
+                fontWeight={500}
+            >
+                Rechercher…
+            </HudText>
 
-            {/* ─── Ligne de conversation "Belei · salut · 09:12" ────────── */}
+            {/* ═══ LISTE CONVERSATION ═══════════════════════════════════ */}
             <mesh position={[0, -0.03, 0.003]}>
                 <planeGeometry args={[1.32, 0.2]} />
-                <meshBasicMaterial color={0x1a1a20} depthWrite={false} transparent opacity={0.7 * o} />
+                <meshBasicMaterial
+                    color={0x1a1a20}
+                    transparent
+                    opacity={0.65 * o}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
 
             <UIAvatar
                 position={[-0.55, -0.03, 0.005]}
-                radius={0.09}
+                radius={0.088}
                 bgColor={0x2a2a30}
                 innerColor={0x8a5a3a}
                 ringOpacity={0.1}
             />
 
             <HudText
-                position={[-0.4, 0.03, 0.006]}
+                position={[-0.4, 0.035, 0.006]}
                 fontSize={0.075}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
+                letterSpacing={0.03}
                 fontWeight={700}
             >
                 Belei
             </HudText>
-
             <HudText
-                position={[-0.4, -0.09, 0.006]}
+                position={[-0.4, -0.08, 0.006]}
                 fontSize={0.062}
-                color="#A0A0A0"
-                opacity={0.9 * o}
+                color="rgba(255,255,255,0.55)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
                 letterSpacing={0.02}
@@ -145,12 +175,11 @@ export const MessageCard = ({
                 salut
             </HudText>
 
-            {/* Timestamp à droite */}
             <HudText
-                position={[0.62, 0.03, 0.006]}
-                fontSize={0.06}
-                color="#A0A0A0"
-                opacity={0.85 * o}
+                position={[0.6, 0.035, 0.006]}
+                fontSize={0.055}
+                color="rgba(255,255,255,0.45)"
+                opacity={o}
                 anchorX="right"
                 anchorY="middle"
                 letterSpacing={0.04}
@@ -159,13 +188,17 @@ export const MessageCard = ({
                 09:12
             </HudText>
 
-            {/* Petit badge non-lu */}
-            <mesh position={[0.62, -0.09, 0.006]}>
-                <circleGeometry args={[0.045, 20]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} />
+            {/* Badge non-lu */}
+            <mesh position={[0.6, -0.08, 0.006]}>
+                <circleGeometry args={[0.042, 20]} />
+                <meshBasicMaterial
+                    color={0xFF2A3B}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
             </mesh>
             <HudText
-                position={[0.62, -0.09, 0.008]}
+                position={[0.6, -0.08, 0.008]}
                 fontSize={0.055}
                 color="#FFFFFF"
                 opacity={o}
@@ -176,12 +209,6 @@ export const MessageCard = ({
             >
                 1
             </HudText>
-
-            {/* Zones vides en bas pour suggérer l'écran */}
-            <mesh position={[0, -0.28, 0.003]}>
-                <planeGeometry args={[1.32, 0.003]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.04 * o} depthWrite={false} />
-            </mesh>
         </GlassCard>
     );
 };

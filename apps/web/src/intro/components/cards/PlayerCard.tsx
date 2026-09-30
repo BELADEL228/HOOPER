@@ -1,6 +1,7 @@
 import { GlassCard } from '../GlassCard';
 import { HudText } from '../HudText';
-import { UIAvatar, UIBorder, UIDot } from './ui';
+import { Icon } from '../icons';
+import { UIAvatar } from './ui';
 
 interface PlayerCardProps {
     position?: [number, number, number];
@@ -9,7 +10,20 @@ interface PlayerCardProps {
     opacity?: number;
 }
 
-/* Reconstruit l'écran "Compte / Paramètres" de HOOPERS */
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  PLAYER CARD — Profil joueur (analytics premium)
+ *
+ *  Structure :
+ *   ┌─────────────────────────────────┐
+ *   │ [avatar] MARC D.          ● 92  │  ← header
+ *   │          Guard · 24 ans         │
+ *   ├─────────────────────────────────┤
+ *   │  PPG     RPG     APG            │  ← stats en 3 colonnes
+ *   │  24.6    4.8     6.2            │
+ *   ├─────────────────────────────────┤
+ *   │  ▸ Voir le profil               │  ← CTA
+ *   └─────────────────────────────────┘
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 export const PlayerCard = ({
     position = [0, 0, 0],
@@ -27,199 +41,179 @@ export const PlayerCard = ({
             opacity={opacity}
             width={1.5}
             height={0.95}
-            borderColor="#FFB800"
+            accentColor="#FFB800"
         >
-            {/* ─── Top bar : ← Compte ───────────────────────────────────── */}
-            <HudText
-                position={[-0.66, 0.36, 0.004]}
-                fontSize={0.062}
-                color="#A0A0A0"
-                opacity={0.9 * o}
-                anchorX="left"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                ‹
-            </HudText>
-            <HudText
-                position={[-0.58, 0.36, 0.004]}
-                fontSize={0.08}
-                color="#FFFFFF"
-                opacity={o}
-                anchorX="left"
-                anchorY="middle"
-                letterSpacing={0.02}
-                fontWeight={700}
-            >
-                Compte
-            </HudText>
-
-            {/* Séparateur haut */}
-            <mesh position={[0, 0.29, 0.003]}>
-                <planeGeometry args={[1.36, 0.004]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.08 * o} depthWrite={false} />
-            </mesh>
-
-            {/* ─── Avatar + nom + email ─────────────────────────────────── */}
+            {/* ═══ HEADER ═══════════════════════════════════════════════ */}
+            {/* Avatar 2× plus grand, mieux positionné */}
             <UIAvatar
-                position={[-0.5, 0.16, 0.004]}
-                radius={0.11}
+                position={[-0.6, 0.3, 0.004]}
+                radius={0.105}
                 bgColor={0xFF2A3B}
                 innerColor={0x8a1520}
+                ringOpacity={0.22}
             />
 
+            {/* Nom — hiérarchie forte */}
             <HudText
-                position={[-0.32, 0.2, 0.004]}
-                fontSize={0.1}
+                position={[-0.44, 0.35, 0.004]}
+                fontSize={0.095}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
-                fontWeight={700}
+                letterSpacing={0.05}
+                fontWeight={800}
             >
-                Belei Abel
+                MARC D.
             </HudText>
 
+            {/* Rôle + âge — meta ligne */}
             <HudText
-                position={[-0.32, 0.08, 0.004]}
-                fontSize={0.055}
-                color="#A0A0A0"
-                opacity={0.9 * o}
+                position={[-0.44, 0.24, 0.004]}
+                fontSize={0.052}
+                color="rgba(255,255,255,0.55)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
+                letterSpacing={0.14}
                 fontWeight={500}
             >
-                jerome · beleiablel3@gmail.com
+                GUARD · 24 ANS · #10
             </HudText>
 
-            {/* ─── Barre de stats PPG / RPG / APG ───────────────────────── */}
-            <mesh position={[0, -0.05, 0.003]}>
-                <planeGeometry args={[1.32, 0.004]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.08 * o} depthWrite={false} />
+            {/* Badge rating — pastille dorée en haut à droite */}
+            <mesh position={[0.58, 0.31, 0.004]}>
+                <circleGeometry args={[0.075, 32]} />
+                <meshBasicMaterial color={0xFFB800} transparent opacity={0.15 * o} depthWrite={false} toneMapped={false} />
+            </mesh>
+            <mesh position={[0.58, 0.31, 0.005]}>
+                <ringGeometry args={[0.072, 0.075, 32]} />
+                <meshBasicMaterial color={0xFFB800} transparent opacity={0.8 * o} depthWrite={false} toneMapped={false} />
+            </mesh>
+            <HudText
+                position={[0.58, 0.315, 0.006]}
+                fontSize={0.075}
+                color="#FFB800"
+                opacity={o}
+                anchorX="center"
+                anchorY="middle"
+                letterSpacing={0.02}
+                fontWeight={800}
+            >
+                92
+            </HudText>
+
+            {/* ═══ DIVIDER ══════════════════════════════════════════════ */}
+            <mesh position={[0, 0.15, 0.004]}>
+                <planeGeometry args={[1.3, 0.0012]} />
+                <meshBasicMaterial color={0xffffff} transparent opacity={0.08 * o} depthWrite={false} toneMapped={false} />
             </mesh>
 
-            {/* Colonne 1 — PPG */}
+            {/* ═══ STATS — 3 colonnes ═══════════════════════════════════ */}
+            {/* Colonne PPG */}
             <HudText
-                position={[-0.5, -0.16, 0.004]}
-                fontSize={0.11}
+                position={[-0.55, 0.02, 0.004]}
+                fontSize={0.05}
+                color="rgba(255,255,255,0.42)"
+                opacity={o}
+                anchorX="left"
+                anchorY="middle"
+                letterSpacing={0.22}
+                fontWeight={600}
+            >
+                PPG
+            </HudText>
+            <HudText
+                position={[-0.55, -0.08, 0.004]}
+                fontSize={0.135}
                 color="#FFB800"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
-                fontWeight={700}
+                letterSpacing={0.01}
+                fontWeight={800}
             >
                 24.6
             </HudText>
+
+            {/* Colonne RPG */}
             <HudText
-                position={[-0.5, -0.26, 0.004]}
+                position={[-0.11, 0.02, 0.004]}
                 fontSize={0.05}
-                color="#A0A0A0"
-                opacity={0.85 * o}
-                anchorX="left"
-                anchorY="middle"
-                letterSpacing={0.18}
-                fontWeight={500}
-            >
-                PPG
-            </HudText>
-
-            {/* Séparateur vertical */}
-            <mesh position={[-0.13, -0.2, 0.003]}>
-                <planeGeometry args={[0.004, 0.22]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.08 * o} depthWrite={false} />
-            </mesh>
-
-            {/* Colonne 2 — RPG */}
-            <HudText
-                position={[0.02, -0.16, 0.004]}
-                fontSize={0.11}
-                color="#FFFFFF"
+                color="rgba(255,255,255,0.42)"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
-                fontWeight={700}
-            >
-                4.8
-            </HudText>
-            <HudText
-                position={[0.02, -0.26, 0.004]}
-                fontSize={0.05}
-                color="#A0A0A0"
-                opacity={0.85 * o}
-                anchorX="left"
-                anchorY="middle"
-                letterSpacing={0.18}
-                fontWeight={500}
+                letterSpacing={0.22}
+                fontWeight={600}
             >
                 RPG
             </HudText>
-
-            {/* Séparateur vertical */}
-            <mesh position={[0.29, -0.2, 0.003]}>
-                <planeGeometry args={[0.004, 0.22]} />
-                <meshBasicMaterial color={0xffffff} transparent opacity={0.08 * o} depthWrite={false} />
-            </mesh>
-
-            {/* Colonne 3 — APG */}
             <HudText
-                position={[0.42, -0.16, 0.004]}
-                fontSize={0.11}
+                position={[-0.11, -0.08, 0.004]}
+                fontSize={0.135}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.02}
-                fontWeight={700}
+                letterSpacing={0.01}
+                fontWeight={800}
             >
-                6.2
+                4.8
             </HudText>
+
+            {/* Colonne APG */}
             <HudText
-                position={[0.42, -0.26, 0.004]}
+                position={[0.33, 0.02, 0.004]}
                 fontSize={0.05}
-                color="#A0A0A0"
-                opacity={0.85 * o}
+                color="rgba(255,255,255,0.42)"
+                opacity={o}
                 anchorX="left"
                 anchorY="middle"
-                letterSpacing={0.18}
-                fontWeight={500}
+                letterSpacing={0.22}
+                fontWeight={600}
             >
                 APG
             </HudText>
-
-            {/* ─── Bouton rouge "Voir profil →" ──────────────────────────── */}
-            <mesh position={[0, -0.38, 0.004]}>
-                <planeGeometry args={[1.34, 0.1]} />
-                <meshBasicMaterial color={0xFF2A3B} depthWrite={false} transparent opacity={0.95 * o} />
-            </mesh>
             <HudText
-                position={[-0.05, -0.38, 0.006]}
-                fontSize={0.06}
+                position={[0.33, -0.08, 0.004]}
+                fontSize={0.135}
+                color="#FFFFFF"
+                opacity={o}
+                anchorX="left"
+                anchorY="middle"
+                letterSpacing={0.01}
+                fontWeight={800}
+            >
+                6.2
+            </HudText>
+
+            {/* ═══ CTA — bouton "Voir profil" ═════════════════════════ */}
+            {/* Fond dégradé rouge */}
+            <mesh position={[0, -0.32, 0.004]}>
+                <planeGeometry args={[1.3, 0.13]} />
+                <meshBasicMaterial color={0xFF2A3B} transparent opacity={0.95 * o} depthWrite={false} toneMapped={false} />
+            </mesh>
+
+            <HudText
+                position={[-0.06, -0.32, 0.006]}
+                fontSize={0.062}
                 color="#FFFFFF"
                 opacity={o}
                 anchorX="center"
                 anchorY="middle"
-                letterSpacing={0.1}
+                letterSpacing={0.16}
                 fontWeight={700}
             >
-                VOIR PROFIL
+                VOIR LE PROFIL
             </HudText>
-            <HudText
-                position={[0.5, -0.38, 0.006]}
-                fontSize={0.07}
+            <Icon
+                name="arrow-right"
+                position={[0.54, -0.32, 0.006]}
+                size={0.075}
                 color="#FFFFFF"
-                opacity={0.9 * o}
-                anchorX="center"
-                anchorY="middle"
-                letterSpacing={0}
-                fontWeight={500}
-            >
-                →
-            </HudText>
+                opacity={o * 0.9}
+            />
         </GlassCard>
     );
 };

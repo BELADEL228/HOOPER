@@ -35,6 +35,8 @@ import {
 } from '../common/NotificationToast';
 import { NotificationPanel } from '../common/NotificationPanel';
 import { useNotificationSound } from '../../hooks/useNotificationSound';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '../common/PullToRefreshIndicator';
 
 interface SocialLayoutProps {
   children: React.ReactNode;
@@ -56,6 +58,7 @@ interface SocialLayoutProps {
   onSwitchToWorkspace?: () => void;
   selectedClub?: Team;
   onSelectClubProfile?: (clubId: string) => void;
+  onRefresh?: () => Promise<void> | void;
 }
 
 interface NavItemDef {
@@ -126,13 +129,13 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
   onSwitchToWorkspace,
   selectedClub,
   onSelectClubProfile,
+  onRefresh,
 }) => {
   const [suggestedClubs, setSuggestedClubs] = useState<ApiClub[]>([]);
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [nextMatch, setNextMatch] = useState<{
     teamA: string; teamB: string; venue: string; date: string;
   } | null>(null);
-
 
   const [showAuthMenu, setShowAuthMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -158,7 +161,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
   // ═══════════════════════════════════════════════════════════════════
   // 📡 Chargement des clubs + tendances
   // ═══════════════════════════════════════════════════════════════════
-  useEffect(() => {
+  const loadSidebarData = useCallback(async () => {
     clubApi
       .fetchClubs()
       .then((data) => setSuggestedClubs(Array.isArray(data) ? data : []))
@@ -202,7 +205,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
         const tagCounts: Record<string, number> = {};
         posts.forEach((p) => {
           const content = typeof p?.content === 'string' ? p.content : '';
-          const tagMatches = content.match(/#\w+/g) || [];
+          const tagMatches: string[] = content.match(/#\w+/g) || [];
           tagMatches.forEach((t) => {
             tagCounts[t.toLowerCase()] = (tagCounts[t.toLowerCase()] || 0) + 1;
           });
@@ -211,7 +214,6 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
         let topics: TrendingTopic[];
 
         if (Object.keys(tagCounts).length > 0) {
-          // ✅ Hashtags trouvés → on les classe et catégorise dynamiquement
           topics = Object.entries(tagCounts)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 6)
@@ -225,7 +227,6 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
               };
             });
         } else {
-          // ✅ Fallback : aucun hashtag, on agrège les mots fréquents du fil
           const wordCounts: Record<string, number> = {};
           const stopWords = new Set(['le','la','les','de','du','des','un','une','et','en','à','au','je','il','elle','nous','vous','ils','que','qui','se','ce','son','sa','ses','par','pour','sur','dans','est','pas','plus','avec']);
           posts.forEach((p) => {
@@ -254,7 +255,31 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
         setTrendingTopics(topics);
       })
       .catch(() => setTrendingTopics([]));
-  }, []);
+  }, [selectedClub]);
+
+  useEffect(() => {
+    loadSidebarData();
+  }, [loadSidebarData]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 📲 Gestion du Pull To Refresh tactile mobile
+  // ═══════════════════════════════════════════════════════════════════
+  const handleRefresh = useCallback(async () => {
+    // 1. Notifier tous les flux d'actualité et composants abonnés
+    window.dispatchEvent(new CustomEvent('hooper:refresh'));
+
+    // 2. Exécuter le handler externe si fourni
+    if (onRefresh) {
+      await Promise.resolve(onRefresh());
+    }
+
+    // 3. Rafraîchir les données du layout
+    await loadSidebarData();
+  }, [onRefresh, loadSidebarData]);
+
+  const { pullDistance, isPulling, isRefreshing, thresholdReached } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
 
   // ═══════════════════════════════════════════════════════════════════
   // ✅ Débloquer l'audio au premier clic utilisateur
@@ -494,6 +519,14 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-[#08090E] text-slate-100 flex flex-col font-sans selection:bg-[#FF2A3B] selection:text-white">
+      {/* ── Indicateur Pull to Refresh Mobile ── */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        thresholdReached={thresholdReached}
+      />
+
       {/* ── 1. Top Navbar Header ── */}
       <header className="sticky top-0 z-40 bg-[#090A0F]/90 backdrop-blur-xl border-b border-white/10 px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">

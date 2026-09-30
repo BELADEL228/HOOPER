@@ -112,12 +112,45 @@ export class MiscService {
     });
   }
 
-  static async applyToRecruitment(postId: string, playerProfileId: string, message?: string) {
-    return prisma.recruitmentApplication.create({
-      data: {
+  static async applyToRecruitment(postId: string, playerProfileId?: string, message?: string, userId?: string) {
+    let resolvedProfileId = playerProfileId;
+    if (!resolvedProfileId && userId) {
+      const existing = await prisma.playerProfile.findUnique({ where: { userId } });
+      if (existing) {
+        resolvedProfileId = existing.id;
+      } else {
+        const created = await prisma.playerProfile.create({
+          data: {
+            userId,
+            jerseyNumber: 0,
+            position: 'Polyvalent',
+            heightCm: 185,
+            weightKg: 75,
+            age: 20,
+            bio: 'Candidat inscrit sur HOOPER',
+          },
+        });
+        resolvedProfileId = created.id;
+      }
+    }
+    if (!resolvedProfileId) {
+      throw new Error('Profil joueur introuvable pour candidater.');
+    }
+    return prisma.recruitmentApplication.upsert({
+      where: {
+        recruitmentPostId_playerProfileId: {
+          recruitmentPostId: postId,
+          playerProfileId: resolvedProfileId,
+        },
+      },
+      create: {
         recruitmentPostId: postId,
-        playerProfileId,
+        playerProfileId: resolvedProfileId,
         message,
+        status: 'PENDING',
+      },
+      update: {
+        message: message ?? undefined,
         status: 'PENDING',
       },
     });
