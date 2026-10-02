@@ -179,48 +179,48 @@ export const GlobalMatchCenter: React.FC<GlobalMatchCenterProps> = ({
     return (
         <div className="space-y-6 pb-12 max-w-5xl mx-auto">
             {/* ─── HEADER ──────────────────────────────────────────────── */}
-            <div className="glass-panel p-5 rounded-3xl border border-white/10 space-y-4">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF2A3B]/20 text-[#FF2A3B] text-xs font-bold uppercase tracking-wider mb-2 border border-[#FF2A3B]/30">
-                            <Radio className="w-3.5 h-3.5 animate-pulse" /> Live Match Center — Toute la Ligue
+            <div className="rounded-2xl border border-white/10 bg-[#0C0F1A] p-6 sm:p-8 space-y-5">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="space-y-3">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF2A3B]/12 border border-[#FF2A3B]/25 text-[#FF2A3B] text-xs font-semibold">
+                            <Radio className="w-3.5 h-3.5 text-[#FF2A3B]" /> Live Match Center — Toute la ligue
                         </div>
-                        <h2 className="text-2xl sm:text-3xl font-black text-white">
-                            Tous les Matchs en Direct
-                        </h2>
-                        <p className="text-slate-400 text-sm">
-                            Suivez en temps réel les rencontres de toutes les équipes de la ligue.
+                        <h1 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tight">
+                            Matchs &amp; Résultats
+                        </h1>
+                        <p className="text-slate-400 text-sm max-w-xl leading-relaxed">
+                            Suivez en temps réel les rencontres de toutes les équipes et franchises de la ligue.
                         </p>
                     </div>
 
                     {/* Stats rapides */}
                     <div className="flex items-center gap-3">
                         {stats.live > 0 && (
-                            <div className="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-black animate-pulse flex items-center gap-1.5">
+                            <div className="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-bold flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-white" />
                                 {stats.live} LIVE
                             </div>
                         )}
-                        <div className="text-xs text-slate-400">
-                            <strong className="text-white">{stats.total}</strong> matchs
+                        <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-400">
+                            <strong className="text-white font-mono text-sm">{stats.total}</strong> matchs
                         </div>
                     </div>
                 </div>
 
                 {/* Filtres statut */}
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-white/10">
                     {(
                         [
                             { key: 'ALL' as const, label: 'Tous', count: stats.total },
-                            { key: 'LIVE' as const, label: '🔴 En Direct', count: stats.live },
-                            { key: 'UPCOMING' as const, label: 'À Venir', count: stats.upcoming },
+                            { key: 'LIVE' as const, label: 'En direct', count: stats.live },
+                            { key: 'UPCOMING' as const, label: 'À venir', count: stats.upcoming },
                             { key: 'FINISHED' as const, label: 'Terminés', count: stats.finished },
                         ] as const
                     ).map((tab) => (
                         <button
                             key={tab.key}
                             onClick={() => setFilter(tab.key)}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${filter === tab.key
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${filter === tab.key
                                     ? 'bg-[#FF2A3B] text-white shadow-md'
                                     : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                                 }`}
@@ -233,7 +233,7 @@ export const GlobalMatchCenter: React.FC<GlobalMatchCenterProps> = ({
                 {/* Filtre par club (si dispo) */}
                 {availableClubs.length > 0 && (
                     <div className="flex items-center gap-2 pt-2 border-t border-white/5">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        <span className="text-xs text-slate-400 font-semibold">
                             Club :
                         </span>
                         <select
@@ -441,7 +441,7 @@ export const GlobalMatchCenter: React.FC<GlobalMatchCenterProps> = ({
                         {/* Résumé */}
                         {selectedMatch.summary && (
                             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                                <div className="text-xs font-bold text-[#FFB800] uppercase tracking-wider flex items-center gap-1.5">
+                                <div className="text-xs font-bold text-[#FFB800] flex items-center gap-1.5">
                                     <Activity className="w-3.5 h-3.5" /> Résumé
                                 </div>
                                 <p className="text-xs text-slate-300 leading-relaxed">

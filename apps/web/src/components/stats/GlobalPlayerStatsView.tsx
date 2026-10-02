@@ -170,17 +170,14 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
 
   return (
     <div className="space-y-8 pb-16 animate-fade-in max-w-7xl mx-auto">
-      {/* ─── EN-TÊTE PRINCIPAL ─── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-linear-to-br from-[#121622] via-[#0E1118] to-[#0A0C12] border border-white/10 shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-linear-to-bl from-[#FF2A3B]/10 via-[#FFB800]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 max-w-2xl space-y-3">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-            Classement & Statistiques des Joueurs
+      {/* Hero */}
+      <div className="rounded-2xl p-6 sm:p-8 bg-[#0C0F1A] border border-white/10">
+        <div className="max-w-2xl space-y-3">
+          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-none">
+            Classement
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            Consultez les performances individuelles, les leaders de la saison régulière et
-            explorez les profils détaillés des athlètes.
+            Performances individuelles, leaders de la saison régulière et profils détaillés des athlètes.
           </p>
         </div>
       </div>
@@ -194,7 +191,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
             className="p-4 rounded-2xl bg-[#10141F] border border-white/10 hover:border-[#FF2A3B]/40 transition-all text-left group cursor-pointer space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#FF2A3B] flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-[#FF2A3B] flex items-center gap-1">
                 <Flame className="w-3.5 h-3.5" /> Points (PPG)
               </span>
               <span className="text-[10px] text-slate-500 font-bold">#1</span>
@@ -216,7 +213,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
             className="p-4 rounded-2xl bg-[#10141F] border border-white/10 hover:border-[#38BDF8]/40 transition-all text-left group cursor-pointer space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#38BDF8] flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-[#38BDF8] flex items-center gap-1">
                 <Zap className="w-3.5 h-3.5" /> Passes (APG)
               </span>
               <span className="text-[10px] text-slate-500 font-bold">#1</span>
@@ -238,7 +235,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
             className="p-4 rounded-2xl bg-[#10141F] border border-white/10 hover:border-[#FFB800]/40 transition-all text-left group cursor-pointer space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#FFB800] flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-[#FFB800] flex items-center gap-1">
                 <Target className="w-3.5 h-3.5" /> Rebonds (RPG)
               </span>
               <span className="text-[10px] text-slate-500 font-bold">#1</span>
@@ -260,7 +257,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
             className="p-4 rounded-2xl bg-[#10141F] border border-white/10 hover:border-emerald-400/40 transition-all text-left group cursor-pointer space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1">
                 <Shield className="w-3.5 h-3.5" /> Intercept. (SPG)
               </span>
               <span className="text-[10px] text-slate-500 font-bold">#1</span>
@@ -282,7 +279,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
             className="p-4 rounded-2xl bg-[#10141F] border border-white/10 hover:border-purple-400/40 transition-all text-left group cursor-pointer space-y-3 col-span-2 md:col-span-1"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-400 flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-purple-400 flex items-center gap-1">
                 <Star className="w-3.5 h-3.5" /> Efficacité (EFF)
               </span>
               <span className="text-[10px] text-slate-500 font-bold">#1</span>
@@ -529,7 +526,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
 
             {/* Statistiques clés */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-[#FFB800]" /> Statistiques de la saison
               </h4>
               <div className="grid grid-cols-4 gap-2">
@@ -594,7 +591,7 @@ export const GlobalPlayerStatsView: React.FC<GlobalPlayerStatsViewProps> = ({
                     setSelectedPlayer(null);
                     onOpenProfile(uid);
                   }}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#E60023] text-white font-bold text-xs transition-colors cursor-pointer shadow-lg shadow-[#FF2A3B]/20"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#E60023] text-white font-bold text-xs transition-colors cursor-pointer shadow-lg"
                 >
                   <User className="w-3.5 h-3.5" />
                   <span>Voir le profil complet</span>

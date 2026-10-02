@@ -131,7 +131,7 @@ export interface ApiNewsPost {
   createdAt: string;
 }
 export interface ApiClubMember {
-  id: string; clubId: string; userId: string; role: string; joinedAt: string;
+  id: string; clubId: string; userId: string; role: string; status: string; joinedAt: string;
   user: { id: string; name: string; email: string; avatarUrl?: string | null; role: string; isSuspended: boolean };
 }
 

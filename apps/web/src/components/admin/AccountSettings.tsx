@@ -225,10 +225,10 @@ export const AccountSettings: React.FC<AccountSettingsProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B91C1C]/20 text-[#B91C1C] text-xs font-bold uppercase tracking-wider mb-2 border border-[#B91C1C]/30">
-            <User className="w-3.5 h-3.5 text-[#D97706]" /> Paramètres du Compte & Profil
+            <User className="w-3.5 h-3.5 text-[#D97706]" /> Paramètres du Compte et Profil
           </div>
           {/* ✅ Header neutre (plus "Compte Joueur") */}
-          <h2 className="text-3xl font-extrabold text-white">Gestion du Compte & Profil</h2>
+          <h2 className="text-3xl font-extrabold text-white">Gestion du Compte et Profil</h2>
           <p className="text-slate-400 text-sm">
             Mettez à jour vos coordonnées personnelles et préférences de compte.
           </p>
@@ -258,7 +258,7 @@ export const AccountSettings: React.FC<AccountSettingsProps> = ({
         {/* Section 1 : Photo */}
         <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4 bg-[#0A0C13]">
           <div className="flex items-center gap-2 text-sm font-extrabold text-white pb-3 border-b border-white/10">
-            <Camera className="w-4 h-4 text-[#D97706]" /> Photo de Profil & Avatar
+            <Camera className="w-4 h-4 text-[#D97706]" /> Photo de Profil et Avatar
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -301,7 +301,7 @@ export const AccountSettings: React.FC<AccountSettingsProps> = ({
         {/* Section 2 : Informations personnelles */}
         <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4 bg-[#0A0C13]">
           <div className="flex items-center gap-2 text-sm font-extrabold text-white pb-3 border-b border-white/10">
-            <User className="w-4 h-4 text-[#B91C1C]" /> Informations Personnelles & Coordonnées
+            <User className="w-4 h-4 text-[#B91C1C]" /> Informations Personnelles et Coordonnées
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -401,7 +401,7 @@ export const AccountSettings: React.FC<AccountSettingsProps> = ({
                 type="text"
                 value={emergencyContact}
                 onChange={(e) => setEmergencyContact(e.target.value)}
-                placeholder="Nom, lien de parenté & numéro"
+                placeholder="Nom, lien de parenté et numéro"
                 className="w-full bg-[#090A0F] border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-[#B91C1C]"
               />
               <p className="text-[10px] text-slate-500 mt-1">
@@ -414,7 +414,7 @@ export const AccountSettings: React.FC<AccountSettingsProps> = ({
         {/* Section 3 : Biographie — ✅ Éditable par TOUS */}
         <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4 bg-[#0A0C13]">
           <div className="flex items-center gap-2 text-sm font-extrabold text-white pb-3 border-b border-white/10">
-            <Edit3 className="w-4 h-4 text-[#D97706]" /> Biographie & Présentation
+            <Edit3 className="w-4 h-4 text-[#D97706]" /> Biographie et Présentation
           </div>
 
           <div className="space-y-2">

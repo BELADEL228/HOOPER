@@ -25,11 +25,13 @@ import {
   Bell,
   Wifi,
   WifiOff,
+  Download,
 } from 'lucide-react';
 import type { UserRole } from '../../types';
 import { filterAccessibleTabs } from '../../config/permissions';
 import { triggerHaptic } from '../../pwa/haptics';
 import { PushNotificationModal } from '../common/PushNotificationModal';
+import { triggerPwaInstall } from '../common/PwaInstallPrompt';
 
 interface MobileNavBarProps {
   activeTab: string;
@@ -177,7 +179,7 @@ export function MobileNavBar({
                   onClick={handleCreateClick}
                   type="button"
                   aria-label="Créer une publication ou une story"
-                  className="relative -top-3 flex flex-col items-center justify-center p-3 rounded-full bg-gradient-to-tr from-[#FF2A3B] to-[#FFB800] text-white shadow-xl shadow-[#FF2A3B]/40 hover:scale-110 active:scale-90 transition-transform cursor-pointer border-2 border-[#090A0F]"
+                  className="relative -top-3 flex flex-col items-center justify-center p-3 rounded-full bg-[#FF2A3B] hover:bg-[#e6001f] text-white shadow-lg active:scale-90 transition-all cursor-pointer border-2 border-[#090A0F]"
                 >
                   <Plus className="w-6 h-6 stroke-[3]" />
                 </button>
@@ -194,7 +196,7 @@ export function MobileNavBar({
                 }`}
               >
                 {isActive && (
-                  <span className="absolute -top-1.5 w-7 h-1 rounded-full bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] shadow-sm shadow-red-500 animate-fade-in" />
+                  <span className="absolute -top-1.5 w-7 h-1 rounded-full bg-[#FF2A3B] animate-fade-in" />
                 )}
 
                 <div className="relative">
@@ -265,7 +267,7 @@ export function MobileNavBar({
 
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#FFB800]">
+                <span className="text-[10px] font-black text-[#FFB800]">
                   {mode === 'social' ? 'Menu Social HOOPER' : 'Gestion Club Workspace'}
                 </span>
                 <h3 className="text-base font-black text-white">
@@ -284,17 +286,31 @@ export function MobileNavBar({
               </button>
             </div>
 
-            {/* Quick Actions Bar (Notifications Push & Réseau) */}
-            <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-white/5 border border-white/10 text-xs">
+            {/* Quick Actions Bar (Installation PWA & Notifications Push & Réseau) */}
+            <div className="flex items-center gap-2 p-2 rounded-2xl bg-white/5 border border-white/10 text-xs">
+              <button
+                onClick={() => {
+                  triggerHaptic('medium');
+                  triggerPwaInstall();
+                  setShowMoreMenu(false);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white font-black transition-colors cursor-pointer"
+                title="Installer l'application sur votre écran d'accueil"
+              >
+                <Download className="w-4 h-4" />
+                <span>Installer l'App</span>
+              </button>
+
               <button
                 onClick={() => {
                   triggerHaptic('medium');
                   setShowPushModal(true);
                 }}
-                className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold transition-all cursor-pointer"
+                title="Configurer les alertes directes"
               >
                 <Bell className="w-4 h-4 text-amber-400" />
-                <span>Alertes Live</span>
+                <span>Alertes</span>
               </button>
 
               <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 text-[11px] text-slate-300 font-medium">

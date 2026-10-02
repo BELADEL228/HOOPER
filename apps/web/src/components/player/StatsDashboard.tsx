@@ -130,38 +130,41 @@ export const StatsDashboard: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
 
-      {/* ─── HEADER ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D97706]/20 text-[#D97706] text-xs font-bold uppercase tracking-wider mb-2 border border-[#D97706]/30">
-            <Trophy className="w-3.5 h-3.5 text-[#B91C1C]" /> Analytics Pro & Performance
+      {/* ─── HERO HEADER ────────────────────────────────────────────── */}
+      <div className="rounded-2xl bg-[#0C0F1A] border border-white/10 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D97706]/15 border border-[#D97706]/30 text-[#D97706] text-xs font-semibold">
+              <Trophy className="w-3.5 h-3.5 text-[#B91C1C]" />
+              Analytics Pro & Performance
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tight">Statistiques</h1>
+            <p className="text-slate-400 text-sm max-w-xl">
+              {selectedPlayer
+                ? `Profil joueur : ${playerName(selectedPlayer)} (#${selectedPlayer.number ?? '?'}).`
+                : 'Analyse globale des métriques collectives de FIRE STONE. Cliquez sur un joueur pour voir son profil.'}
+            </p>
           </div>
-          <h2 className="text-3xl font-extrabold text-white">Tableau des Statistiques Avancées</h2>
-          <p className="text-slate-400 text-sm">
-            {selectedPlayer
-              ? `Profil joueur : ${playerName(selectedPlayer)} (#${selectedPlayer.number ?? '?'}).`
-              : 'Analyse globale des métriques collectives de FIRE STONE. Cliquez sur un joueur pour voir son profil.'}
-          </p>
-        </div>
 
-        {selectedPlayer && (
-          <button
-            onClick={() => setSelectedPlayerId(null)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs border border-white/20 transition-all self-start md:self-auto"
-          >
-            <X className="w-4 h-4 text-[#B91C1C]" />
-            <span>Réinitialiser (Vue Équipe Globale)</span>
-          </button>
-        )}
+          {selectedPlayer && (
+            <button
+              onClick={() => setSelectedPlayerId(null)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs border border-white/20 transition-all self-start md:self-auto cursor-pointer"
+            >
+              <X className="w-4 h-4 text-[#B91C1C]" />
+              <span>Réinitialiser (Vue équipe globale)</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ─── PLAYER SELECTOR BAR ──────────────────────────────────────── */}
-      <div className="glass-panel p-4 rounded-3xl border border-white/10 space-y-3 bg-[#0A0C13]">
-        <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider px-1">
+      <div className="glass-panel p-4 rounded-2xl border border-white/10 space-y-3 bg-[#0A0C13]">
+        <div className="flex items-center justify-between text-xs text-slate-400 font-semibold px-1">
           <span className="flex items-center gap-1.5 text-[#D97706]">
-            <Users className="w-4 h-4 text-[#B91C1C]" /> Filtrer par Joueur :
+            <Users className="w-4 h-4 text-[#B91C1C]" /> Filtrer par joueur :
           </span>
-          <span>{selectedPlayer ? `Joueur : ${playerName(selectedPlayer)}` : 'Mode : Équipe Globale (Tous)'}</span>
+          <span>{selectedPlayer ? `Joueur : ${playerName(selectedPlayer)}` : 'Mode : Équipe globale (Tous)'}</span>
         </div>
 
         <div className="flex items-center gap-3 overflow-x-auto pb-1 pt-1">
@@ -473,8 +476,8 @@ export const StatsDashboard: React.FC = () => {
               {/* ⚠️ `achievements` = string[] dans la vraie ApiPlayer */}
               {selectedPlayer.achievements && selectedPlayer.achievements.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="text-xs font-bold text-[#D97706] uppercase tracking-wider flex items-center gap-1.5">
-                    <Star className="w-3.5 h-3.5" /> Badges & Récompenses
+                  <div className="text-xs font-semibold text-[#D97706] flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5" /> Badges & récompenses
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {selectedPlayer.achievements.map((achievement, idx) => (

@@ -97,8 +97,10 @@ export interface Player {
   team?: {
     id?: string;
     name: string;
+    slug?: string;
     city?: string;
     logoUrl?: string;
+    category?: PlayerCategory;
   };
   seasonStats: {
     ppg: number;

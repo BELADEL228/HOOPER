@@ -77,13 +77,13 @@ const Section: React.FC<SectionProps> = ({ title, subtitle, icon, isOpen, onTogg
 // ─── Champ de formulaire ──────────────────────────────────────────────────────
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="space-y-1.5">
-    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</label>
+    <label className="text-xs font-semibold text-slate-400">{label}</label>
     {children}
   </div>
 );
 
 const inputClass = "w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#FF2A3B] transition-colors";
-const btnPrimary = "flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white text-sm font-bold shadow-md hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40";
+const btnPrimary = "flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#E0202F] text-white text-sm font-bold transition-colors cursor-pointer disabled:opacity-40";
 const btnSecondary = "flex items-center gap-2 px-4 py-2 rounded-xl bg-white/8 border border-white/10 text-sm text-slate-300 hover:bg-white/15 transition-colors cursor-pointer";
 
 // ─── Toggle switch ────────────────────────────────────────────────────────────
@@ -327,9 +327,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       </div>
 
       {/* En-tête */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-white">Paramètres</h1>
-        <p className="text-sm text-slate-500 mt-1">Gérez votre compte, votre confidentialité et vos préférences.</p>
+      <div className="rounded-2xl border border-white/10 bg-[#0C0F1A] p-6 mb-6">
+        <h1 className="text-3xl md:text-4xl font-black text-white leading-none tracking-tight">Paramètres</h1>
+        <p className="text-sm text-slate-400 mt-2">Gérez votre compte, votre confidentialité et vos préférences.</p>
       </div>
 
       {/* ── SECTION 1 : Compte ── */}
@@ -476,7 +476,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
         {/* Danger zone */}
         <div className="mt-4 pt-4 border-t border-white/8">
-          <p className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3">Zone de danger</p>
+          <p className="text-xs font-semibold text-red-400 mb-3">Zone de danger</p>
           {!showDeleteConfirm ? (
             <button
               type="button"
@@ -627,7 +627,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
               </div>
               {theme === val && (
-                <span className="text-[10px] font-bold text-[#FF2A3B] uppercase tracking-wider">Actif</span>
+                <span className="text-[10px] font-bold text-[#FF2A3B]">Actif</span>
               )}
             </button>
           ))}

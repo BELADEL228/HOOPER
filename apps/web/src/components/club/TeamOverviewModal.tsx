@@ -73,7 +73,6 @@ export const TeamOverviewModal: React.FC<TeamOverviewModalProps> = ({
           }}
         >
           <div
-            className="absolute -top-12 -right-12 w-64 h-64 rounded-full blur-3xl opacity-40 pointer-events-none"
             style={{ backgroundColor: secondaryColor }}
           />
 
@@ -446,7 +445,7 @@ export const TeamOverviewModal: React.FC<TeamOverviewModalProps> = ({
                     onNavigate('marketplace');
                   }}
                   type="button"
-                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-xs font-black uppercase tracking-wider text-white shadow-xl shadow-red-500/25 transition-all cursor-pointer flex items-center gap-2 shrink-0"
+                  className="px-6 py-3 rounded-2xl bg-[#FF2A3B] hover:bg-[#e6001f] text-xs font-black text-white transition-colors cursor-pointer flex items-center gap-2 shrink-0"
                 >
                   <ShoppingBag className="w-4 h-4" /> Personnaliser dans la Boutique
                 </button>

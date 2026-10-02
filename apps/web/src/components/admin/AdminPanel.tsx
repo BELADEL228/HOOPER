@@ -378,7 +378,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
             {isSuperAdmin ? <Crown className="w-3.5 h-3.5 text-yellow-400" /> : <ShieldCheck className="w-3.5 h-3.5 text-red-400" />}
             {isSuperAdmin ? 'SUPER ADMINISTRATEUR — PLATEFORME' : 'Console d’Administration'}
           </div>
-          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">Panneau de Contrôle & Modération</h2>
+          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">Panneau de Contrôle et Modération</h2>
           <p className="text-slate-400 text-sm mt-1">
             Gérez les utilisateurs, surveillez les signalements en temps réel et auditez les actions administratives.
           </p>
@@ -389,7 +389,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
           {[
             { id: 'DASHBOARD', label: 'Vue d’ensemble', icon: Activity },
             ...(isSuperAdmin ? [{ id: 'SUPERVISION', label: 'Supervision', icon: Gauge }] : []),
-            { id: 'USERS', label: 'Utilisateurs & RBAC', icon: Users },
+            { id: 'USERS', label: 'Utilisateurs et RBAC', icon: Users },
             ...(isSuperAdmin ? [{ id: 'REQUESTS', label: 'Demandes de clubs', icon: Building2, count: clubRequests.filter((request) => request.status === 'PENDING').length }] : []),
             { id: 'REPORTS', label: 'Modération', icon: AlertTriangle, count: metrics?.moderation.pendingReports },
             { id: 'AUDIT', label: 'Journal d’Audit', icon: FileText },
@@ -401,9 +401,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  isActive ? 'bg-[#FF2A3B] text-white shadow-lg shadow-red-500/20' : 'text-slate-300 hover:text-white hover:bg-white/5'
-                }`}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${isActive ? 'bg-[#FF2A3B] text-white shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -472,7 +471,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
 
             <div className="glass-panel p-5 rounded-3xl border border-white/10 space-y-2">
               <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase">
-                <span>Équipes & Tournois</span>
+                <span>Équipes et Tournois</span>
                 <Trophy className="w-4 h-4 text-emerald-400" />
               </div>
               <p className="text-3xl font-black text-white">
@@ -487,7 +486,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
           {/* État des services */}
           <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Server className="w-5 h-5 text-cyan-400" /> Santé de l'Infrastructure & Microservices
+              <Server className="w-5 h-5 text-cyan-400" /> Santé de l'Infrastructure et Microservices
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
               <div className="rounded-2xl bg-white/5 p-4 border border-white/10 flex items-center justify-between">
@@ -532,7 +531,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-black text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#FFB800]" /> Annuaire & Attribution des Rôles (RBAC)
+                <Users className="w-5 h-5 text-[#FFB800]" /> Annuaire et Attribution des Rôles (RBAC)
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
                 Attribuez les privilèges administratifs, suspendez les comptes ou révoquez les accès.
@@ -730,13 +729,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
               { label: 'Utilisateurs', value: supervision?.inventory.users, icon: Users, color: 'text-cyan-300' },
               { label: 'Clubs approuvés', value: supervision?.inventory.clubs, icon: Building2, color: 'text-amber-300' },
               { label: 'Contenus publiés', value: supervision?.inventory.posts, icon: MessageSquare, color: 'text-violet-300' },
-              { label: 'Matchs & tournois', value: (supervision?.inventory.matches ?? 0) + (supervision?.inventory.tournaments ?? 0), icon: Trophy, color: 'text-emerald-300' },
+              { label: 'Matchs et tournois', value: (supervision?.inventory.matches ?? 0) + (supervision?.inventory.tournaments ?? 0), icon: Trophy, color: 'text-emerald-300' },
             ].map((item) => { const Icon = item.icon; return <div key={item.label} className="glass-panel rounded-2xl border border-white/10 p-5"><Icon className={`w-5 h-5 ${item.color}`} /><p className="mt-3 text-3xl font-black text-white">{supervision ? item.value : '—'}</p><p className="mt-1 text-xs text-slate-400">{item.label}</p></div>; })}
           </div>
 
           <div className="grid lg:grid-cols-3 gap-5">
             <div className="glass-panel rounded-3xl border border-white/10 p-6 lg:col-span-1 space-y-4"><h4 className="font-black text-white flex items-center gap-2"><ShieldAlert className="w-5 h-5 text-amber-400" /> À traiter</h4><button onClick={() => setActiveTab('REQUESTS')} className="w-full flex justify-between p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left"><span className="text-xs font-bold text-amber-100">Demandes de clubs</span><strong className="text-2xl text-amber-300">{supervision?.attention.requestsPending ?? '—'}</strong></button><button onClick={() => setActiveTab('REPORTS')} className="w-full flex justify-between p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-left"><span className="text-xs font-bold text-red-100">Signalements ouverts</span><strong className="text-2xl text-red-300">{supervision?.attention.reportsPending ?? '—'}</strong></button></div>
-            <div className="glass-panel rounded-3xl border border-white/10 p-6 lg:col-span-2 space-y-4"><h4 className="font-black text-white flex items-center gap-2"><Activity className="w-5 h-5 text-cyan-400" /> Santé des services</h4><div className="grid sm:grid-cols-3 gap-3"><ServiceStatus label="API & base de données" value={supervision?.database === 'ONLINE' ? 'OPÉRATIONNEL' : supervision ? 'INDISPONIBLE' : '…'} ok={supervision?.database === 'ONLINE'} icon={<Database className="w-4 h-4" />} /><ServiceStatus label="Mémoire serveur" value={supervision ? `${supervision.system.memoryMb} MB` : '…'} ok icon={<Server className="w-4 h-4" />} /><ServiceStatus label="Disponibilité API" value={supervision ? formatUptime(supervision.system.uptimeSeconds) : '…'} ok icon={<Zap className="w-4 h-4" />} /></div><p className="text-xs text-slate-500">Environnement : <span className="text-slate-300 font-bold">{supervision?.system.environment || '—'}</span></p></div>
+            <div className="glass-panel rounded-3xl border border-white/10 p-6 lg:col-span-2 space-y-4"><h4 className="font-black text-white flex items-center gap-2"><Activity className="w-5 h-5 text-cyan-400" /> Santé des services</h4><div className="grid sm:grid-cols-3 gap-3"><ServiceStatus label="API et base de données" value={supervision?.database === 'ONLINE' ? 'OPÉRATIONNEL' : supervision ? 'INDISPONIBLE' : '…'} ok={supervision?.database === 'ONLINE'} icon={<Database className="w-4 h-4" />} /><ServiceStatus label="Mémoire serveur" value={supervision ? `${supervision.system.memoryMb} MB` : '…'} ok icon={<Server className="w-4 h-4" />} /><ServiceStatus label="Disponibilité API" value={supervision ? formatUptime(supervision.system.uptimeSeconds) : '…'} ok icon={<Zap className="w-4 h-4" />} /></div><p className="text-xs text-slate-500">Environnement : <span className="text-slate-300 font-bold">{supervision?.system.environment || '—'}</span></p></div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-5"><div className="glass-panel rounded-3xl border border-white/10 p-6"><h4 className="font-black text-white flex items-center gap-2 mb-4"><FileText className="w-5 h-5 text-violet-300" /> Activité administrative récente</h4><div className="space-y-3">{supervision?.auditLogs.length ? supervision.auditLogs.map((log) => <div key={log.id} className="border-l-2 border-violet-400/50 pl-3"><p className="text-xs font-bold text-white">{log.action} <span className="text-slate-500">· {log.targetType}</span></p><p className="text-[11px] text-slate-400">{log.user?.name || 'Système'} · {new Date(log.createdAt).toLocaleString('fr-FR')}</p></div>) : <p className="text-sm text-slate-500">Aucune activité administrative récente.</p>}</div></div><div className="glass-panel rounded-3xl border border-white/10 p-6"><h4 className="font-black text-white flex items-center gap-2 mb-4"><UserRoundPlus className="w-5 h-5 text-emerald-300" /> Dernières inscriptions</h4><div className="space-y-3">{supervision?.recentUsers.length ? supervision.recentUsers.map((user) => <div key={user.id} className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-white">{user.name} {user.isSuspended && <span className="text-red-300">(suspendu)</span>}</p><p className="text-[11px] text-slate-500">{user.email} · {user.role}</p></div><span className="text-[10px] text-slate-500">{new Date(user.createdAt).toLocaleDateString('fr-FR')}</span></div>) : <p className="text-sm text-slate-500">Aucune inscription récente.</p>}</div></div></div>
@@ -763,11 +762,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
                 <button
                   key={st}
                   onClick={() => setReportStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    reportStatusFilter === st
-                      ? 'bg-amber-500 text-slate-950 font-black shadow'
-                      : 'bg-white/5 text-slate-400 hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${reportStatusFilter === st
+                    ? 'bg-amber-500 text-slate-950 font-black shadow'
+                    : 'bg-white/5 text-slate-400 hover:text-white'
+                    }`}
                 >
                   {st === 'PENDING' ? 'En attente' : st === 'RESOLVED' ? 'Résolus' : 'Classés'}
                 </button>
@@ -920,15 +918,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
                         <span className="block text-[10px] text-slate-400">{log.user?.role}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          log.action.includes('SUSPEND')
-                            ? 'bg-amber-500/20 text-amber-300'
-                            : log.action.includes('DELETE')
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${log.action.includes('SUSPEND')
+                          ? 'bg-amber-500/20 text-amber-300'
+                          : log.action.includes('DELETE')
                             ? 'bg-red-500/20 text-red-300'
                             : log.action.includes('ROLE')
-                            ? 'bg-cyan-500/20 text-cyan-300'
-                            : 'bg-white/10 text-slate-200'
-                        }`}>
+                              ? 'bg-cyan-500/20 text-cyan-300'
+                              : 'bg-white/10 text-slate-200'
+                          }`}>
                           {log.action}
                         </span>
                       </td>
@@ -953,7 +950,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentRole, authUser: _
       {activeTab === 'SETTINGS' && (
         <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-6 max-w-2xl animate-fadeIn">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Settings className="w-5 h-5 text-[#FF2A3B]" /> Configuration de la Plateforme & Sécurité
+            <Settings className="w-5 h-5 text-[#FF2A3B]" /> Configuration de la Plateforme et Sécurité
           </h3>
 
           <div className="space-y-4 text-xs">

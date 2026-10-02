@@ -100,7 +100,7 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
           {status.permission !== 'granted' ? (
             <button
               onClick={handleRequest}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-red-500/25 hover:scale-[1.01] transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <Bell className="w-4 h-4" />
               Activer les notifications

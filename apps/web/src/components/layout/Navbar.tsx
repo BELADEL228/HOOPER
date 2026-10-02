@@ -107,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-[#090A0F]/90 backdrop-blur-xl border-b border-white/10 transition-all">
+    <header className="hidden lg:block sticky top-0 z-50 bg-[#090A0F]/90 backdrop-blur-xl border-b border-white/10 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo FIRE STONE */}
@@ -254,77 +254,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
           </div>
-
-          {/* Mobile menu trigger */}
-          <div className="lg:hidden flex items-center gap-3">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg bg-white/5 text-slate-300"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
         </div>
       </div>
-
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#090A0F] border-b border-white/10 px-4 pt-2 pb-6 space-y-3">
-          <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 mb-2">
-            <img
-              src={displayAvatar}
-              alt={displayUserName}
-              className="w-10 h-10 rounded-xl object-cover border border-[#D97706]"
-            />
-            <div>
-              <div className="font-extrabold text-white text-xs">{displayUserName}</div>
-              <div className="text-[10px] text-[#D97706] font-bold">
-                Rôle actuel : {displayUserRole}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {filteredNavItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setMobileMenuOpen(false);
-                }}
-                className={`px-3 py-2.5 rounded-lg text-left text-xs font-bold ${activeTab === item.id
-                    ? 'bg-[#B91C1C] text-white font-bold'
-                    : 'bg-white/5 text-slate-300'
-                  }`}
-              >
-                {item.label}
-              </button>
-            ))}
-            {isAuthenticated && (
-              <>
-                <button
-                  onClick={() => {
-                    setActiveTab('mon-profil');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="px-3 py-2.5 rounded-lg text-left text-xs font-bold bg-white/5 text-amber-300 border border-amber-500/30"
-                >
-                  👤 Mon Profil
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('parametres');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="px-3 py-2.5 rounded-lg text-left text-xs font-bold bg-white/5 text-slate-200 border border-white/10"
-                >
-                  ⚙️ Paramètres
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 };

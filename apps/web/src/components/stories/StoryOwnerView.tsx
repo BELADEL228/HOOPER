@@ -337,7 +337,7 @@ export const StoryOwnerView: React.FC<StoryOwnerViewProps> = ({
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors cursor-pointer ${activeTab === tab.id
+                                        className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${activeTab === tab.id
                                             ? 'text-[#FF2A3B] border-[#FF2A3B]'
                                             : 'text-slate-400 border-transparent hover:text-white'
                                             }`}

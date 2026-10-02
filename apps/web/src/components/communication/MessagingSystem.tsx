@@ -14,6 +14,9 @@ import {
   Hash,
   AlertCircle,
   Loader2,
+  Lock,
+  Sparkles,
+  Smile
 } from 'lucide-react';
 import { apiUrl } from '../../services/api';
 import { useClub } from '../../context/ClubContext';
@@ -35,6 +38,7 @@ interface Channel {
 export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole }) => {
   const { activeClub } = useClub();
   const clubId = activeClub?.clubId || activeClub?.id;
+  const clubName = activeClub?.name || 'Mon Club';
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const channels: Channel[] = useMemo(
@@ -42,31 +46,31 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
       {
         id: 'GENERAL',
         name: 'général-club',
-        description: `Canal d'échange ouvert à tous les membres de ${activeClub.name}`,
+        description: `Canal d'échange officiel de ${clubName}`,
         icon: 'general',
       },
       {
         id: 'ANNOUNCEMENTS',
-        name: 'annonces-officielles',
-        description: 'Horaires des matchs, convocations et directives du bureau',
+        name: 'annonces-convocations',
+        description: 'Horaires des matchs, convocations et ordres du jour',
         icon: 'announcements',
       },
       {
         id: 'TACTICS',
-        name: 'tactique-coaching',
-        description: 'Analyses de jeu, systèmes et bilans techniques',
+        name: 'stratégie-coaching',
+        description: 'Systèmes offensifs, bilans de match et analyses vidéo',
         icon: 'tactics',
         restrictedToRoles: ['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH', 'PLAYER'],
       },
       {
         id: 'LOCKER_ROOM',
         name: 'vestiaire-joueurs',
-        description: 'Échanges et cohésion d’équipe entre athlètes',
+        description: 'Discussion privée et cohésion du groupe athlètes',
         icon: 'players',
         restrictedToRoles: ['SUPER_ADMIN', 'CLUB_ADMIN', 'COACH', 'PLAYER'],
       },
     ],
-    [activeClub.name]
+    [clubName]
   );
 
   const [activeChannelId, setActiveChannelId] = useState<string>('GENERAL');
@@ -77,9 +81,8 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
   const [isUploading, setIsUploading] = useState(false);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
 
-  // Épinglé en vedette
   const [pinnedAnnouncement, setPinnedAnnouncement] = useState<string | null>(
-    `Match ce samedi à 18h30 à l’arène de ${activeClub.city || 'Lomé'}. Présence au vestiaire requise 45 minutes avant le coup d'envoi.`
+    `Rassemblement au vestiaire ce samedi à 17h30 pour le match de championnat. Tenues officielles requises.`
   );
 
   const activeChannel = useMemo(
@@ -87,7 +90,6 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
     [channels, activeChannelId]
   );
 
-  // Charger les messages du club
   const loadMessages = async () => {
     const session = JSON.parse(localStorage.getItem('firestone-auth') || '{}');
     if (!session?.token) return;
@@ -133,7 +135,7 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
       );
       setSyncError(null);
     } catch {
-      setSyncError('Mode local : vos messages sont stockés temporairement sur votre appareil.');
+      setSyncError('Mode local : messages synchronisés dès rétablissement du réseau.');
     }
   };
 
@@ -212,11 +214,10 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
           return;
         }
       } catch {
-        setSyncError('Message local : le serveur de messagerie est temporairement injoignable.');
+        setSyncError('Message local : le serveur est temporairement injoignable.');
       }
     }
 
-    // Fallback optimiste local
     const newMessage: Message = {
       id: `msg_${Date.now()}`,
       senderId: 'current_user',
@@ -254,7 +255,6 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
     );
   };
 
-  // Filtrage par recherche
   const filteredMessages = useMemo(() => {
     if (!searchQuery.trim()) return messages;
     return messages.filter(
@@ -265,39 +265,52 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
   }, [messages, searchQuery]);
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* ── En-tête de la Messagerie ── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-300 mb-1">
-            <MessageSquare className="w-3.5 h-3.5" /> Vestiaire Numérique & Communication
+    <div className="space-y-6 pb-20">
+      {/* En-tête Principal */}
+      <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#121626] via-[#0D101C] to-[#07090F] p-6 sm:p-7">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/15 via-red-500/5 to-transparent pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-black uppercase tracking-wider">
+                <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+                Vestiaire Numérique & Communication
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-semibold">
+                {clubName}
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Canaux d'Échange & Briefings
+            </h1>
+
+            <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
+              Discussions en temps réel entre le staff technique, les capitaines et l'effectif complet.
+              Notifications de convocation et stratégie tactique.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Messagerie Interne — <span className="text-[#FFB800]">{activeClub.name}</span>
-          </h1>
-          <p className="text-xs text-slate-400">
-            Échangez en temps réel avec le staff technique, les capitaines et l'ensemble de l'effectif.
-          </p>
+
+          {syncError && (
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{syncError}</span>
+            </div>
+          )}
         </div>
+      </div>
 
-        {syncError && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{syncError}</span>
-          </div>
-        )}
-      </header>
-
-      {/* ── Fenêtre Principale de Chat ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 glass-panel rounded-3xl border border-white/10 overflow-hidden h-[640px]">
+      {/* Fenêtre de Chat */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 rounded-3xl border border-white/10 bg-[#0F131F] overflow-hidden h-[640px] shadow-2xl">
         {/* Barre Latérale : Canaux & Salons */}
-        <div className="lg:col-span-4 bg-black/40 border-r border-white/10 p-4 sm:p-5 flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-4 bg-[#0A0D15] border-r border-white/10 p-4 sm:p-5 flex flex-col justify-between space-y-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Salons d'équipe
+              <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                Salons Officiels
               </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
 
             {/* Liste des canaux */}
@@ -311,22 +324,22 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
                     onClick={() => setActiveChannelId(ch.id)}
                     className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white shadow-md'
-                        : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5'
+                        ? 'bg-gradient-to-r from-red-600 to-amber-600 text-white shadow-lg'
+                        : 'bg-white/[0.02] hover:bg-white/[0.05] text-slate-300 border border-white/5'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                          isActive ? 'bg-white/20' : 'bg-black/30'
+                          isActive ? 'bg-black/20 text-white' : 'bg-black/40 text-slate-400'
                         }`}
                       >
                         {ch.icon === 'general' ? (
                           <Users className="w-4 h-4" />
                         ) : ch.icon === 'announcements' ? (
-                          <Bell className="w-4 h-4 text-[#FFB800]" />
+                          <Bell className="w-4 h-4 text-amber-400" />
                         ) : ch.icon === 'tactics' ? (
-                          <Shield className="w-4 h-4 text-[#38BDF8]" />
+                          <Shield className="w-4 h-4 text-sky-400" />
                         ) : (
                           <Flame className="w-4 h-4 text-purple-400" />
                         )}
@@ -345,10 +358,10 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
           </div>
 
           {/* Statut présence & Membres */}
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
+          <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2 text-xs">
             <div className="flex items-center justify-between text-slate-400">
-              <span className="font-bold">Membres Actifs</span>
-              <span className="text-emerald-400 font-bold">En direct</span>
+              <span className="font-bold">Présence Vestiaire</span>
+              <span className="text-emerald-400 font-black text-[10px] uppercase">En direct</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5">
@@ -356,18 +369,18 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
               </span>
               <span className="text-[11px] text-slate-300">
-                Staff technique, capitaines & joueurs connectés
+                Staff technique, capitaines & athlètes connectés
               </span>
             </div>
           </div>
         </div>
 
         {/* Zone de Conversation */}
-        <div className="lg:col-span-8 flex flex-col justify-between bg-[#090A0F]/70 p-4 sm:p-6">
+        <div className="lg:col-span-8 flex flex-col justify-between bg-[#0C101A] p-4 sm:p-6">
           {/* Header du salon actif */}
           <div className="pb-3 border-b border-white/10 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-white/10 text-[#FFB800]">
+              <div className="p-2 rounded-xl bg-white/5 text-amber-400">
                 <Hash className="w-5 h-5" />
               </div>
               <div>
@@ -384,23 +397,23 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
                 placeholder="Filtrer les messages..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="glass-input w-full pl-8 pr-3 py-1.5 text-xs rounded-xl"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-black/50 border border-white/10 text-white focus:outline-none focus:border-amber-400 placeholder:text-slate-500"
               />
             </div>
           </div>
 
           {/* Annonce Épinglée */}
           {pinnedAnnouncement && (
-            <div className="my-2 p-3 rounded-2xl bg-[#FFB800]/10 border border-[#FFB800]/30 flex items-start justify-between gap-3 text-xs">
-              <div className="flex items-start gap-2 text-slate-200">
-                <Pin className="w-4 h-4 text-[#FFB800] shrink-0 mt-0.5" />
+            <div className="my-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start justify-between gap-3 text-xs">
+              <div className="flex items-start gap-2.5 text-slate-200">
+                <Pin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-[#FFB800]">Note du Staff :</strong> {pinnedAnnouncement}
+                  <strong className="text-amber-400">Note du Staff :</strong> {pinnedAnnouncement}
                 </span>
               </div>
               <button
                 onClick={() => setPinnedAnnouncement(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -412,8 +425,8 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
             {filteredMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-2 text-slate-500">
                 <MessageSquare className="w-10 h-10 opacity-30" />
-                <p className="text-xs">Aucun message pour le moment dans ce salon.</p>
-                <p className="text-[10px]">Soyez le premier à lancer la conversation !</p>
+                <p className="text-xs font-bold text-slate-400">Aucun message pour l'instant dans ce salon.</p>
+                <p className="text-[11px]">Écrivez le premier mot pour lancer le briefing !</p>
               </div>
             ) : (
               filteredMessages.map((msg) => (
@@ -426,13 +439,19 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-black text-white">{msg.senderName}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/5 text-slate-400 border border-white/5">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                          msg.senderRole === 'COACH' || msg.senderRole === 'SUPER_ADMIN'
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            : 'bg-white/5 text-slate-400 border border-white/5'
+                        }`}
+                      >
                         {msg.senderRole}
                       </span>
-                      <span className="text-[10px] text-slate-500 ml-auto">{msg.timestamp}</span>
+                      <span className="text-[10px] text-slate-500 ml-auto font-mono">{msg.timestamp}</span>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 p-3.5 rounded-2xl text-xs text-slate-200 leading-relaxed max-w-2xl break-words">
+                    <div className="bg-[#141926] border border-white/5 p-3.5 rounded-2xl text-xs text-slate-200 leading-relaxed max-w-2xl break-words">
                       {msg.text}
                     </div>
 
@@ -450,7 +469,7 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
                       ))}
 
                       <div className="hidden group-hover:flex items-center gap-1.5 text-xs text-slate-400">
-                        {(['🔥', '🏀', '💪', '❤️', '👏'] as const).map((emoji) => (
+                        {(['🔥', '🏀', '💪', '🎯', '👏'] as const).map((emoji) => (
                           <button
                             key={emoji}
                             onClick={() => addReaction(msg.id, emoji)}
@@ -468,11 +487,11 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Prévisualisation média attaché */}
+          {/* Prévisualisation média */}
           {attachedImage && (
-            <div className="p-2 mb-2 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between w-max gap-3">
+            <div className="p-2 mb-2 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-between w-max gap-3">
               <img src={attachedImage} alt="Média" className="w-12 h-12 rounded-xl object-cover" />
-              <span className="text-[10px] text-slate-400">Image prête à l'envoi</span>
+              <span className="text-[10px] text-slate-400 font-bold">Image prête à l'envoi</span>
               <button
                 onClick={() => setAttachedImage(null)}
                 className="text-slate-400 hover:text-white"
@@ -482,11 +501,11 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
             </div>
           )}
 
-          {/* Formulaire de saisie */}
+          {/* Formulaire d'envoi */}
           <form onSubmit={handleSendMessage} className="pt-3 border-t border-white/10 flex items-center gap-2">
             <label className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0">
               {isUploading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[#38BDF8]" />
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
               ) : (
                 <ImageIcon className="w-4 h-4" />
               )}
@@ -504,13 +523,13 @@ export const MessagingSystem: React.FC<MessagingSystemProps> = ({ currentRole })
               placeholder={`Écrire dans #${activeChannel.name}...`}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="glass-input flex-1 rounded-xl px-4 py-2.5 text-xs"
+              className="flex-1 rounded-xl px-4 py-2.5 text-xs bg-black/50 border border-white/10 text-white focus:outline-none focus:border-amber-400 placeholder:text-slate-500"
             />
 
             <button
               type="submit"
               disabled={isUploading || (!inputText.trim() && !attachedImage)}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white font-black text-xs hover:brightness-110 transition-all flex items-center gap-1.5 shadow-md disabled:opacity-40 cursor-pointer shrink-0"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 text-white font-black text-xs hover:opacity-95 transition-all flex items-center gap-1.5 shadow-md disabled:opacity-40 cursor-pointer shrink-0"
             >
               <span>Envoyer</span>
               <Send className="w-3.5 h-3.5" />

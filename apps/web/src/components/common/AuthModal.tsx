@@ -18,7 +18,6 @@ import {
   MapPin,
   ChevronRight,
   ChevronLeft,
-  Sparkles,
   Trophy,
   Upload,
   FileText,
@@ -503,49 +502,72 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-      <div className="glass-panel rounded-3xl border border-white/20 max-w-lg w-full p-5 sm:p-7 space-y-4 relative max-h-[92vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className={`rounded-2xl border border-white/10 bg-[#0C0F1A] w-full p-6 sm:p-8 space-y-5 relative max-h-[90vh] overflow-y-auto shadow-2xl transition-all ${
+        tab === 'REGISTER' ? 'max-w-xl' : 'max-w-md'
+      }`}>
         {/* Bouton Fermer */}
         <button
           onClick={() => {
             onClose();
             resetAll();
           }}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
           title="Fermer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* En-tête officiel HOOPER */}
-        <div className="text-center space-y-1.5 pt-1">
-          <div className="w-14 h-14 mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black flex items-center justify-center">
+        <div className="text-center space-y-2 pt-1">
+          <div className="w-12 h-12 mx-auto rounded-xl overflow-hidden border border-white/15 shadow-md bg-black flex items-center justify-center">
             <img className="w-full h-full object-cover" src={logo} alt="HOOPER" />
           </div>
-          <h3 className="text-2xl font-black text-white tracking-tight">
-            {tab === 'LOGIN' ? 'Bienvenue sur HOOPER' : tab === 'REGISTER' ? 'Rejoindre la Plateforme' : 'Récupération d\'accès'}
-          </h3>
-          <p className="text-xs text-slate-400">Réseau social & gestion intégrée du basketball togolais</p>
+          <div>
+            <h3 className="text-2xl font-black text-white tracking-tight">
+              {tab === 'LOGIN' ? 'Connexion' : tab === 'REGISTER' ? 'Créer un compte' : 'Mot de passe oublié'}
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">
+              {tab === 'LOGIN'
+                ? 'Accédez à votre espace club, statistiques et vestiaire.'
+                : tab === 'REGISTER'
+                ? 'Rejoignez la plateforme officielle du basketball togolais.'
+                : 'Saisissez votre email pour réinitialiser votre accès.'}
+            </p>
+          </div>
         </div>
 
-        {/* Onglets Connexion / Inscription / Récupération */}
+        {/* Onglets Connexion / Inscription */}
         <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 text-xs font-bold">
-          {(['LOGIN', 'REGISTER', 'FORGOT'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => {
-                setTab(t);
-                setError('');
-                setSubmittedMessage('');
-                setRegisteredSession(null);
-                setRegisterStep(1);
-              }}
-              className={`flex-1 py-2 rounded-lg transition-all cursor-pointer ${tab === t ? 'bg-[#FF2A3B] text-white shadow-md' : 'text-slate-300 hover:text-white'
-                }`}
-            >
-              {t === 'LOGIN' ? 'Connexion' : t === 'REGISTER' ? 'Inscription' : 'Mot de passe oublié'}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => {
+              setTab('LOGIN');
+              setError('');
+              setSubmittedMessage('');
+              setRegisteredSession(null);
+            }}
+            className={`flex-1 py-2 rounded-lg transition-colors cursor-pointer ${
+              tab === 'LOGIN' || tab === 'FORGOT' ? 'bg-[#FF2A3B] text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Connexion
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTab('REGISTER');
+              setError('');
+              setSubmittedMessage('');
+              setRegisteredSession(null);
+              setRegisterStep(1);
+            }}
+            className={`flex-1 py-2 rounded-lg transition-colors cursor-pointer ${
+              tab === 'REGISTER' ? 'bg-[#FF2A3B] text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Inscription
+          </button>
         </div>
 
         {error && (
@@ -556,13 +578,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* FEEDBACK IMMÉDIAT APRÈS SOUMISSION */}
         {submittedMessage ? (
-          <div className="bg-emerald-500/15 border border-emerald-500/40 p-6 rounded-2xl text-center space-y-4 animate-scale-up">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center mx-auto text-emerald-400">
-              <CheckCircle className="w-8 h-8" />
+          <div className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center mx-auto text-emerald-400">
+              <CheckCircle className="w-6 h-6" />
             </div>
             <div className="space-y-2">
               <h4 className="text-lg font-black text-white">Demande enregistrée !</h4>
-              <p className="text-xs text-slate-200 leading-relaxed font-medium bg-black/40 p-3 rounded-xl border border-emerald-500/30">
+              <p className="text-xs text-slate-300 leading-relaxed font-medium bg-black/40 p-3 rounded-xl border border-emerald-500/20">
                 {submittedMessage}
               </p>
             </div>
@@ -577,45 +599,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   setSubmittedMessage('');
                 }
               }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-lg hover:scale-[1.01] transition-all cursor-pointer"
+              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors cursor-pointer"
             >
               Accéder à HOOPER maintenant →
             </button>
           </div>
         ) : tab === 'REGISTER' ? (
-          /* WORKFLOW D'INSCRIPTION DÉTAILLÉ SELON HOOPER_SPECIFICATIONS.MD */
-          <div className="space-y-4 text-xs">
+          /* WORKFLOW D'INSCRIPTION */
+          <div className="space-y-5 text-xs">
             {/* Barre de progression */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-[10px] font-medium text-slate-400">
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-semibold text-slate-400">
                 <span>
-                  {registerStep === 1 && '① Profil utilisateur'}
-                  {registerStep === 2 && '② Identifiants & Compte'}
-                  {registerStep === 3 && (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR' ? '③ Confirmation' : '③ Profil métier')}
-                  {registerStep === 4 && '④ Récapitulatif'}
+                  {registerStep === 1 && 'Étape 1 · Choix du profil'}
+                  {registerStep === 2 && 'Étape 2 · Identifiants & Compte'}
+                  {registerStep === 3 && (selectedRole === 'SUPPORTER' || selectedRole === 'VISITOR' ? 'Étape 3 · Confirmation' : 'Étape 3 · Fiche sportive & Club')}
+                  {registerStep === 4 && 'Étape 4 · Récapitulatif'}
                 </span>
-                <span className="font-bold text-white">{Math.round((registerStep / totalSteps) * 100)}%</span>
+                <span className="font-bold text-white font-mono">{registerStep}/{totalSteps}</span>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {Array.from({ length: totalSteps }, (_, i) => (
-                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i < registerStep ? 'bg-gradient-to-r from-[#FF2A3B] to-[#FFB800]' : 'bg-white/10'
-                    }`} />
+                  <div
+                    key={i}
+                    className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                      i < registerStep ? 'bg-[#FF2A3B]' : 'bg-white/10'
+                    }`}
+                  />
                 ))}
               </div>
             </div>
 
             {/* ══════════════════════════════════════════════════════════════════
-                ÉCRAN 1 : QUESTIONNER LE RÔLE DÈS LE DÉPART (SECTION 3.1)
+                ÉCRAN 1 : CHOIX DU RÔLE
                 ══════════════════════════════════════════════════════════════════ */}
             {registerStep === 1 && (
               <div className="space-y-3">
                 <div className="text-center space-y-1">
-                  <h4 className="text-sm font-black text-white flex items-center justify-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#FFB800]" />
-                    Quel type d'utilisateur êtes-vous ?
-                  </h4>
+                  <h4 className="text-sm font-bold text-white">Sélectionnez votre profil d'accès</h4>
                   <p className="text-[11px] text-slate-400">
-                    Sélectionnez votre profil pour adapter les fonctionnalités à vos besoins.
+                    Votre vestiaire et vos outils seront configurés selon votre rôle.
                   </p>
                 </div>
 
@@ -627,25 +650,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         key={r.value}
                         type="button"
                         onClick={() => setSelectedRole(r.value)}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 relative ${isSelected
-                          ? 'border-[#FF2A3B] bg-[#FF2A3B]/15 shadow-lg shadow-red-500/10'
-                          : 'border-white/10 bg-white/5 hover:bg-white/10'
-                          }`}
+                        className={`p-3.5 rounded-xl border text-left transition-colors cursor-pointer flex flex-col justify-between gap-2.5 relative ${
+                          isSelected
+                            ? 'border-[#FF2A3B] bg-[#FF2A3B]/10 text-white shadow-sm'
+                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8 text-slate-300'
+                        }`}
                       >
                         <div className="flex items-start justify-between">
                           <div className={isSelected ? 'text-[#FF2A3B]' : 'text-slate-300'}>{r.icon}</div>
                           <span
-                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isSelected
-                              ? 'bg-[#FF2A3B] text-white'
-                              : 'bg-white/10 text-slate-400'
-                              }`}
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                              isSelected
+                                ? 'bg-[#FF2A3B] text-white'
+                                : 'bg-white/10 text-slate-400'
+                            }`}
                           >
                             {r.badge}
                           </span>
                         </div>
                         <div>
                           <div className="font-bold text-white text-xs">{r.label}</div>
-                          <div className="text-[10px] text-slate-400 leading-tight mt-0.5">{r.desc}</div>
+                          <div className="text-[11px] text-slate-400 leading-tight mt-0.5">{r.desc}</div>
                         </div>
                       </button>
                     );
@@ -835,11 +860,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
 
                     {createClubMode ? (
-                      <div className="space-y-3 bg-gradient-to-b from-white/5 to-transparent p-3.5 rounded-2xl border border-white/10">
-                        <div className="text-[11px] text-amber-300 flex items-center gap-1.5 font-medium">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          Le système de design sera automatiquement généré à partir du logo !
-                        </div>
+                      <div className="space-y-3 bg-white/5 p-3.5 rounded-2xl border border-white/10">
                         <div>
                           <label className="block text-slate-300 font-medium mb-1">Nom officiel du club *</label>
                           <input
@@ -854,16 +875,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <label className="block text-slate-300 font-medium">Logo officiel du club</label>
-                            <label className="text-[11px] text-amber-300 hover:text-amber-200 cursor-pointer flex items-center gap-1 font-semibold">
+                            <label className="text-[11px] text-slate-400 hover:text-white cursor-pointer flex items-center gap-1 font-semibold transition-colors">
                               {uploadingClubLogo ? (
                                 <>
                                   <Loader2 className="w-3 h-3 animate-spin" />
-                                  <span>Téléversement CDN...</span>
+                                  <span>Téléversement...</span>
                                 </>
                               ) : (
                                 <>
                                   <Upload className="w-3 h-3" />
-                                  <span>Importer logo (Cloudinary)</span>
+                                  <span>Importer un fichier</span>
                                 </>
                               )}
                               <input
@@ -885,7 +906,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             )}
                             <input
                               type="text"
-                              placeholder="https://res.cloudinary.com/... ou importez un fichier"
+                              placeholder="URL du logo ou importez un fichier"
                               value={newClubLogoUrl}
                               onChange={(e) => setNewClubLogoUrl(e.target.value)}
                               className="w-full px-3 py-2 rounded-xl glass-input text-xs"
@@ -1314,17 +1335,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 type="button"
                 onClick={nextStep}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white font-bold text-sm shadow-lg shadow-red-500/25 hover:scale-[1.01] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white font-bold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {loading
-                  ? 'Traitement en cours...'
-                  : registerStep < totalSteps
-                    ? (
-                      <>
-                        Continuer <ChevronRight className="w-4 h-4" />
-                      </>
-                    )
-                    : 'Valider mon Inscription 🎉'}
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Traitement...</>
+                ) : registerStep < totalSteps ? (
+                  <>Continuer <ChevronRight className="w-4 h-4" /></>
+                ) : (
+                  <>Valider l'inscription <CheckCircle className="w-4 h-4" /></>
+                )}
               </button>
             </div>
           </div>
@@ -1355,7 +1374,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <input
                       type="text"
                       required
-                      placeholder="Code reçu"
+                      placeholder="Code reçu par email"
                       value={resetCode}
                       onChange={(e) => setResetCode(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input"
@@ -1367,46 +1386,83 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="••••••••"
+                      placeholder="8 caractères minimum"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl glass-input"
                     />
+                    <button type="button" tabIndex={-1}
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
               </>
             ) : (
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Mot de passe</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input"
-                  />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-300 font-medium">
+                    {tab === 'FORGOT' ? 'Adresse Email (saisie ci-dessus)' : 'Mot de passe'}
+                  </label>
+                  {tab === 'LOGIN' && (
+                    <button
+                      type="button"
+                      onClick={() => { setTab('FORGOT'); setError(''); setSubmittedMessage(''); }}
+                      className="text-[11px] text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Mot de passe oublié ?
+                    </button>
+                  )}
                 </div>
+                {tab === 'LOGIN' && (
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl glass-input"
+                    />
+                    <button type="button" tabIndex={-1}
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white font-bold text-sm shadow-lg shadow-red-500/25 hover:scale-[1.01] transition-all disabled:opacity-60 cursor-pointer"
+              className="w-full py-3 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white font-bold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             >
-              {loading
-                ? 'Chargement...'
-                : tab === 'LOGIN'
-                  ? 'Se Connecter'
-                  : resetToken
-                    ? 'Valider le nouveau mot de passe'
-                    : 'Envoyer le lien de réinitialisation'}
+              {loading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Chargement...</>
+              ) : tab === 'LOGIN' ? (
+                'Se connecter'
+              ) : resetToken ? (
+                'Valider le nouveau mot de passe'
+              ) : (
+                'Envoyer le code de réinitialisation'
+              )}
             </button>
+
+            {tab === 'FORGOT' && !resetToken && (
+              <button
+                type="button"
+                onClick={() => { setTab('LOGIN'); setError(''); setSubmittedMessage(''); }}
+                className="w-full text-center text-[11px] text-slate-400 hover:text-white transition-colors cursor-pointer py-1"
+              >
+                ← Retour à la connexion
+              </button>
+            )}
           </form>
         )}
       </div>

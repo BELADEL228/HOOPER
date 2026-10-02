@@ -172,7 +172,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveMode('STORY')}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeMode === 'STORY' ? 'bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] text-white shadow-md' : 'text-slate-400 hover:text-white'
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer ${activeMode === 'STORY' ? 'bg-[#FF2A3B] text-white' : 'text-slate-400 hover:text-white'
               }`}
           >
             <Clock className="w-4 h-4" />
@@ -305,7 +305,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || isCompressing || (!text.trim() && !mediaUrl.trim())}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] hover:from-[#FF4555] hover:to-[#FF2A3B] text-white text-xs sm:text-sm font-bold shadow-lg shadow-[#FF2A3B]/30 disabled:opacity-40 cursor-pointer transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] hover:from-[#FF4555] hover:to-[#FF2A3B] text-white text-xs sm:text-sm font-bold shadow-lg disabled:opacity-40 cursor-pointer transition-all"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               <span>{isSubmitting ? 'Envoi...' : 'Diffuser'}</span>

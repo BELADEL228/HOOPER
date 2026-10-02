@@ -410,7 +410,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 pt-4 lg:pt-0">
               <button
                 onClick={handleToggleFollow}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg min-h-[40px] ${isFollowing
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-colors cursor-pointer min-h-[40px] ${isFollowing
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                     : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
                   }`}
@@ -425,7 +425,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
               {isClubManager && (
                 <button
                   onClick={() => setActiveTab('admin')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all cursor-pointer shadow-lg shadow-cyan-500/20 min-h-[40px]"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-sky-600 hover:bg-sky-500 transition-colors cursor-pointer min-h-[40px]"
                 >
                   <Sliders className="w-4 h-4" />
                   <span>Gestion du Club</span>
@@ -437,7 +437,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
           {/* SÉLECTEUR D'ÉQUIPES */}
           {Array.isArray(fullClub.teams) && fullClub.teams.length > 0 && (
             <div className="mt-8 pt-6 border-t border-white/10">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <div className="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-2">
                 <Users className="w-4 h-4 text-slate-400" /> Équipe active consultée :
               </div>
               <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
@@ -493,7 +493,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shrink-0 border min-h-[42px] ${isActive
+                  className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shrink-0 border min-h-[42px] ${isActive
                       ? 'bg-white/15 text-white border-white/30 shadow-sm'
                       : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                     }`}
@@ -527,8 +527,8 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
             {/* ✅ Formulaire publication réservé aux vrais managers */}
             {isClubManager && (
               <div className="glass-panel p-5 rounded-3xl border border-white/10 space-y-3 bg-[#10141D]">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#FFB800] uppercase tracking-wider">
-                  <Sparkles className="w-4 h-4" /> Publication Officielle du Club
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#FFB800]">
+                  <Sparkles className="w-4 h-4" /> Publication officielle du club
                 </div>
                 <form onSubmit={handlePublishNews} className="space-y-3">
                   <textarea
@@ -545,7 +545,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
                     <button
                       type="submit"
                       disabled={submittingPost || !newPostContent.trim()}
-                      className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#FF2A3B] hover:bg-[#E60023] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-md shadow-red-500/20"
+                      className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#FF2A3B] hover:bg-[#E60023] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-md"
                     >
                       {submittingPost ? (
                         <>
@@ -651,7 +651,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
           {/* Colonne Droite : Infos */}
           <div className="space-y-6">
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4 bg-[#10141D]">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-black text-white flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-amber-500" />
                 <span>QG &amp; Coordonnées</span>
               </h3>
@@ -711,7 +711,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
 
             {stats && (
               <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4 bg-[#10141D]">
-                <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <h3 className="text-sm font-black text-white flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-amber-500" />
                   <span>Bilan Saison</span>
                 </h3>
@@ -817,7 +817,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
                           #{player.number ?? '—'}
                         </div>
                         <div className="absolute bottom-3 left-3 right-3">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-[#FFB800] block">
+                          <span className="text-[10px] font-bold text-[#FFB800] block">
                             {player.position || 'Joueur'}
                           </span>
                           <h4 className="text-lg font-black text-white leading-tight truncate">
@@ -1058,7 +1058,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
                         <div className="text-lg sm:text-xl font-black text-white">
                           {m.scoreTeam ?? '—'} - {m.scoreOpponent ?? '—'}
                         </div>
-                        <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                        <div className="text-[10px] font-semibold text-emerald-400">
                           Terminé
                           {m.mvpPlayerName && ` • MVP : ${m.mvpPlayerName}`}
                         </div>
@@ -1169,7 +1169,7 @@ export const ClubProfilePage: React.FC<ClubProfilePageProps> = ({
           </div>
 
           <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4 bg-[#10141D]">
-            <h4 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-sm font-black text-white flex items-center gap-2">
               <Users className="w-4 h-4 text-cyan-400" />
               <span>Attribution des Rôles dans le Club</span>
             </h4>

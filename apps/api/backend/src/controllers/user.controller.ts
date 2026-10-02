@@ -85,6 +85,9 @@ export class UserController {
                             threePtPct: true,
                             ftPct: true,
                             achievementsJson: true,
+                            skillsJson: true,
+                            recruitmentApplications: true,
+                            scoutingEntries: true
                         },
                     },
                     clubMemberships: {

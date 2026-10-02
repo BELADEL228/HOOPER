@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { UserRole, Team } from '../../types';
+import type { UserRole, Team, User } from '../../types';
 import {
   Flame,
   LayoutDashboard,
@@ -21,12 +21,16 @@ import {
   Menu,
   X,
   LogIn,
+  LogOut,
   MapPinned,
   ShoppingBag,
   ArrowLeft,
+  Download,
+  Bell,
 } from 'lucide-react';
 import { ClubLogo } from '../common/ClubLogo';
 import { filterAccessibleTabs, PRIVATE_TABS } from '../../config/permissions';
+import { triggerPwaInstall } from '../common/PwaInstallPrompt';
 
 interface SidebarProps {
   currentRole: UserRole;
@@ -42,6 +46,14 @@ interface SidebarProps {
   isAuthenticated?: boolean;
   onBackToPublic?: () => void;
   selectedClub?: Team | null;
+  authUser?: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    avatarUrl?: string | null;
+  } | null;
+  onLogout?: () => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -95,6 +107,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isAuthenticated = false,
   onBackToPublic,
   selectedClub,
+  authUser,
+  onLogout,
+  unreadNotifications,
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const collapsed =
@@ -126,8 +141,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           setMobileOpen(false);
         }}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${isActive
-            ? 'bg-linear-to-r from-[#B91C1C] to-[#881337] text-white shadow-md shadow-red-950/30 font-bold border border-red-800/30'
-            : 'text-slate-300 hover:text-white hover:bg-white/5'
+          ? 'bg-linear-to-r from-[#B91C1C] to-[#881337] text-white shadow-md shadow-red-950/30 font-bold border border-red-800/30'
+          : 'text-slate-300 hover:text-white hover:bg-white/5'
           }`}
         title={item.label}
       >
@@ -147,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {onBackToPublic && (
           <button
             onClick={onBackToPublic}
-            className={`w-full flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer ${collapsed ? 'p-2' : ''
+            className={`w-full flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition-all text-xs font-bold cursor-pointer ${collapsed ? 'p-2' : ''
               }`}
             title="Revenir au Portail Public de la Ligue"
           >
@@ -155,6 +170,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!collapsed && <span className="truncate">Portail Ligue</span>}
           </button>
         )}
+
+        {/* Bouton Installation PWA Mobile */}
+        <button
+          onClick={() => {
+            triggerPwaInstall();
+            setMobileOpen(false);
+          }}
+          className={`w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:brightness-110 transition-all cursor-pointer shadow-sm active:scale-95 ${collapsed ? 'justify-center p-2' : ''
+            }`}
+          title="Installer l'application sur smartphone (PWA)"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#FF2A3B] to-[#FFB800] text-black font-black flex items-center justify-center shadow shrink-0">
+              <Download className="w-3.5 h-3.5" />
+            </div>
+            {!collapsed && (
+              <div className="text-left">
+                <p className="text-xs font-black text-white">Installer l'App</p>
+                <p className="text-[9px] text-slate-400">Écran d'accueil PWA</p>
+              </div>
+            )}
+          </div>
+          {!collapsed && <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />}
+        </button>
 
         <div className="flex items-center justify-between">
           <div
@@ -242,39 +281,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="pt-4 border-t border-white/10 space-y-3">
         {!collapsed ? (
           <div className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 overflow-hidden">
               <img
                 src={
-                  isAuthenticated
+                  authUser?.avatarUrl ||
+                  (isAuthenticated
                     ? 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=150&auto=format&fit=crop&q=80'
-                    : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+                    : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80')
                 }
                 alt="User"
-                className="w-9 h-9 rounded-xl object-cover border border-[#B91C1C]"
+                className="w-9 h-9 rounded-xl object-cover border border-[#B91C1C] shrink-0"
               />
               <div className="text-left text-xs overflow-hidden">
                 <div className="font-bold text-white truncate">
-                  {isAuthenticated ? 'Session En Cours' : 'Visiteur'}
+                  {authUser?.name || (isAuthenticated ? 'Session En Cours' : 'Visiteur')}
                 </div>
-                <span className="inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#B91C1C]/20 text-[#FFB800] border border-[#B91C1C]/30">
+                <span className="inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#B91C1C]/20 text-[#FFB800] border border-[#B91C1C]/30 truncate max-w-[120px]">
                   {isAuthenticated ? currentRole : 'PUBLIC'}
                 </span>
               </div>
             </div>
-            <button
-              onClick={onOpenAuth}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
-              title={isAuthenticated ? 'Espace membre' : 'Se connecter'}
-            >
-              <LogIn className="w-4 h-4" />
-            </button>
+            {isAuthenticated && onLogout ? (
+              <button
+                onClick={onLogout}
+                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 transition-colors shrink-0"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors shrink-0"
+                title={isAuthenticated ? 'Espace membre' : 'Se connecter'}
+              >
+                <LogIn className="w-4 h-4" />
+              </button>
+            )}
           </div>
         ) : (
           <button
-            onClick={onOpenAuth}
+            onClick={isAuthenticated && onLogout ? onLogout : onOpenAuth}
             className="w-full p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 flex justify-center"
+            title={isAuthenticated ? 'Se déconnecter' : 'Se connecter'}
           >
-            <LogIn className="w-5 h-5" />
+            {isAuthenticated ? <LogOut className="w-5 h-5 text-red-400" /> : <LogIn className="w-5 h-5" />}
           </button>
         )}
       </div>
@@ -283,43 +334,79 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Top Bar */}
-      <div className="lg:hidden sticky top-0 z-40 bg-[#090A0F]/90 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex items-center justify-between">
+      {/* Mobile Top Bar — Seul et unique header mobile du mode club */}
+      <div className="lg:hidden sticky top-0 z-40 bg-[#090A0F]/95 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex items-center justify-between shadow-lg">
         <div
           onClick={() => setActiveTab('accueil')}
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2.5 cursor-pointer active:scale-95 transition-transform"
         >
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#B91C1C] to-[#D97706] p-0.5">
-            <div className="w-full h-full bg-[#090A0F] rounded-[6px] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF2A3B] to-[#FFB800] p-0.5 shadow-md">
+            <div className="w-full h-full bg-[#090A0F] rounded-[9px] flex items-center justify-center overflow-hidden">
               <ClubLogo
                 logoUrl={selectedClub?.logoUrl}
                 alt={`Logo ${selectedClub?.name || 'club'}`}
-                className="w-full h-full object-contain"
-                fallback={<Flame className="w-5 h-5 text-[#B91C1C]" />}
+                className="w-full h-full object-contain p-0.5"
+                fallback={<Flame className="w-5 h-5 text-[#FF2A3B]" />}
               />
             </div>
           </div>
-          <span className="font-extrabold text-white text-base truncate max-w-[140px]">
-            {selectedClub?.name || 'FIRE STONE'}
-          </span>
+          <div className="flex flex-col">
+            <span className="font-black text-white text-sm tracking-tight truncate max-w-[130px] leading-tight">
+              {selectedClub?.name || 'FIRE STONE'}
+            </span>
+            <span className="text-[9px] font-bold text-[#FFB800]">
+              Club Workspace
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           {onBackToPublic && (
             <button
               onClick={onBackToPublic}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 text-xs font-bold border border-amber-500/20"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30 transition-all cursor-pointer active:scale-95"
+              title="Retourner au portail public"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Ligue</span>
             </button>
           )}
 
+          {/* Bouton PWA mobile direct */}
+          <button
+            onClick={() => triggerPwaInstall()}
+            className="p-2 rounded-xl bg-[#FF2A3B]/10 hover:bg-[#FF2A3B]/20 text-[#FF2A3B] border border-[#FF2A3B]/30 transition-all cursor-pointer active:scale-95"
+            title="Installer l'application mobile"
+            aria-label="Installer l'application mobile"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+
+          {/* Notifications si non lues */}
+          {unreadNotifications > 0 && (
+            <button
+              onClick={() => setActiveTab('messagerie')}
+              className="relative p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all cursor-pointer active:scale-95"
+              title="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF2A3B] text-white text-[9px] font-black flex items-center justify-center animate-pulse">
+                {unreadNotifications}
+              </span>
+            </button>
+          )}
+
+          {/* Bouton Unique Hamburger Menu Mobile */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 rounded-xl bg-white/5 text-slate-300"
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 transition-all cursor-pointer active:scale-95 shadow-md flex items-center justify-center"
+            aria-label="Ouvrir le menu de navigation"
           >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileOpen ? (
+              <X className="w-5 h-5 text-red-400" />
+            ) : (
+              <Menu className="w-5 h-5 text-white" />
+            )}
           </button>
         </div>
       </div>

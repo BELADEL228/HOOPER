@@ -246,10 +246,8 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
     <div className="space-y-8 pb-12">
       
       {/* Top Banner Player Header */}
-      <div className="relative glass-panel rounded-3xl p-6 sm:p-8 border border-white/15 overflow-hidden bg-[#0A0C13]">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#B91C1C]/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 relative z-10">
+      <div className="rounded-2xl p-6 sm:p-8 border border-white/10 bg-[#0C0F1A]">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div className="relative shrink-0">
               <img
@@ -263,11 +261,11 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
             </div>
 
             <div className="space-y-3 text-center sm:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B91C1C]/20 text-[#B91C1C] text-xs font-bold uppercase tracking-wider border border-[#B91C1C]/30">
-                <UserCheck className="w-3.5 h-3.5 text-[#D97706]" /> Espace Profil Joueur
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#B91C1C]/20 text-[#FF2A3B] text-xs font-semibold border border-[#B91C1C]/30">
+                <UserCheck className="w-3.5 h-3.5 text-[#D97706]" /> Espace profil joueur
               </div>
 
-              <h2 className="text-3xl sm:text-4xl font-black text-white">{userName}</h2>
+              <h1 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tight">{userName}</h1>
               <div className="text-xs text-[#D97706] font-bold">
                 {authUser?.role || 'PLAYER'} • {userCity}, {userCountry}
               </div>
@@ -288,7 +286,7 @@ export const PlayerPersonalProfile: React.FC<PlayerPersonalProfileProps> = ({
               <button
                 type="button"
                 onClick={onSwitchToWorkspace}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] text-white font-black text-xs shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-all flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white font-black text-xs transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <Trophy className="w-4 h-4 text-white" />
                 <span>Accéder à l'espace club</span>

@@ -169,7 +169,7 @@ export const SponsorDonationPortal: React.FC = () => {
       >
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-purple-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-300">
               <ShieldCheck className="w-3.5 h-3.5" /> Espace Partenariats & Mécénat
             </div>
 
@@ -185,7 +185,7 @@ export const SponsorDonationPortal: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
             <button
               onClick={() => setActiveTab('PARTNERSHIP')}
-              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white text-xs font-black hover:brightness-110 transition-all shadow-lg shadow-[#FF2A3B]/20 cursor-pointer"
+              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-[#FF2A3B] text-white text-xs font-black hover:brightness-110 transition-all shadow-lg cursor-pointer"
             >
               Déposer une offre B2B
             </button>
@@ -205,7 +205,7 @@ export const SponsorDonationPortal: React.FC = () => {
           onClick={() => setActiveTab('PACKS')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'PACKS'
-              ? 'bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white shadow-md'
+              ? 'bg-[#FF2A3B] text-white'
               : 'bg-white/5 hover:bg-white/10 text-slate-300'
           }`}
         >
@@ -216,7 +216,7 @@ export const SponsorDonationPortal: React.FC = () => {
           onClick={() => setActiveTab('PARTNERSHIP')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'PARTNERSHIP'
-              ? 'bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white shadow-md'
+              ? 'bg-[#FF2A3B] text-white'
               : 'bg-white/5 hover:bg-white/10 text-slate-300'
           }`}
         >
@@ -227,7 +227,7 @@ export const SponsorDonationPortal: React.FC = () => {
           onClick={() => setActiveTab('DONATION')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'DONATION'
-              ? 'bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white shadow-md'
+              ? 'bg-[#FF2A3B] text-white'
               : 'bg-white/5 hover:bg-white/10 text-slate-300'
           }`}
         >
@@ -238,7 +238,7 @@ export const SponsorDonationPortal: React.FC = () => {
           onClick={() => setActiveTab('SPONSORS')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'SPONSORS'
-              ? 'bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white shadow-md'
+              ? 'bg-[#FF2A3B] text-white'
               : 'bg-white/5 hover:bg-white/10 text-slate-300'
           }`}
         >
@@ -261,7 +261,7 @@ export const SponsorDonationPortal: React.FC = () => {
             <div className="glass-panel p-6 sm:p-8 rounded-3xl border-2 border-amber-500/40 relative flex flex-col justify-between space-y-6 shadow-xl shadow-amber-500/10 bg-gradient-to-b from-amber-500/10 to-transparent">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Majeur & Exclusif
                   </span>
                   <Sparkles className="w-5 h-5 text-amber-400" />
@@ -316,7 +316,7 @@ export const SponsorDonationPortal: React.FC = () => {
             <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/15 flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 text-slate-300 border border-white/10">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black bg-white/10 text-slate-300 border border-white/10">
                     Visibilité Principale
                   </span>
                   <Award className="w-5 h-5 text-[#FFB800]" />
@@ -371,7 +371,7 @@ export const SponsorDonationPortal: React.FC = () => {
             <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/15 flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-500/20 text-slate-400">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black bg-slate-500/20 text-slate-400">
                     Soutien Régional
                   </span>
                   <ShieldCheck className="w-5 h-5 text-slate-400" />
@@ -536,7 +536,7 @@ export const SponsorDonationPortal: React.FC = () => {
               <button
                 type="submit"
                 disabled={partnershipSubmitting}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white font-black text-xs hover:brightness-110 transition-all disabled:opacity-50 cursor-pointer shadow-lg shadow-[#FF2A3B]/20"
+                className="w-full py-3.5 rounded-xl bg-[#FF2A3B] text-white font-black text-xs hover:brightness-110 transition-all disabled:opacity-50 cursor-pointer shadow-lg"
               >
                 {partnershipSubmitting ? 'Transmission en cours...' : 'Envoyer la proposition officielle'}
               </button>
@@ -606,7 +606,7 @@ export const SponsorDonationPortal: React.FC = () => {
                         }}
                         className={`py-3 rounded-xl font-black text-xs transition-all border ${
                           donationAmount === amt && !customAmount
-                            ? 'bg-[#FF2A3B] text-white border-[#FF2A3B] shadow-lg shadow-red-500/20'
+                            ? 'bg-[#FF2A3B] text-white border-[#FF2A3B] shadow-lg'
                             : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                         }`}
                       >
@@ -702,7 +702,7 @@ export const SponsorDonationPortal: React.FC = () => {
                 <button
                   type="submit"
                   disabled={donationProcessing}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#B91C1C] text-white font-black text-xs hover:brightness-110 transition-all cursor-pointer shadow-lg shadow-[#FF2A3B]/20 disabled:opacity-50"
+                  className="w-full py-3.5 rounded-xl bg-[#FF2A3B] text-white font-black text-xs hover:brightness-110 transition-all cursor-pointer shadow-lg disabled:opacity-50"
                 >
                   {donationProcessing
                     ? 'Traitement sécurisé en cours...'

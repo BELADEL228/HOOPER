@@ -268,7 +268,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           </div>
           <button
             onClick={() => onOpenAuth?.()}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white text-xs font-bold shadow-lg shadow-red-500/25 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white text-xs font-bold active:scale-95 transition-all cursor-pointer shrink-0"
           >
             <LogIn className="w-3.5 h-3.5" />
             <span>Se connecter</span>
@@ -478,7 +478,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
                   </p>
                   <button
                     onClick={() => onOpenAuth?.()}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-red-500/25 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white text-xs font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer"
                   >
                     <LogIn className="w-3.5 h-3.5" />
                     <span>Créer un compte</span>
@@ -623,7 +623,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
               </p>
               <button
                 onClick={() => onOpenAuth?.()}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-red-500/25 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white text-xs font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Créer un compte gratuit</span>

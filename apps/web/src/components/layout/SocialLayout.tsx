@@ -534,7 +534,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
             onClick={() => onSelectTab('accueil')}
             className="flex items-center gap-2.5 group cursor-pointer focus:outline-none"
           >
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[#FF2A3B]/25 group-hover:scale-105 transition-transform border border-white/10 shrink-0 bg-black">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg group-hover:scale-105 transition-transform border border-white/10 shrink-0 bg-black">
               <img src={logo} alt="HOOPER" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col text-left">
@@ -812,7 +812,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
                   key={item.id}
                   onClick={() => onSelectTab(item.id)}
                   className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${isActive
-                    ? 'bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white shadow-lg shadow-[#FF2A3B]/30'
+                    ? 'bg-[#FF2A3B] hover:bg-[#e6001f] text-white shadow-lg'
                     : 'text-slate-300 hover:bg-white/10 hover:text-white'
                     }`}
                 >
@@ -839,7 +839,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
 
             {visibleHubItems.length > 0 && (
               <div className="pt-2 mt-2 border-t border-white/5 space-y-1">
-                <div className="px-3.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                <div className="px-3.5 py-1 text-[10px] font-black text-slate-500">
                   Hub & Services
                 </div>
                 {visibleHubItems.map((item) => {
@@ -851,7 +851,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
                       onClick={() => onSelectTab(item.id)}
                       className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white shadow-lg shadow-[#FF2A3B]/30'
+                          ? 'bg-[#FF2A3B] hover:bg-[#e6001f] text-white shadow-lg'
                           : 'text-slate-400 hover:bg-white/10 hover:text-white'
                       }`}
                     >
@@ -868,7 +868,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
             <div className="pt-3">
               <button
                 onClick={onCreateClick}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-[#FF2A3B] via-[#E60023] to-[#FFB800] text-white text-xs sm:text-sm font-black uppercase tracking-wider shadow-xl shadow-[#FF2A3B]/30 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white text-xs sm:text-sm font-black transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
                 <span>Créer +</span>
@@ -880,7 +880,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
               <div className="social-card-border rounded-3xl p-4 space-y-2.5">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-[#FFB800]" />
-                  <span className="text-xs font-bold text-white uppercase tracking-wider">
+                  <span className="text-xs font-bold text-white">
                     Espace Club
                   </span>
                 </div>
@@ -907,7 +907,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
             {nextMatch && (
               <div className="social-card-border rounded-3xl p-4 space-y-3 shadow-xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span className="text-[11px] font-black text-slate-400 flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5 text-[#FF2A3B]" /> Prochain Match
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[#FF2A3B] text-white animate-pulse">
@@ -937,7 +937,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
             <div className="social-card-border rounded-3xl p-4 space-y-3 shadow-xl">
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4 text-[#FFB800]" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                <span className="text-[11px] font-black text-slate-400">
                   Tendances Basketball
                 </span>
               </div>
@@ -975,7 +975,7 @@ export const SocialLayout: React.FC<SocialLayoutProps> = ({
 
             <div className="social-card-border rounded-3xl p-4 space-y-3 shadow-xl">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <span className="text-[11px] font-black text-slate-400 flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5 text-[#FF2A3B]" /> Clubs à Découvrir
                 </span>
                 <button

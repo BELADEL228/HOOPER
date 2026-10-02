@@ -354,39 +354,41 @@ export function TeamDesignerPage() {
   return (
     <div className="space-y-8 pb-16 animate-fadeIn text-slate-100">
       {/* En-tête */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-cyan-300">
-            <Wand2 className="w-3.5 h-3.5 text-cyan-400" /> AI Team Designer & Studio Visuel
+      <div className="rounded-2xl border border-white/10 bg-[#0C0F1A] p-6 sm:p-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/12 border border-cyan-500/25 text-cyan-300 text-xs font-semibold">
+              <Wand2 className="w-3.5 h-3.5 text-cyan-400" /> Studio visuel & identité
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tight">
+              Identité Visuelle & Thèmes
+            </h1>
+            <p className="text-sm text-slate-400 max-w-xl leading-relaxed">
+              Analysez un logo par IA, générez la charte graphique officielle et visualisez les maillots & affiches en direct.
+            </p>
           </div>
-          <h2 className="mt-2 text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
-            Identité Visuelle & Thèmes d’Équipe
-          </h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Analysez un logo par IA, générez la charte graphique officielle et visualisez les maillots & affiches en direct.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={handleCopyJson}
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-slate-200 hover:bg-white/10 hover:text-white transition-all shadow-sm"
-          >
-            {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
-            {copiedCode ? 'Tokens copiés !' : 'Exporter tokens (JSON)'}
-          </button>
-          <button
-            onClick={handleSaveTheme}
-            disabled={savingTheme || !selectedTeam}
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-red-500/20 disabled:opacity-50 transition-all cursor-pointer"
-          >
-            <Save className="w-4 h-4" />
-            {savingTheme ? 'Enregistrement...' : 'Sauvegarder pour l’équipe'}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleCopyJson}
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+            >
+              {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
+              {copiedCode ? 'Tokens copiés !' : 'Exporter tokens (JSON)'}
+            </button>
+            <button
+              onClick={handleSaveTheme}
+              disabled={savingTheme || !selectedTeam}
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#FF2A3B] hover:bg-[#E0202F] px-5 py-2.5 text-xs font-bold text-white transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              {savingTheme ? 'Enregistrement...' : 'Sauvegarder pour l’équipe'}
+            </button>
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* Messages de statut */}
       {statusMessage && (
@@ -689,7 +691,7 @@ export function TeamDesignerPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Domicile */}
                 <div
-                  className="rounded-3xl p-6 border border-white/15 flex flex-col items-center justify-between relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
+                  className="rounded-3xl p-6 border border-white/15 flex flex-col items-center justify-between relative overflow-hidden transition-transform duration-300"
                   style={{ background: tokens.background, boxShadow: tokens.shadow }}
                 >
                   <div className="w-full flex justify-between items-center mb-4">
@@ -751,7 +753,7 @@ export function TeamDesignerPage() {
 
                 {/* Extérieur */}
                 <div
-                  className="rounded-3xl p-6 border border-white/15 flex flex-col items-center justify-between relative overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
+                  className="rounded-3xl p-6 border border-white/15 flex flex-col items-center justify-between relative overflow-hidden transition-transform duration-300"
                   style={{
                     background: tokens.themeType === 'dark' ? '#0F172A' : '#FFFFFF',
                     boxShadow: tokens.shadow,
@@ -836,7 +838,6 @@ export function TeamDesignerPage() {
                 }}
               >
                 <div
-                  className="absolute -right-16 -top-16 w-64 h-64 rounded-full blur-3xl opacity-30 pointer-events-none"
                   style={{ background: tokens.primary }}
                 />
 

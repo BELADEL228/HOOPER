@@ -593,11 +593,11 @@ export function App() {
                   {/* Bouton rapide vers le Live Center */}
                   <button
                     onClick={() => setActiveTab('live')}
-                    className="w-full flex items-center justify-between px-5 py-3 rounded-2xl bg-gradient-to-r from-[#FF2A3B]/20 to-[#FF2A3B]/5 border border-[#FF2A3B]/30 text-white hover:from-[#FF2A3B]/30 transition-all group"
+                    className="w-full flex items-center justify-between px-5 py-3 rounded-2xl bg-white/5 border border-[#FF2A3B]/25 text-white hover:bg-white/8 transition-colors group"
                   >
                     <span className="flex items-center gap-2 text-sm font-bold">
                       <span className="w-2 h-2 rounded-full bg-[#FF2A3B] animate-pulse" />
-                      Live Center — Lives & Replays
+                      Live Center — Lives et Replays
                     </span>
                     <span className="text-xs text-[#FF2A3B] font-bold group-hover:translate-x-1 transition-transform">Voir →</span>
                   </button>
@@ -738,6 +738,8 @@ export function App() {
               isAuthenticated={isAuthenticated}
               onBackToPublic={() => setViewMode('social')}
               selectedClub={selectedClub}
+              authUser={authUser}
+              onLogout={handleLogout}
             />
 
             <div
@@ -884,7 +886,7 @@ export function App() {
                           onClick={() => setActiveTab('marketplace')}
                           className="hover:text-white text-left text-amber-400 font-semibold cursor-pointer"
                         >
-                          Boutique & Billets
+                          Boutique et Billets
                         </button>
                       </div>
                     </div>
@@ -892,11 +894,11 @@ export function App() {
                     {/* Contact */}
                     <div className="md:col-span-4 space-y-3 text-xs text-slate-300">
                       <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-                        Contact & QG Club
+                        Contact et QG Club
                       </h4>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-[#FF2A3B]" /> Terrain & Arène :{' '}
+                          <MapPin className="w-4 h-4 text-[#FF2A3B]" /> Terrain et Arène :{' '}
                           {selectedClub.city}
                         </div>
                         <div className="flex items-center gap-2">
@@ -904,7 +906,7 @@ export function App() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-blue-400" />{' '}
-                          contact@firestone-basketball.tg
+                          contact@HOOPERS-basketball.tg
                         </div>
                         <div className="flex items-center gap-2">
                           <MessageCircle className="w-4 h-4 text-emerald-400" /> WhatsApp : +228 79

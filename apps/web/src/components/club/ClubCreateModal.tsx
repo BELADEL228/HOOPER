@@ -200,7 +200,7 @@ export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
                 onClose();
                 onOpenAuth();
               }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] text-white text-xs font-black uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-red-500/20"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white text-xs font-black transition-colors cursor-pointer"
             >
               <LogIn className="w-4 h-4" /> Se connecter / S'inscrire
             </button>
@@ -459,7 +459,7 @@ export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
                     setError('');
                     setStep(2);
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#E60023] text-white text-xs font-bold transition-all cursor-pointer shadow-lg shadow-red-500/25"
+                  className="px-5 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#E60023] text-white text-xs font-bold transition-all cursor-pointer"
                 >
                   Suivant : Identité →
                 </button>
@@ -467,7 +467,7 @@ export const ClubCreateModal: React.FC<ClubCreateModalProps> = ({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2A3B] to-[#FFB800] text-white text-xs font-black uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-red-500/25 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FF2A3B] hover:bg-[#e6001f] text-white text-xs font-black transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>

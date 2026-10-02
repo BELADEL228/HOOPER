@@ -459,7 +459,7 @@ export const SocialProfileView: React.FC<SocialProfileViewProps> = ({
       {/* ── Header Profil ── */}
       <div className="social-card-border rounded-3xl overflow-hidden shadow-2xl">
         {/* Couverture */}
-        <div className="relative h-44 sm:h-56 w-full bg-gradient-to-r from-[#FF2A3B] via-[#0F121A] to-[#FFB800]/40 overflow-hidden">
+        <div className="relative h-44 sm:h-56 w-full bg-[#0F121A] overflow-hidden">
           <img
             src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1400&auto=format&fit=crop&q=80"
             alt="Couverture"
@@ -556,7 +556,7 @@ export const SocialProfileView: React.FC<SocialProfileViewProps> = ({
                     disabled={loadingFollow}
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-60 ${profile.isFollowing
                       ? 'bg-white/10 text-white border border-white/20 hover:bg-white/15'
-                      : 'bg-gradient-to-r from-[#FF2A3B] to-[#E60023] text-white shadow-lg shadow-[#FF2A3B]/25 hover:from-[#FF4555]'
+                      : 'bg-[#FF2A3B] hover:bg-[#e6001f] text-white shadow-lg hover:from-[#FF4555]'
                       }`}
                   >
                     {loadingFollow ? (

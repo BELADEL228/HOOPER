@@ -352,7 +352,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
           <button
             type="submit"
             disabled={isSubmitting || isProcessingFile || (!content.trim() && !mediaUrl.trim())}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-[#FF2A3B] to-[#E60023] hover:from-[#FF4555] hover:to-[#FF2A3B] text-white text-xs sm:text-sm font-bold shadow-lg shadow-[#FF2A3B]/25 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-[#FF2A3B] to-[#E60023] hover:from-[#FF4555] hover:to-[#FF2A3B] text-white text-xs sm:text-sm font-bold shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Envoi…</span></>

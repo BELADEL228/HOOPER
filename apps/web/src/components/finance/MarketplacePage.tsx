@@ -458,7 +458,7 @@ export function MarketplacePage() {
           <button
             onClick={() => setIsCartOpen(true)}
             type="button"
-            className="relative inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 px-5 py-3 text-xs font-black text-white shadow-lg shadow-red-500/25 transition-all cursor-pointer"
+            className="relative inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 px-5 py-3 text-xs font-black text-white transition-all cursor-pointer"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Mon Panier</span>
@@ -510,7 +510,7 @@ export function MarketplacePage() {
               onClick={() => setActiveTab(tab.id as any)}
               type="button"
               className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${isActive
-                  ? 'bg-gradient-to-r from-red-600 to-amber-500 text-white shadow-md shadow-red-500/20'
+                  ? 'bg-gradient-to-r from-red-600 to-amber-500 text-white shadow-md'
                   : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                 }`}
             >
@@ -1096,7 +1096,7 @@ export function MarketplacePage() {
                 <button
                   onClick={() => setIsCheckoutModalOpen(true)}
                   type="button"
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-red-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-xs font-black uppercase tracking-wider text-white flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <CreditCard className="w-4 h-4" /> Passer la commande ({totalCartAmount.toLocaleString('fr-FR')} F)
                 </button>
@@ -1302,7 +1302,7 @@ export function MarketplacePage() {
               <button
                 type="submit"
                 disabled={checkoutLoading}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-red-500/25 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 {checkoutLoading ? (
                   'Traitement du paiement...'

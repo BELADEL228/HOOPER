@@ -79,7 +79,7 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({
             >
               <div
                 className={`relative w-16 h-16 sm:w-[70px] sm:h-[70px] rounded-full flex items-center justify-center ${hasUnseen
-                    ? 'story-ring-unseen shadow-lg shadow-[#FF2A3B]/20'
+                    ? 'story-ring-unseen shadow-lg'
                     : 'story-ring-seen'
                   }`}
               >
